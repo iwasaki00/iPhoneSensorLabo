@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>iPhone Sensor Lab</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app">
+    <header class="hero">
+      <p class="eyebrow">iPhone Sensor Lab</p>
+      <h1>ブラウザでセンサー情報を確認</h1>
+      <p class="lead">
+        カメラ、傾き、加速度、GPS、画面向きを1画面で確認できます。
+        iPhone Safariでは最初に権限許可が必要です。
+      </p>
+      <div class="actions">
+        <button id="startAllButton" class="button primary">まとめて開始</button>
+        <button id="cameraButton" class="button">カメラ許可</button>
+        <button id="motionButton" class="button">モーション許可</button>
+        <button id="locationButton" class="button">GPS許可</button>
+      </div>
+      <p id="statusMessage" class="status">
+        HTTPS または localhost 相当で開くと、iPhone Safari で各機能を使いやすくなります。
+      </p>
+    </header>
+
+    <section class="grid">
+      <article class="panel panel-camera">
+        <div class="panel-header">
+          <h2>1. カメラ映像</h2>
+          <span id="cameraState" class="badge">未開始</span>
+        </div>
+        <div class="camera-shell">
+          <video id="cameraPreview" autoplay playsinline muted></video>
+          <div id="cameraFallback" class="camera-fallback">
+            カメラ権限を許可すると映像を表示します。
+          </div>
+        </div>
+      </article>
+
+      <article class="panel">
+        <div class="panel-header">
+          <h2>2. 傾き</h2>
+          <span id="orientationPermissionState" class="badge">未開始</span>
+        </div>
+        <dl class="metrics">
+          <div><dt>alpha</dt><dd id="alphaValue">-</dd></div>
+          <div><dt>beta</dt><dd id="betaValue">-</dd></div>
+          <div><dt>gamma</dt><dd id="gammaValue">-</dd></div>
+          <div><dt>compass</dt><dd id="compassValue">-</dd></div>
+        </dl>
+      </article>
+
+      <article class="panel">
+        <div class="panel-header">
+          <h2>3. 加速度</h2>
+          <span id="motionPermissionState" class="badge">未開始</span>
+        </div>
+        <dl class="metrics">
+          <div><dt>x</dt><dd id="accelXValue">-</dd></div>
+          <div><dt>y</dt><dd id="accelYValue">-</dd></div>
+          <div><dt>z</dt><dd id="accelZValue">-</dd></div>
+          <div><dt>interval</dt><dd id="motionIntervalValue">-</dd></div>
+        </dl>
+        <div class="subpanel">
+          <h3>加速度（重力込み）</h3>
+          <dl class="metrics compact">
+            <div><dt>x</dt><dd id="accelGXValue">-</dd></div>
+            <div><dt>y</dt><dd id="accelGYValue">-</dd></div>
+            <div><dt>z</dt><dd id="accelGZValue">-</dd></div>
+          </dl>
+        </div>
+      </article>
+
+      <article class="panel">
+        <div class="panel-header">
+          <h2>4. GPS</h2>
+          <span id="locationState" class="badge">未開始</span>
+        </div>
+        <dl class="metrics">
+          <div><dt>緯度</dt><dd id="latitudeValue">-</dd></div>
+          <div><dt>経度</dt><dd id="longitudeValue">-</dd></div>
+          <div><dt>精度</dt><dd id="accuracyValue">-</dd></div>
+          <div><dt>高度</dt><dd id="altitudeValue">-</dd></div>
+          <div><dt>速度</dt><dd id="speedValue">-</dd></div>
+        </dl>
+      </article>
+
+      <article class="panel">
+        <div class="panel-header">
+          <h2>5. 画面の向き</h2>
+          <span id="screenState" class="badge success">監視中</span>
+        </div>
+        <dl class="metrics">
+          <div><dt>orientation</dt><dd id="screenOrientationValue">-</dd></div>
+          <div><dt>angle</dt><dd id="screenAngleValue">-</dd></div>
+          <div><dt>window</dt><dd id="windowSizeValue">-</dd></div>
+        </dl>
+      </article>
+
+      <article class="panel">
+        <div class="panel-header">
+          <h2>追加情報</h2>
+          <span class="badge info">提案</span>
+        </div>
+        <dl class="metrics">
+          <div><dt>UA</dt><dd id="uaValue">-</dd></div>
+          <div><dt>language</dt><dd id="languageValue">-</dd></div>
+          <div><dt>pixel ratio</dt><dd id="pixelRatioValue">-</dd></div>
+          <div><dt>secure context</dt><dd id="secureContextValue">-</dd></div>
+        </dl>
+      </article>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
