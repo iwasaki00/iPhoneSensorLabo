@@ -242,7 +242,7 @@ h2 {
 }
 
 .viewer-frame {
-  aspect-ratio: 3 / 4;
+  aspect-ratio: 4 / 3;
 }
 
 .preview-frame {
@@ -361,16 +361,6 @@ h2 {
   }
 }
 
-@media (max-width: 760px) {
-  .viewer-frame {
-    aspect-ratio: 4 / 3;
-  }
-
-  .preview-frame {
-    aspect-ratio: 4 / 3;
-  }
-}
-
 @media (max-width: 540px) {
   .app-shell {
     padding-inline: 10px;
@@ -420,12 +410,12 @@ h2 {
   }
 
   .viewer-frame {
-    aspect-ratio: 16 / 10;
-    min-height: 240px;
+    aspect-ratio: 16 / 9;
+    min-height: 220px;
   }
 
   .preview-frame {
-    aspect-ratio: 16 / 10;
+    aspect-ratio: 16 / 9;
     margin-top: 10px;
   }
 
