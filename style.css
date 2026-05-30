@@ -361,9 +361,19 @@ h2 {
   }
 }
 
+@media (max-width: 760px) {
+  .viewer-frame {
+    aspect-ratio: 4 / 3;
+  }
+
+  .preview-frame {
+    aspect-ratio: 4 / 3;
+  }
+}
+
 @media (max-width: 540px) {
   .app-shell {
-    padding-inline: 12px;
+    padding-inline: 10px;
   }
 
   .metric-grid {
@@ -372,5 +382,62 @@ h2 {
 
   .action-button {
     flex: 1 1 0;
+  }
+
+  .hero {
+    padding: 18px 16px;
+  }
+
+  .feature-card,
+  .menu-card,
+  .toolbar {
+    padding: 14px;
+    border-radius: 20px;
+  }
+
+  .page-nav,
+  .card-head,
+  .chip-row,
+  .viewer-overlay {
+    gap: 8px;
+  }
+
+  .menu-link,
+  .mini-button {
+    padding: 9px 12px;
+  }
+
+  .status-badge,
+  .info-chip {
+    min-height: 30px;
+    padding: 0 10px;
+    font-size: 0.82rem;
+  }
+
+  .hand-layout {
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  .viewer-frame {
+    aspect-ratio: 16 / 10;
+    min-height: 240px;
+  }
+
+  .preview-frame {
+    aspect-ratio: 16 / 10;
+    margin-top: 10px;
+  }
+
+  .viewer-overlay {
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+  }
+
+  .result-item,
+  .empty-state,
+  .fallback-message {
+    padding: 12px;
   }
 }
