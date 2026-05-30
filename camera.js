@@ -1,10 +1,8 @@
-const MODEL_ASSET_PATH =
-  "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task";
-const WASM_ROOT =
-  "https://unpkg.com/@mediapipe/tasks-vision@0.10.22/wasm";
-const VISION_BUNDLE_URL =
-  "https://unpkg.com/@mediapipe/tasks-vision@0.10.22/vision_bundle.mjs";
-const APP_VERSION = "camera.js v20260531g";
+const MEDIAPIPE_BASE = "./vendor/mediapipe";
+const MODEL_ASSET_PATH = `${MEDIAPIPE_BASE}/hand_landmarker.task`;
+const WASM_ROOT = `${MEDIAPIPE_BASE}/wasm`;
+const VISION_BUNDLE_URL = `${MEDIAPIPE_BASE}/vision_bundle.mjs`;
+const APP_VERSION = "camera.js v20260531h";
 
 const HAND_CONNECTIONS = [
   [0, 1], [1, 2], [2, 3], [3, 4],
@@ -117,6 +115,10 @@ function formatError(prefix, error) {
   return `${prefix}: ${detail}`;
 }
 
+function getSetupHint() {
+  return "vendor/mediapipe/ に vision_bundle.mjs、wasm/、hand_landmarker.task を配置してください。";
+}
+
 async function loadVisionModule() {
   if (!handVisionModulePromise) {
     setDebugStage("import vision_bundle.mjs");
@@ -192,7 +194,7 @@ async function ensureHandLandmarker() {
 
     return handLandmarker;
   } catch (error) {
-    const message = formatError("MediaPipe の読み込みに失敗しました", error);
+    const message = `${formatError("MediaPipe の読み込みに失敗しました", error)} ${getSetupHint()}`;
     setHandStatus("error", "読込失敗", message);
     setHandEmpty(message);
     setGlobalStatus(message);
@@ -470,6 +472,8 @@ function initializeDebugInfo() {
   setDebugText(ui.debugLastError, "-");
   setDebugText(ui.debugEventLog, "-");
   setDebugStage("page initialized");
+  pushDebugLog(`wasm=${WASM_ROOT}`);
+  pushDebugLog(`model=${MODEL_ASSET_PATH}`);
 }
 
 window.addEventListener("error", (event) => {
