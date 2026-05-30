@@ -31,7 +31,6 @@ const ui = {
   basicCameraState: document.getElementById("basicCameraState"),
   basicCameraVideo: document.getElementById("basicCameraVideo"),
   basicCameraFallback: document.getElementById("basicCameraFallback"),
-
   handStatusBadge: document.getElementById("handStatusBadge"),
   handStatusMessage: document.getElementById("handStatusMessage"),
   handCountChip: document.getElementById("handCountChip"),
@@ -77,6 +76,7 @@ function isSecureEnough() {
 
 async function startBasicCamera() {
   if (basicCameraStream) {
+    setGlobalStatus("カメラはすでに起動しています。");
     return;
   }
 
@@ -85,6 +85,9 @@ async function startBasicCamera() {
     setGlobalStatus("このブラウザはカメラ API に対応していません。");
     return;
   }
+
+  setBadge(ui.basicCameraState, "準備中", "loading");
+  setGlobalStatus("カメラを起動しています...");
 
   try {
     basicCameraStream = await navigator.mediaDevices.getUserMedia({
@@ -99,7 +102,10 @@ async function startBasicCamera() {
     setGlobalStatus("カメラ映像表示を開始しました。");
   } catch (error) {
     setBadge(ui.basicCameraState, "失敗", "error");
-    setGlobalStatus(`カメラ開始に失敗しました: ${error.message}`);
+    const message = error?.name === "NotAllowedError"
+      ? "カメラ権限が拒否されました。Safari の設定からカメラを許可してください。"
+      : `カメラ開始に失敗しました: ${error.message}`;
+    setGlobalStatus(message);
   }
 }
 
@@ -361,3 +367,4 @@ ui.startHandButton.addEventListener("click", startHandRecognition);
 ui.stopHandButton.addEventListener("click", stopHandRecognition);
 
 setHandEmpty("手をカメラに映してください");
+setGlobalStatus("各機能の開始ボタンを押して実験してください。");
