@@ -2,6 +2,8 @@ const MODEL_ASSET_PATH =
   "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task";
 const WASM_ROOT =
   "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm";
+const VISION_BUNDLE_URL =
+  "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/vision_bundle.mjs";
 
 const HAND_CONNECTIONS = [
   [0, 1], [1, 2], [2, 3], [3, 4],
@@ -40,13 +42,13 @@ const ui = {
 const handCtx = ui.handCanvas.getContext("2d");
 
 let basicCameraStream = null;
+let handVisionModule = null;
 let handLandmarker = null;
 let handStream = null;
 let handRafId = 0;
 let lastVideoTime = -1;
 let lastFrameAt = 0;
 let smoothedFps = 0;
-let visionTasksModule = null;
 
 function setGlobalStatus(message) {
   ui.globalStatus.textContent = message;
@@ -67,7 +69,17 @@ function setHandEmpty(message) {
 }
 
 function isSecureEnough() {
-  return window.isSecureContext || location.hostname === "localhost" || location.hostname === "127.0.0.1";
+  return (
+    window.isSecureContext ||
+    location.hostname === "localhost" ||
+    location.hostname === "127.0.0.1" ||
+    location.protocol === "file:"
+  );
+}
+
+function formatError(prefix, error) {
+  const detail = error?.message || String(error);
+  return `${prefix}: ${detail}`;
 }
 
 async function startBasicCamera() {
@@ -92,6 +104,7 @@ async function startBasicCamera() {
       },
       audio: false
     });
+
     ui.basicCameraVideo.srcObject = basicCameraStream;
     ui.basicCameraFallback.hidden = true;
     setBadge(ui.basicCameraState, "動作中", "live");
@@ -100,7 +113,7 @@ async function startBasicCamera() {
     setBadge(ui.basicCameraState, "失敗", "error");
     const message = error?.name === "NotAllowedError"
       ? "カメラ権限が拒否されました。Safari の設定からカメラを許可してください。"
-      : `カメラ開始に失敗しました: ${error.message}`;
+      : formatError("カメラ開始に失敗しました", error);
     setGlobalStatus(message);
   }
 }
@@ -110,21 +123,32 @@ async function ensureHandLandmarker() {
     return handLandmarker;
   }
 
-  setHandStatus("loading", "準備中", "モデル読み込み中...");
-  if (!visionTasksModule) {
-    visionTasksModule = await import("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/vision_bundle.mjs");
-  }
+  setHandStatus("loading", "準備中", "MediaPipe モデルを読み込んでいます...");
+  setGlobalStatus("MediaPipe モデルを読み込んでいます...");
 
-  const vision = await visionTasksModule.FilesetResolver.forVisionTasks(WASM_ROOT);
-  handLandmarker = await visionTasksModule.HandLandmarker.createFromOptions(vision, {
-    baseOptions: { modelAssetPath: MODEL_ASSET_PATH },
-    runningMode: "VIDEO",
-    numHands: 2,
-    minHandDetectionConfidence: 0.55,
-    minHandPresenceConfidence: 0.55,
-    minTrackingConfidence: 0.5
-  });
-  return handLandmarker;
+  try {
+    if (!handVisionModule) {
+      handVisionModule = await import(VISION_BUNDLE_URL);
+    }
+
+    const vision = await handVisionModule.FilesetResolver.forVisionTasks(WASM_ROOT);
+    handLandmarker = await handVisionModule.HandLandmarker.createFromOptions(vision, {
+      baseOptions: { modelAssetPath: MODEL_ASSET_PATH },
+      runningMode: "VIDEO",
+      numHands: 2,
+      minHandDetectionConfidence: 0.55,
+      minHandPresenceConfidence: 0.55,
+      minTrackingConfidence: 0.5
+    });
+
+    return handLandmarker;
+  } catch (error) {
+    const message = formatError("MediaPipe の読み込みに失敗しました", error);
+    setHandStatus("error", "読込失敗", message);
+    setHandEmpty(message);
+    setGlobalStatus(message);
+    throw error;
+  }
 }
 
 function getHandConstraints() {
@@ -260,6 +284,7 @@ function drawHandResult(result) {
 
   const handLandmarks = result?.landmarks ?? [];
   const handednesses = getHandednessList(result);
+
   for (let index = 0; index < handLandmarks.length; index += 1) {
     const handednessLabel = handednesses[index]?.[0]?.categoryName ?? "Unknown";
     drawHandSkeleton(handLandmarks[index], handednessLabel);
@@ -292,7 +317,9 @@ function handLoop() {
       renderHandResults(result);
       updateFps(now);
     } catch (error) {
-      setHandStatus("error", "推論エラー", `推論中にエラーが発生しました: ${error.message}`);
+      const message = formatError("推論中にエラーが発生しました", error);
+      setHandStatus("error", "推論エラー", message);
+      setGlobalStatus(message);
     }
   }
 
@@ -301,17 +328,23 @@ function handLoop() {
 
 async function startHandRecognition() {
   if (!isSecureEnough()) {
-    setHandStatus("error", "HTTPS必須", "iPhoneでは HTTPS 公開が必要です。localhost は例外です。");
+    const message = "iPhoneでは HTTPS 公開が必要です。ローカル確認は localhost または file 直開きで試してください。";
+    setHandStatus("error", "HTTPS必須", message);
     setHandEmpty("HTTPS 環境で開いてください");
+    setGlobalStatus(message);
     return;
   }
 
   if (!navigator.mediaDevices?.getUserMedia) {
-    setHandStatus("error", "非対応", "このブラウザは getUserMedia に対応していません。");
+    const message = "このブラウザは getUserMedia に対応していません。";
+    setHandStatus("error", "非対応", message);
+    setGlobalStatus(message);
     return;
   }
 
   ui.startHandButton.disabled = true;
+  setHandStatus("loading", "準備中", "手指認識を起動しています...");
+  setGlobalStatus("手指認識を起動しています...");
 
   try {
     await ensureHandLandmarker();
@@ -332,10 +365,11 @@ async function startHandRecognition() {
     ui.stopHandButton.disabled = true;
     const message = error?.name === "NotAllowedError"
       ? "カメラ権限が拒否されました。Safari の設定から許可してください。"
-      : `手指認識開始に失敗しました: ${error.message}`;
+      : formatError("手指認識開始に失敗しました", error);
 
     setHandStatus("error", "エラー", message);
     setHandEmpty(message);
+    setGlobalStatus(message);
   }
 }
 
@@ -360,6 +394,7 @@ function stopHandRecognition() {
   ui.startHandButton.disabled = false;
   ui.stopHandButton.disabled = true;
   setHandStatus("default", "停止中", "手指認識を停止しました。");
+  setGlobalStatus("各機能の開始ボタンを押して実験してください。");
 }
 
 ui.basicCameraButton.addEventListener("click", startBasicCamera);
