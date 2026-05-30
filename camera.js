@@ -124,9 +124,14 @@ async function ensureHandLandmarker() {
   setGlobalStatus("MediaPipe モデルを読み込んでいます...");
 
   try {
-    const visionNamespace = window.vision;
+    if (window.__mpVisionLoadError) {
+      throw new Error("vision_bundle.js の読み込みに失敗しました");
+    }
+
+    const visionNamespace = globalThis.vision;
     if (!visionNamespace?.FilesetResolver || !visionNamespace?.HandLandmarker) {
-      throw new Error("vision_bundle.js が読み込まれていません");
+      const scriptState = window.__mpVisionLoaded ? "読み込み後に vision 名前空間が見つかりません" : "vision_bundle.js がまだ読み込まれていません";
+      throw new Error(scriptState);
     }
 
     const vision = await visionNamespace.FilesetResolver.forVisionTasks(WASM_ROOT);
