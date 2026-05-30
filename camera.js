@@ -79,6 +79,21 @@ function formatError(prefix, error) {
   return `${prefix}: ${detail}`;
 }
 
+function resolveVisionNamespace() {
+  const candidates = [
+    globalThis.vision,
+    globalThis.mp?.tasks?.vision,
+    {
+      FilesetResolver: globalThis.FilesetResolver,
+      HandLandmarker: globalThis.HandLandmarker
+    }
+  ];
+
+  return candidates.find((candidate) =>
+    candidate?.FilesetResolver && candidate?.HandLandmarker
+  ) ?? null;
+}
+
 async function startBasicCamera() {
   if (basicCameraStream) {
     setGlobalStatus("カメラはすでに起動しています。");
@@ -128,9 +143,11 @@ async function ensureHandLandmarker() {
       throw new Error("vision_bundle.js の読み込みに失敗しました");
     }
 
-    const visionNamespace = globalThis.vision;
-    if (!visionNamespace?.FilesetResolver || !visionNamespace?.HandLandmarker) {
-      const scriptState = window.__mpVisionLoaded ? "読み込み後に vision 名前空間が見つかりません" : "vision_bundle.js がまだ読み込まれていません";
+    const visionNamespace = resolveVisionNamespace();
+    if (!visionNamespace) {
+      const scriptState = window.__mpVisionLoaded
+        ? "読み込み後に MediaPipe の API が見つかりません"
+        : "vision_bundle.js がまだ読み込まれていません";
       throw new Error(scriptState);
     }
 
