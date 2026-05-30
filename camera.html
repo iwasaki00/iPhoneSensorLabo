@@ -78,8 +78,32 @@
         </div>
       </div>
     </section>
+
+    <section class="feature-card feature-card-wide">
+      <div class="card-head">
+        <div>
+          <p class="card-kicker">Debug</p>
+          <h2>デバッグ情報</h2>
+        </div>
+      </div>
+      <p class="card-message">
+        手指認識で失敗したときの切り分け用です。表示内容をそのまま共有してください。
+      </p>
+      <dl class="metric-grid">
+        <div class="metric-wide"><dt>page url</dt><dd id="debugPageUrl">-</dd></div>
+        <div class="metric-wide"><dt>camera.js url</dt><dd id="debugScriptUrl">-</dd></div>
+        <div class="metric-wide"><dt>MediaPipe url</dt><dd id="debugMediapipeUrl">-</dd></div>
+        <div><dt>secure context</dt><dd id="debugSecureContext">-</dd></div>
+        <div><dt>protocol</dt><dd id="debugProtocol">-</dd></div>
+        <div><dt>hostname</dt><dd id="debugHostname">-</dd></div>
+        <div><dt>user agent</dt><dd id="debugUserAgent">-</dd></div>
+        <div><dt>last stage</dt><dd id="debugStage">-</dd></div>
+        <div class="metric-wide"><dt>last error</dt><dd id="debugLastError">-</dd></div>
+        <div class="metric-wide"><dt>event log</dt><dd id="debugEventLog">-</dd></div>
+      </dl>
+    </section>
   </main>
 
-  <script defer src="camera.js?v=20260531e"></script>
+  <script defer src="camera.js?v=20260531f"></script>
 </body>
 </html>
