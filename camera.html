@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>カメラ実験 | iPhone Sensor Lab</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app-shell">
+    <header class="hero">
+      <p class="eyebrow">Camera Lab</p>
+      <h1>カメラ実験</h1>
+      <p class="lead">
+        基本的なカメラ映像表示と、MediaPipe を使った手指認識実験を確認します。
+      </p>
+      <nav class="page-nav" aria-label="ページ移動">
+        <a href="index.html" class="menu-link">トップへ戻る</a>
+        <a href="#basic-camera" class="menu-link">カメラ映像表示</a>
+        <a href="#hand-recognition" class="menu-link">手指認識実験</a>
+        <a href="sensor.html" class="menu-link">センサー実験へ</a>
+      </nav>
+      <p id="cameraGlobalStatus" class="global-status">
+        各機能の開始ボタンを押して実験してください。
+      </p>
+    </header>
+
+    <section id="basic-camera" class="feature-card">
+      <div class="card-head">
+        <div>
+          <p class="card-kicker">Basic Camera</p>
+          <h2>カメラ映像表示</h2>
+        </div>
+        <div class="chip-row">
+          <span id="basicCameraState" class="status-badge">未起動</span>
+          <button id="basicCameraButton" class="mini-button">開始</button>
+        </div>
+      </div>
+      <p class="card-message">基本的な撮影機能の確認用です。背面カメラを優先して起動します。</p>
+      <div class="preview-frame">
+        <video id="basicCameraVideo" autoplay playsinline muted></video>
+        <div id="basicCameraFallback" class="fallback-message">
+          カメラを開始するとここに映像を表示します。
+        </div>
+      </div>
+    </section>
+
+    <section id="hand-recognition" class="feature-card feature-card-wide">
+      <div class="card-head">
+        <div>
+          <p class="card-kicker">Vision</p>
+          <h2>手指認識実験</h2>
+        </div>
+        <div class="chip-row">
+          <span id="handStatusBadge" class="status-badge">待機中</span>
+          <span id="fpsChip" class="info-chip">FPS: --</span>
+          <span id="handCountChip" class="info-chip">手の数: 0</span>
+          <button id="startHandButton" class="mini-button">開始</button>
+          <button id="stopHandButton" class="mini-button danger" disabled>停止</button>
+        </div>
+      </div>
+      <p id="handStatusMessage" class="card-message">
+        前面カメラを使って手指認識を実行します。iPhone では HTTPS 公開が必要です。
+      </p>
+      <div class="hand-layout">
+        <div class="viewer-frame">
+          <video id="handVideo" playsinline autoplay muted aria-hidden="true"></video>
+          <canvas id="handCanvas"></canvas>
+          <div class="viewer-overlay">
+            <span class="info-chip">Front Camera</span>
+            <span class="info-chip">MediaPipe Hand Landmarker</span>
+          </div>
+        </div>
+        <div id="handResults" class="result-list">
+          <p class="empty-state">手をカメラに映してください</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="camera.js"></script>
+</body>
+</html>

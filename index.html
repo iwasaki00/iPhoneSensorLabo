@@ -12,165 +12,33 @@
       <p class="eyebrow">iPhone Sensor Lab</p>
       <h1>iPhone センサー実験室</h1>
       <p class="lead">
-        既存のセンサー確認機能に加えて、前面カメラの手指認識をまとめて検証できる実験ページです。
-      </p>
-      <p id="globalStatus" class="global-status">
-        メニューから機能を選ぶか、下のボタンでまとめて起動してください。
+        iPhone Safari でカメラ機能と各種センサー機能をカテゴリ別に確認するための入口ページです。
       </p>
     </header>
 
-    <section class="toolbar">
-      <div class="action-row">
-        <button id="startAllButton" class="action-button primary">まとめて開始</button>
-        <button id="startHandButton" class="action-button">手指認識開始</button>
-        <button id="stopHandButton" class="action-button danger" disabled>手指認識停止</button>
-      </div>
-      <nav class="menu" aria-label="機能メニュー">
-        <a href="#hand-section" class="menu-link">手指認識</a>
-        <a href="#camera-section" class="menu-link">カメラ</a>
-        <a href="#motion-section" class="menu-link">傾き・加速度</a>
-        <a href="#location-section" class="menu-link">GPS</a>
-        <a href="#screen-section" class="menu-link">画面</a>
-        <a href="#device-section" class="menu-link">端末情報</a>
-      </nav>
-    </section>
+    <section class="menu-home">
+      <a class="menu-card" href="camera.html">
+        <p class="card-kicker">Camera Lab</p>
+        <h2>カメラ実験</h2>
+        <p class="card-copy">カメラ映像表示と手指認識実験をまとめています。</p>
+        <ul class="link-list">
+          <li>カメラ映像表示</li>
+          <li>手指認識実験</li>
+        </ul>
+      </a>
 
-    <section id="hand-section" class="feature-card feature-card-wide">
-      <div class="card-head">
-        <div>
-          <p class="card-kicker">Vision</p>
-          <h2>手指認識</h2>
-        </div>
-        <div class="chip-row">
-          <span id="handStatusBadge" class="status-badge">待機中</span>
-          <span id="fpsChip" class="info-chip">FPS: --</span>
-          <span id="handCountChip" class="info-chip">手の数: 0</span>
-        </div>
-      </div>
-      <p id="handStatusMessage" class="card-message">
-        手指認識開始を押すとモデルを読み込み、前面カメラで検出を始めます。
-      </p>
-      <div class="hand-layout">
-        <div class="viewer-frame">
-          <video id="handVideo" playsinline autoplay muted aria-hidden="true"></video>
-          <canvas id="handCanvas"></canvas>
-          <div class="viewer-overlay">
-            <span class="info-chip">MediaPipe Hand Landmarker</span>
-            <span class="info-chip">Front Camera</span>
-          </div>
-        </div>
-        <div id="handResults" class="result-list">
-          <p class="empty-state">手をカメラに映してください</p>
-        </div>
-      </div>
-    </section>
-
-    <section class="grid">
-      <article id="camera-section" class="feature-card">
-        <div class="card-head">
-          <div>
-            <p class="card-kicker">Camera</p>
-            <h2>カメラ映像表示</h2>
-          </div>
-          <div class="chip-row">
-            <span id="cameraState" class="status-badge">未起動</span>
-            <button id="cameraButton" class="mini-button">開始</button>
-          </div>
-        </div>
-        <p class="card-message">元のセンサー確認用カメラ表示です。背面カメラを優先します。</p>
-        <div class="preview-frame">
-          <video id="cameraPreview" autoplay playsinline muted></video>
-          <div id="cameraFallback" class="fallback-message">
-            カメラを開始するとここに映像を表示します。
-          </div>
-        </div>
-      </article>
-
-      <article id="motion-section" class="feature-card">
-        <div class="card-head">
-          <div>
-            <p class="card-kicker">Motion</p>
-            <h2>傾き・加速度</h2>
-          </div>
-          <div class="chip-row">
-            <span id="motionState" class="status-badge">未起動</span>
-            <button id="motionButton" class="mini-button">開始</button>
-          </div>
-        </div>
-        <p class="card-message">alpha / beta / gamma と加速度 x / y / z を表示します。</p>
-        <dl class="metric-grid">
-          <div><dt>alpha</dt><dd id="alphaValue">-</dd></div>
-          <div><dt>beta</dt><dd id="betaValue">-</dd></div>
-          <div><dt>gamma</dt><dd id="gammaValue">-</dd></div>
-          <div><dt>加速度 x</dt><dd id="accelXValue">-</dd></div>
-          <div><dt>加速度 y</dt><dd id="accelYValue">-</dd></div>
-          <div><dt>加速度 z</dt><dd id="accelZValue">-</dd></div>
-          <div><dt>重力込み</dt><dd id="accelGValue">-</dd></div>
-          <div><dt>interval</dt><dd id="motionIntervalValue">-</dd></div>
-        </dl>
-      </article>
-
-      <article id="location-section" class="feature-card">
-        <div class="card-head">
-          <div>
-            <p class="card-kicker">Location</p>
-            <h2>GPS</h2>
-          </div>
-          <div class="chip-row">
-            <span id="locationState" class="status-badge">未起動</span>
-            <button id="locationButton" class="mini-button">開始</button>
-          </div>
-        </div>
-        <p class="card-message">緯度・経度に加えて精度と速度も確認できます。</p>
-        <dl class="metric-grid">
-          <div><dt>緯度</dt><dd id="latitudeValue">-</dd></div>
-          <div><dt>経度</dt><dd id="longitudeValue">-</dd></div>
-          <div><dt>精度</dt><dd id="accuracyValue">-</dd></div>
-          <div><dt>高度</dt><dd id="altitudeValue">-</dd></div>
-          <div><dt>速度</dt><dd id="speedValue">-</dd></div>
-          <div><dt>監視状態</dt><dd id="locationModeValue">watchPosition</dd></div>
-        </dl>
-      </article>
-
-      <article id="screen-section" class="feature-card">
-        <div class="card-head">
-          <div>
-            <p class="card-kicker">Screen</p>
-            <h2>画面の向き</h2>
-          </div>
-          <div class="chip-row">
-            <span id="screenState" class="status-badge live">監視中</span>
-          </div>
-        </div>
-        <p class="card-message">向き、角度、ウィンドウサイズを常時表示します。</p>
-        <dl class="metric-grid">
-          <div><dt>orientation</dt><dd id="screenOrientationValue">-</dd></div>
-          <div><dt>angle</dt><dd id="screenAngleValue">-</dd></div>
-          <div><dt>window</dt><dd id="windowSizeValue">-</dd></div>
-          <div><dt>pixel ratio</dt><dd id="pixelRatioValue">-</dd></div>
-        </dl>
-      </article>
-
-      <article id="device-section" class="feature-card">
-        <div class="card-head">
-          <div>
-            <p class="card-kicker">Device</p>
-            <h2>端末情報</h2>
-          </div>
-          <div class="chip-row">
-            <span class="status-badge live">表示中</span>
-          </div>
-        </div>
-        <p class="card-message">ユーザーエージェントや HTTPS 状態を表示します。</p>
-        <dl class="metric-grid">
-          <div><dt>language</dt><dd id="languageValue">-</dd></div>
-          <div><dt>secure context</dt><dd id="secureContextValue">-</dd></div>
-          <div class="metric-wide"><dt>UA</dt><dd id="uaValue">-</dd></div>
-        </dl>
-      </article>
+      <a class="menu-card" href="sensor.html">
+        <p class="card-kicker">Sensor Lab</p>
+        <h2>センサー実験</h2>
+        <p class="card-copy">傾き加速度、GPS、画面の向き、端末情報を確認できます。</p>
+        <ul class="link-list">
+          <li>傾き加速度</li>
+          <li>GPS</li>
+          <li>画面の向き</li>
+          <li>端末情報</li>
+        </ul>
+      </a>
     </section>
   </main>
-
-  <script type="module" src="script.js"></script>
 </body>
 </html>

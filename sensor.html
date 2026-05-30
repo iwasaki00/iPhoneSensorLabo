@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>センサー実験 | iPhone Sensor Lab</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app-shell">
+    <header class="hero">
+      <p class="eyebrow">Sensor Lab</p>
+      <h1>センサー実験</h1>
+      <p class="lead">
+        iPhone の傾き加速度、GPS、画面の向き、端末情報をカテゴリ別に確認します。
+      </p>
+      <nav class="page-nav" aria-label="ページ移動">
+        <a href="index.html" class="menu-link">トップへ戻る</a>
+        <a href="#motion-section" class="menu-link">傾き加速度</a>
+        <a href="#location-section" class="menu-link">GPS</a>
+        <a href="#screen-section" class="menu-link">画面の向き</a>
+        <a href="#device-section" class="menu-link">端末情報</a>
+        <a href="camera.html" class="menu-link">カメラ実験へ</a>
+      </nav>
+      <p id="sensorGlobalStatus" class="global-status">
+        センサー権限が必要な機能は開始ボタンから有効化してください。
+      </p>
+    </header>
+
+    <section class="toolbar">
+      <div class="action-row">
+        <button id="startMotionButton" class="action-button primary">傾き加速度を開始</button>
+        <button id="startLocationButton" class="action-button">GPSを開始</button>
+      </div>
+    </section>
+
+    <section class="grid">
+      <article id="motion-section" class="feature-card">
+        <div class="card-head">
+          <div>
+            <p class="card-kicker">Motion</p>
+            <h2>傾き加速度</h2>
+          </div>
+          <div class="chip-row">
+            <span id="motionState" class="status-badge">未起動</span>
+          </div>
+        </div>
+        <p class="card-message">alpha / beta / gamma と加速度 x / y / z を表示します。</p>
+        <dl class="metric-grid">
+          <div><dt>alpha</dt><dd id="alphaValue">-</dd></div>
+          <div><dt>beta</dt><dd id="betaValue">-</dd></div>
+          <div><dt>gamma</dt><dd id="gammaValue">-</dd></div>
+          <div><dt>加速度 x</dt><dd id="accelXValue">-</dd></div>
+          <div><dt>加速度 y</dt><dd id="accelYValue">-</dd></div>
+          <div><dt>加速度 z</dt><dd id="accelZValue">-</dd></div>
+          <div><dt>重力込み</dt><dd id="accelGValue">-</dd></div>
+          <div><dt>interval</dt><dd id="motionIntervalValue">-</dd></div>
+        </dl>
+      </article>
+
+      <article id="location-section" class="feature-card">
+        <div class="card-head">
+          <div>
+            <p class="card-kicker">Location</p>
+            <h2>GPS</h2>
+          </div>
+          <div class="chip-row">
+            <span id="locationState" class="status-badge">未起動</span>
+          </div>
+        </div>
+        <p class="card-message">緯度・経度に加えて精度、高度、速度を確認します。</p>
+        <dl class="metric-grid">
+          <div><dt>緯度</dt><dd id="latitudeValue">-</dd></div>
+          <div><dt>経度</dt><dd id="longitudeValue">-</dd></div>
+          <div><dt>精度</dt><dd id="accuracyValue">-</dd></div>
+          <div><dt>高度</dt><dd id="altitudeValue">-</dd></div>
+          <div><dt>速度</dt><dd id="speedValue">-</dd></div>
+          <div><dt>監視方式</dt><dd id="locationModeValue">watchPosition</dd></div>
+        </dl>
+      </article>
+
+      <article id="screen-section" class="feature-card">
+        <div class="card-head">
+          <div>
+            <p class="card-kicker">Screen</p>
+            <h2>画面の向き</h2>
+          </div>
+          <div class="chip-row">
+            <span id="screenState" class="status-badge live">監視中</span>
+          </div>
+        </div>
+        <p class="card-message">画面の向き、角度、ウィンドウサイズを常時表示します。</p>
+        <dl class="metric-grid">
+          <div><dt>orientation</dt><dd id="screenOrientationValue">-</dd></div>
+          <div><dt>angle</dt><dd id="screenAngleValue">-</dd></div>
+          <div><dt>window</dt><dd id="windowSizeValue">-</dd></div>
+          <div><dt>pixel ratio</dt><dd id="pixelRatioValue">-</dd></div>
+        </dl>
+      </article>
+
+      <article id="device-section" class="feature-card">
+        <div class="card-head">
+          <div>
+            <p class="card-kicker">Device</p>
+            <h2>端末情報</h2>
+          </div>
+          <div class="chip-row">
+            <span class="status-badge live">表示中</span>
+          </div>
+        </div>
+        <p class="card-message">言語、HTTPS 状態、ユーザーエージェントを表示します。</p>
+        <dl class="metric-grid">
+          <div><dt>language</dt><dd id="languageValue">-</dd></div>
+          <div><dt>secure context</dt><dd id="secureContextValue">-</dd></div>
+          <div class="metric-wide"><dt>UA</dt><dd id="uaValue">-</dd></div>
+        </dl>
+      </article>
+    </section>
+  </main>
+
+  <script type="module" src="sensor.js"></script>
+</body>
+</html>
