@@ -2,8 +2,6 @@ const MODEL_ASSET_PATH =
   "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task";
 const WASM_ROOT =
   "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm";
-const VISION_BUNDLE_URL =
-  "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/vision_bundle.mjs";
 
 const HAND_CONNECTIONS = [
   [0, 1], [1, 2], [2, 3], [3, 4],
@@ -42,7 +40,6 @@ const ui = {
 const handCtx = ui.handCanvas.getContext("2d");
 
 let basicCameraStream = null;
-let handVisionModule = null;
 let handLandmarker = null;
 let handStream = null;
 let handRafId = 0;
@@ -127,12 +124,13 @@ async function ensureHandLandmarker() {
   setGlobalStatus("MediaPipe モデルを読み込んでいます...");
 
   try {
-    if (!handVisionModule) {
-      handVisionModule = await import(VISION_BUNDLE_URL);
+    const visionNamespace = window.vision;
+    if (!visionNamespace?.FilesetResolver || !visionNamespace?.HandLandmarker) {
+      throw new Error("vision_bundle.js が読み込まれていません");
     }
 
-    const vision = await handVisionModule.FilesetResolver.forVisionTasks(WASM_ROOT);
-    handLandmarker = await handVisionModule.HandLandmarker.createFromOptions(vision, {
+    const vision = await visionNamespace.FilesetResolver.forVisionTasks(WASM_ROOT);
+    handLandmarker = await visionNamespace.HandLandmarker.createFromOptions(vision, {
       baseOptions: { modelAssetPath: MODEL_ASSET_PATH },
       runningMode: "VIDEO",
       numHands: 2,
