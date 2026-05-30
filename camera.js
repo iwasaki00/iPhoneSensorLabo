@@ -2,6 +2,8 @@ const MODEL_ASSET_PATH =
   "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task";
 const WASM_ROOT =
   "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm";
+const VISION_BUNDLE_URL =
+  "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/vision_bundle.js";
 
 const HAND_CONNECTIONS = [
   [0, 1], [1, 2], [2, 3], [3, 4],
@@ -40,6 +42,7 @@ const ui = {
 const handCtx = ui.handCanvas.getContext("2d");
 
 let basicCameraStream = null;
+let handVisionModulePromise = null;
 let handLandmarker = null;
 let handStream = null;
 let handRafId = 0;
@@ -79,35 +82,27 @@ function formatError(prefix, error) {
   return `${prefix}: ${detail}`;
 }
 
-function resolveVisionNamespace() {
-  const candidates = [
-    globalThis.vision,
-    globalThis.mp?.tasks?.vision,
-    {
-      FilesetResolver: globalThis.FilesetResolver,
-      HandLandmarker: globalThis.HandLandmarker
-    }
-  ];
-
-  return candidates.find((candidate) =>
-    candidate?.FilesetResolver && candidate?.HandLandmarker
-  ) ?? null;
+async function loadVisionModule() {
+  if (!handVisionModulePromise) {
+    handVisionModulePromise = import(VISION_BUNDLE_URL);
+  }
+  return handVisionModulePromise;
 }
 
 async function startBasicCamera() {
   if (basicCameraStream) {
-    setGlobalStatus("カメラはすでに起動しています。");
+    setGlobalStatus("カメラはすでに起動しています。 camera.js v20260531d");
     return;
   }
 
   if (!navigator.mediaDevices?.getUserMedia) {
     setBadge(ui.basicCameraState, "非対応", "error");
-    setGlobalStatus("このブラウザはカメラ API に対応していません。");
+    setGlobalStatus("このブラウザはカメラ API に対応していません。 camera.js v20260531d");
     return;
   }
 
   setBadge(ui.basicCameraState, "準備中", "loading");
-  setGlobalStatus("カメラを起動しています...");
+  setGlobalStatus("カメラを起動しています... camera.js v20260531d");
 
   try {
     basicCameraStream = await navigator.mediaDevices.getUserMedia({
@@ -120,13 +115,13 @@ async function startBasicCamera() {
     ui.basicCameraVideo.srcObject = basicCameraStream;
     ui.basicCameraFallback.hidden = true;
     setBadge(ui.basicCameraState, "動作中", "live");
-    setGlobalStatus("カメラ映像表示を開始しました。");
+    setGlobalStatus("カメラ映像表示を開始しました。 camera.js v20260531d");
   } catch (error) {
     setBadge(ui.basicCameraState, "失敗", "error");
     const message = error?.name === "NotAllowedError"
       ? "カメラ権限が拒否されました。Safari の設定からカメラを許可してください。"
       : formatError("カメラ開始に失敗しました", error);
-    setGlobalStatus(message);
+    setGlobalStatus(`${message} camera.js v20260531d`);
   }
 }
 
@@ -136,23 +131,13 @@ async function ensureHandLandmarker() {
   }
 
   setHandStatus("loading", "準備中", "MediaPipe モデルを読み込んでいます...");
-  setGlobalStatus("MediaPipe モデルを読み込んでいます...");
+  setGlobalStatus("MediaPipe モデルを読み込んでいます... camera.js v20260531d");
 
   try {
-    if (window.__mpVisionLoadError) {
-      throw new Error("vision_bundle.js の読み込みに失敗しました");
-    }
+    const visionModule = await loadVisionModule();
+    const vision = await visionModule.FilesetResolver.forVisionTasks(WASM_ROOT);
 
-    const visionNamespace = resolveVisionNamespace();
-    if (!visionNamespace) {
-      const scriptState = window.__mpVisionLoaded
-        ? "読み込み後に MediaPipe の API が見つかりません"
-        : "vision_bundle.js がまだ読み込まれていません";
-      throw new Error(scriptState);
-    }
-
-    const vision = await visionNamespace.FilesetResolver.forVisionTasks(WASM_ROOT);
-    handLandmarker = await visionNamespace.HandLandmarker.createFromOptions(vision, {
+    handLandmarker = await visionModule.HandLandmarker.createFromOptions(vision, {
       baseOptions: { modelAssetPath: MODEL_ASSET_PATH },
       runningMode: "VIDEO",
       numHands: 2,
@@ -166,7 +151,7 @@ async function ensureHandLandmarker() {
     const message = formatError("MediaPipe の読み込みに失敗しました", error);
     setHandStatus("error", "読込失敗", message);
     setHandEmpty(message);
-    setGlobalStatus(message);
+    setGlobalStatus(`${message} camera.js v20260531d`);
     throw error;
   }
 }
@@ -339,7 +324,7 @@ function handLoop() {
     } catch (error) {
       const message = formatError("推論中にエラーが発生しました", error);
       setHandStatus("error", "推論エラー", message);
-      setGlobalStatus(message);
+      setGlobalStatus(`${message} camera.js v20260531d`);
     }
   }
 
@@ -351,20 +336,20 @@ async function startHandRecognition() {
     const message = "iPhoneでは HTTPS 公開が必要です。ローカル確認は localhost または file 直開きで試してください。";
     setHandStatus("error", "HTTPS必須", message);
     setHandEmpty("HTTPS 環境で開いてください");
-    setGlobalStatus(message);
+    setGlobalStatus(`${message} camera.js v20260531d`);
     return;
   }
 
   if (!navigator.mediaDevices?.getUserMedia) {
     const message = "このブラウザは getUserMedia に対応していません。";
     setHandStatus("error", "非対応", message);
-    setGlobalStatus(message);
+    setGlobalStatus(`${message} camera.js v20260531d`);
     return;
   }
 
   ui.startHandButton.disabled = true;
   setHandStatus("loading", "準備中", "手指認識を起動しています...");
-  setGlobalStatus("手指認識を起動しています...");
+  setGlobalStatus("手指認識を起動しています... camera.js v20260531d");
 
   try {
     await ensureHandLandmarker();
@@ -377,7 +362,7 @@ async function startHandRecognition() {
 
     ui.stopHandButton.disabled = false;
     setHandStatus("live", "検出中", "前面カメラで手指認識を実行中です。");
-    setGlobalStatus("手指認識を開始しました。");
+    setGlobalStatus("手指認識を開始しました。 camera.js v20260531d");
     cancelAnimationFrame(handRafId);
     handRafId = requestAnimationFrame(handLoop);
   } catch (error) {
@@ -389,7 +374,7 @@ async function startHandRecognition() {
 
     setHandStatus("error", "エラー", message);
     setHandEmpty(message);
-    setGlobalStatus(message);
+    setGlobalStatus(`${message} camera.js v20260531d`);
   }
 }
 
@@ -414,7 +399,7 @@ function stopHandRecognition() {
   ui.startHandButton.disabled = false;
   ui.stopHandButton.disabled = true;
   setHandStatus("default", "停止中", "手指認識を停止しました。");
-  setGlobalStatus("各機能の開始ボタンを押して実験してください。");
+  setGlobalStatus("各機能の開始ボタンを押して実験してください。 camera.js v20260531d");
 }
 
 ui.basicCameraButton.addEventListener("click", startBasicCamera);
@@ -422,4 +407,4 @@ ui.startHandButton.addEventListener("click", startHandRecognition);
 ui.stopHandButton.addEventListener("click", stopHandRecognition);
 
 setHandEmpty("手をカメラに映してください");
-setGlobalStatus("各機能の開始ボタンを押して実験してください。 camera.js v20260531c");
+setGlobalStatus("各機能の開始ボタンを押して実験してください。 camera.js v20260531d");
