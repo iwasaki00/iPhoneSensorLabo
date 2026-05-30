@@ -422,4 +422,4 @@ ui.startHandButton.addEventListener("click", startHandRecognition);
 ui.stopHandButton.addEventListener("click", stopHandRecognition);
 
 setHandEmpty("手をカメラに映してください");
-setGlobalStatus("各機能の開始ボタンを押して実験してください。");
+setGlobalStatus("各機能の開始ボタンを押して実験してください。 camera.js v20260531c");
