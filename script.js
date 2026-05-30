@@ -14,8 +14,7 @@ const HAND_CONNECTIONS = [
   [5, 9], [9, 10], [10, 11], [11, 12],
   [9, 13], [13, 14], [14, 15], [15, 16],
   [13, 17], [17, 18], [18, 19], [19, 20],
-  [0, 17], [0, 9],
-  [5, 17]
+  [0, 17], [0, 9], [5, 17]
 ];
 
 const FINGER_LABELS = {
@@ -26,85 +25,242 @@ const FINGER_LABELS = {
   pinky: "小指"
 };
 
-const video = document.getElementById("cameraVideo");
-const canvas = document.getElementById("outputCanvas");
-const ctx = canvas.getContext("2d");
-const startButton = document.getElementById("startButton");
-const stopButton = document.getElementById("stopButton");
-const statusBadge = document.getElementById("statusBadge");
-const fpsChip = document.getElementById("fpsChip");
-const handCountChip = document.getElementById("handCountChip");
-const sensorStateChip = document.getElementById("sensorStateChip");
-const statusMessage = document.getElementById("statusMessage");
-const resultsContainer = document.getElementById("resultsContainer");
+const ui = {
+  globalStatus: document.getElementById("globalStatus"),
+  startAllButton: document.getElementById("startAllButton"),
+  startHandButton: document.getElementById("startHandButton"),
+  stopHandButton: document.getElementById("stopHandButton"),
 
-const alphaValue = document.getElementById("alphaValue");
-const betaValue = document.getElementById("betaValue");
-const gammaValue = document.getElementById("gammaValue");
-const accelValue = document.getElementById("accelValue");
-const screenOrientationValue = document.getElementById("screenOrientationValue");
-const screenAngleValue = document.getElementById("screenAngleValue");
-const windowSizeValue = document.getElementById("windowSizeValue");
-const pixelRatioValue = document.getElementById("pixelRatioValue");
+  handVideo: document.getElementById("handVideo"),
+  handCanvas: document.getElementById("handCanvas"),
+  handStatusBadge: document.getElementById("handStatusBadge"),
+  handStatusMessage: document.getElementById("handStatusMessage"),
+  handResults: document.getElementById("handResults"),
+  fpsChip: document.getElementById("fpsChip"),
+  handCountChip: document.getElementById("handCountChip"),
+
+  cameraButton: document.getElementById("cameraButton"),
+  cameraPreview: document.getElementById("cameraPreview"),
+  cameraFallback: document.getElementById("cameraFallback"),
+  cameraState: document.getElementById("cameraState"),
+
+  motionButton: document.getElementById("motionButton"),
+  motionState: document.getElementById("motionState"),
+  alphaValue: document.getElementById("alphaValue"),
+  betaValue: document.getElementById("betaValue"),
+  gammaValue: document.getElementById("gammaValue"),
+  accelXValue: document.getElementById("accelXValue"),
+  accelYValue: document.getElementById("accelYValue"),
+  accelZValue: document.getElementById("accelZValue"),
+  accelGValue: document.getElementById("accelGValue"),
+  motionIntervalValue: document.getElementById("motionIntervalValue"),
+
+  locationButton: document.getElementById("locationButton"),
+  locationState: document.getElementById("locationState"),
+  latitudeValue: document.getElementById("latitudeValue"),
+  longitudeValue: document.getElementById("longitudeValue"),
+  accuracyValue: document.getElementById("accuracyValue"),
+  altitudeValue: document.getElementById("altitudeValue"),
+  speedValue: document.getElementById("speedValue"),
+  locationModeValue: document.getElementById("locationModeValue"),
+
+  screenState: document.getElementById("screenState"),
+  screenOrientationValue: document.getElementById("screenOrientationValue"),
+  screenAngleValue: document.getElementById("screenAngleValue"),
+  windowSizeValue: document.getElementById("windowSizeValue"),
+  pixelRatioValue: document.getElementById("pixelRatioValue"),
+
+  languageValue: document.getElementById("languageValue"),
+  secureContextValue: document.getElementById("secureContextValue"),
+  uaValue: document.getElementById("uaValue")
+};
+
+const handCtx = ui.handCanvas.getContext("2d");
+
+let rearCameraStream = null;
+let locationWatchId = null;
+let motionStarted = false;
 
 let handLandmarker = null;
-let mediaStream = null;
-let animationFrameId = 0;
+let handStream = null;
+let handRafId = 0;
 let lastVideoTime = -1;
 let lastFrameAt = 0;
-let fps = 0;
+let smoothedFps = 0;
 
-function getHandednessList(result) {
-  return result?.handedness ?? result?.handednesses ?? [];
+function setText(element, value) {
+  element.textContent = value ?? "-";
 }
 
-function updateStatus(kind, badgeText, message) {
-  statusBadge.className = `status-badge ${kind}`;
-  statusBadge.textContent = badgeText;
-  statusMessage.textContent = message;
-}
-
-function setEmptyResult(message) {
-  resultsContainer.innerHTML = `<p class="empty-result">${message}</p>`;
-}
-
-function formatNumber(value, digits = 1) {
+function formatNumber(value, digits = 2) {
   return Number.isFinite(value) ? value.toFixed(digits) : "-";
 }
 
-function updateSensorPanel() {
-  const orientation = screen.orientation?.type ?? window.orientation ?? "-";
-  const angle = screen.orientation?.angle ?? window.orientation ?? "-";
-  screenOrientationValue.textContent = String(orientation);
-  screenAngleValue.textContent = String(angle);
-  windowSizeValue.textContent = `${window.innerWidth} x ${window.innerHeight}`;
-  pixelRatioValue.textContent = formatNumber(window.devicePixelRatio, 2);
+function formatMeters(value) {
+  return Number.isFinite(value) ? `${value.toFixed(1)} m` : "-";
 }
 
-function attachSensorListeners() {
-  updateSensorPanel();
-  window.addEventListener("resize", updateSensorPanel);
-  screen.orientation?.addEventListener?.("change", updateSensorPanel);
+function formatSpeed(value) {
+  return Number.isFinite(value) ? `${value.toFixed(2)} m/s` : "-";
+}
 
-  window.addEventListener("deviceorientation", (event) => {
-    alphaValue.textContent = formatNumber(event.alpha);
-    betaValue.textContent = formatNumber(event.beta);
-    gammaValue.textContent = formatNumber(event.gamma);
-  });
+function setBadge(element, text, kind = "default") {
+  element.className = `status-badge${kind === "default" ? "" : ` ${kind}`}`;
+  element.textContent = text;
+}
 
-  window.addEventListener("devicemotion", (event) => {
-    const accel = event.accelerationIncludingGravity;
-    if (!accel) {
-      accelValue.textContent = "-";
-      return;
-    }
-    accelValue.textContent =
-      `x:${formatNumber(accel.x)} y:${formatNumber(accel.y)} z:${formatNumber(accel.z)}`;
-  });
+function setGlobalStatus(message) {
+  ui.globalStatus.textContent = message;
+}
+
+function setHandStatus(kind, badgeText, message) {
+  setBadge(ui.handStatusBadge, badgeText, kind);
+  ui.handStatusMessage.textContent = message;
 }
 
 function isSecureEnough() {
   return window.isSecureContext || location.hostname === "localhost" || location.hostname === "127.0.0.1";
+}
+
+function populateStaticInfo() {
+  setText(ui.languageValue, navigator.language);
+  setText(ui.secureContextValue, window.isSecureContext ? "yes" : "no");
+  setText(ui.uaValue, navigator.userAgent);
+}
+
+function updateScreenInfo() {
+  const orientation = screen.orientation?.type ?? `${window.orientation ?? 0}`;
+  const angle = screen.orientation?.angle ?? window.orientation ?? 0;
+
+  setText(ui.screenOrientationValue, String(orientation));
+  setText(ui.screenAngleValue, `${angle}°`);
+  setText(ui.windowSizeValue, `${window.innerWidth} x ${window.innerHeight}`);
+  setText(ui.pixelRatioValue, formatNumber(window.devicePixelRatio, 2));
+}
+
+async function startRearCamera() {
+  if (rearCameraStream) {
+    return;
+  }
+
+  if (!navigator.mediaDevices?.getUserMedia) {
+    setBadge(ui.cameraState, "非対応", "error");
+    setGlobalStatus("このブラウザはカメラ API に対応していません。");
+    return;
+  }
+
+  try {
+    rearCameraStream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: { ideal: "environment" }
+      },
+      audio: false
+    });
+    ui.cameraPreview.srcObject = rearCameraStream;
+    ui.cameraFallback.hidden = true;
+    setBadge(ui.cameraState, "動作中", "live");
+    setGlobalStatus("カメラ映像表示を開始しました。");
+  } catch (error) {
+    setBadge(ui.cameraState, "失敗", "error");
+    setGlobalStatus(`カメラ開始に失敗しました: ${error.message}`);
+  }
+}
+
+function bindMotionListeners() {
+  if (motionStarted) {
+    return;
+  }
+
+  window.addEventListener("deviceorientation", (event) => {
+    setText(ui.alphaValue, formatNumber(event.alpha));
+    setText(ui.betaValue, formatNumber(event.beta));
+    setText(ui.gammaValue, formatNumber(event.gamma));
+  });
+
+  window.addEventListener("devicemotion", (event) => {
+    const accel = event.acceleration ?? {};
+    const accelG = event.accelerationIncludingGravity ?? {};
+
+    setText(ui.accelXValue, formatNumber(accel.x, 3));
+    setText(ui.accelYValue, formatNumber(accel.y, 3));
+    setText(ui.accelZValue, formatNumber(accel.z, 3));
+    setText(
+      ui.accelGValue,
+      `x:${formatNumber(accelG.x, 2)} y:${formatNumber(accelG.y, 2)} z:${formatNumber(accelG.z, 2)}`
+    );
+    setText(ui.motionIntervalValue, Number.isFinite(event.interval) ? `${event.interval} ms` : "-");
+  });
+
+  motionStarted = true;
+}
+
+async function startMotion() {
+  try {
+    const orientationPermission = window.DeviceOrientationEvent?.requestPermission;
+    if (typeof orientationPermission === "function") {
+      const orientationResult = await orientationPermission();
+      if (orientationResult !== "granted") {
+        setBadge(ui.motionState, "拒否", "error");
+        setGlobalStatus("傾きセンサーの権限が拒否されました。");
+        return;
+      }
+    }
+
+    const motionPermission = window.DeviceMotionEvent?.requestPermission;
+    if (typeof motionPermission === "function") {
+      const motionResult = await motionPermission();
+      if (motionResult !== "granted") {
+        setBadge(ui.motionState, "拒否", "error");
+        setGlobalStatus("加速度センサーの権限が拒否されました。");
+        return;
+      }
+    }
+
+    bindMotionListeners();
+    setBadge(ui.motionState, "動作中", "live");
+    setGlobalStatus("傾き・加速度の監視を開始しました。");
+  } catch (error) {
+    setBadge(ui.motionState, "失敗", "error");
+    setGlobalStatus(`モーション開始に失敗しました: ${error.message}`);
+  }
+}
+
+function startLocation() {
+  if (!navigator.geolocation) {
+    setBadge(ui.locationState, "非対応", "error");
+    setGlobalStatus("このブラウザは位置情報 API に対応していません。");
+    return;
+  }
+
+  if (locationWatchId) {
+    return;
+  }
+
+  locationWatchId = navigator.geolocation.watchPosition(
+    (position) => {
+      const { latitude, longitude, accuracy, altitude, speed } = position.coords;
+      setText(ui.latitudeValue, formatNumber(latitude, 6));
+      setText(ui.longitudeValue, formatNumber(longitude, 6));
+      setText(ui.accuracyValue, formatMeters(accuracy));
+      setText(ui.altitudeValue, formatMeters(altitude));
+      setText(ui.speedValue, formatSpeed(speed));
+      setBadge(ui.locationState, "動作中", "live");
+      setGlobalStatus("GPS の監視を開始しました。");
+    },
+    (error) => {
+      setBadge(ui.locationState, "失敗", "error");
+      setGlobalStatus(`GPS 開始に失敗しました: ${error.message}`);
+    },
+    {
+      enableHighAccuracy: true,
+      maximumAge: 1000,
+      timeout: 10000
+    }
+  );
+}
+
+function setHandEmpty(message) {
+  ui.handResults.innerHTML = `<p class="empty-state">${message}</p>`;
 }
 
 async function ensureHandLandmarker() {
@@ -112,24 +268,20 @@ async function ensureHandLandmarker() {
     return handLandmarker;
   }
 
-  updateStatus("loading", "準備中", "モデル読み込み中...");
-
+  setHandStatus("loading", "準備中", "モデル読み込み中...");
   const vision = await FilesetResolver.forVisionTasks(WASM_ROOT);
   handLandmarker = await HandLandmarker.createFromOptions(vision, {
-    baseOptions: {
-      modelAssetPath: MODEL_ASSET_PATH
-    },
+    baseOptions: { modelAssetPath: MODEL_ASSET_PATH },
     runningMode: "VIDEO",
     numHands: 2,
     minHandDetectionConfidence: 0.55,
     minHandPresenceConfidence: 0.55,
     minTrackingConfidence: 0.5
   });
-
   return handLandmarker;
 }
 
-function getIdealVideoConstraints() {
+function getHandConstraints() {
   const maxHeight = Math.min(1280, Math.max(window.innerHeight * window.devicePixelRatio, 960));
   const aspectRatio = window.innerWidth / Math.max(window.innerHeight, 1);
 
@@ -143,66 +295,59 @@ function getIdealVideoConstraints() {
   };
 }
 
-function resizeCanvasToVideo() {
-  const width = video.videoWidth || 720;
-  const height = video.videoHeight || 960;
-  if (canvas.width !== width || canvas.height !== height) {
-    canvas.width = width;
-    canvas.height = height;
+function resizeHandCanvas() {
+  const width = ui.handVideo.videoWidth || 720;
+  const height = ui.handVideo.videoHeight || 960;
+  if (ui.handCanvas.width !== width || ui.handCanvas.height !== height) {
+    ui.handCanvas.width = width;
+    ui.handCanvas.height = height;
   }
 }
 
-function clearCanvas() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-}
-
-function toPixel(landmark) {
+function toCanvasPoint(landmark) {
   return {
-    x: (1 - landmark.x) * canvas.width,
-    y: landmark.y * canvas.height
+    x: (1 - landmark.x) * ui.handCanvas.width,
+    y: landmark.y * ui.handCanvas.height
   };
 }
 
-function drawVideoFrame() {
-  ctx.save();
-  ctx.translate(canvas.width, 0);
-  ctx.scale(-1, 1);
-  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-  ctx.restore();
+function drawHandVideoFrame() {
+  handCtx.save();
+  handCtx.translate(ui.handCanvas.width, 0);
+  handCtx.scale(-1, 1);
+  handCtx.drawImage(ui.handVideo, 0, 0, ui.handCanvas.width, ui.handCanvas.height);
+  handCtx.restore();
 }
 
-function drawHand(landmarks, handednessLabel) {
-  ctx.lineWidth = 4;
-  ctx.strokeStyle = handednessLabel === "Left" ? "#f59e0b" : "#0ea5a1";
-  ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
+function drawHandSkeleton(landmarks, handednessLabel) {
+  handCtx.strokeStyle = handednessLabel === "Left" ? "#f59e0b" : "#0ea5a1";
+  handCtx.lineWidth = 4;
 
   for (const [fromIndex, toIndex] of HAND_CONNECTIONS) {
-    const from = toPixel(landmarks[fromIndex]);
-    const to = toPixel(landmarks[toIndex]);
-    ctx.beginPath();
-    ctx.moveTo(from.x, from.y);
-    ctx.lineTo(to.x, to.y);
-    ctx.stroke();
+    const from = toCanvasPoint(landmarks[fromIndex]);
+    const to = toCanvasPoint(landmarks[toIndex]);
+    handCtx.beginPath();
+    handCtx.moveTo(from.x, from.y);
+    handCtx.lineTo(to.x, to.y);
+    handCtx.stroke();
   }
 
   for (let index = 0; index < landmarks.length; index += 1) {
-    const point = toPixel(landmarks[index]);
+    const point = toCanvasPoint(landmarks[index]);
     const radius = index === 8 ? 7 : 4.2;
-    ctx.beginPath();
-    ctx.fillStyle = index === 8 ? "#fb7185" : "#f8fafc";
-    ctx.strokeStyle = "#0f172a";
-    ctx.lineWidth = 2;
-    ctx.arc(point.x, point.y, radius, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
+    handCtx.beginPath();
+    handCtx.fillStyle = index === 8 ? "#fb7185" : "#ffffff";
+    handCtx.strokeStyle = "#0f172a";
+    handCtx.lineWidth = 2;
+    handCtx.arc(point.x, point.y, radius, 0, Math.PI * 2);
+    handCtx.fill();
+    handCtx.stroke();
   }
 }
 
 function getFingerStates(landmarks, handednessLabel) {
   const isLeft = handednessLabel === "Left";
-  const thumbTip = landmarks[4];
-  const thumbIp = landmarks[3];
-  const thumbExtended = isLeft ? thumbTip.x < thumbIp.x : thumbTip.x > thumbIp.x;
+  const thumbExtended = isLeft ? landmarks[4].x < landmarks[3].x : landmarks[4].x > landmarks[3].x;
 
   return {
     thumb: thumbExtended,
@@ -214,171 +359,183 @@ function getFingerStates(landmarks, handednessLabel) {
 }
 
 function inferGesture(fingers) {
-  const values = Object.values(fingers);
-  const extendedCount = values.filter(Boolean).length;
+  const extendedCount = Object.values(fingers).filter(Boolean).length;
 
-  if (values.every(Boolean)) {
+  if (Object.values(fingers).every(Boolean)) {
     return "パー";
   }
-
-  if (extendedCount <= 1) {
-    return fingers.index ? "指差し" : "グー";
-  }
-
   if (fingers.index && fingers.middle && !fingers.ring && !fingers.pinky && !fingers.thumb) {
     return "ピース";
   }
-
   if (fingers.index && !fingers.middle && !fingers.ring && !fingers.pinky) {
     return "指差し";
   }
-
+  if (extendedCount <= 1) {
+    return "グー";
+  }
   return "その他";
 }
 
-function renderResults(result) {
+function getHandednessList(result) {
+  return result?.handedness ?? result?.handednesses ?? [];
+}
+
+function renderHandResults(result) {
   const handLandmarks = result?.landmarks ?? [];
   const handednesses = getHandednessList(result);
 
-  handCountChip.textContent = `手の数: ${handLandmarks.length}`;
+  ui.handCountChip.textContent = `手の数: ${handLandmarks.length}`;
 
   if (!handLandmarks.length) {
-    setEmptyResult("手をカメラに映してください");
+    setHandEmpty("手をカメラに映してください");
     return;
   }
 
-  const html = handLandmarks.map((landmarks, index) => {
+  ui.handResults.innerHTML = handLandmarks.map((landmarks, index) => {
     const handednessLabel = handednesses[index]?.[0]?.categoryName ?? "Unknown";
     const fingers = getFingerStates(landmarks, handednessLabel);
     const gesture = inferGesture(fingers);
-    const fingerText = Object.entries(fingers)
+    const fingersHtml = Object.entries(fingers)
       .map(([key, value]) => `${FINGER_LABELS[key]}: ${value ? "伸びている" : "曲がっている"}`)
       .join("<br>");
 
     return `
       <section class="result-item">
         <h3>手 ${index + 1} / ${handednessLabel}</h3>
-        <p>${fingerText}</p>
+        <p>${fingersHtml}</p>
         <p>推定ジェスチャー: ${gesture}</p>
       </section>
     `;
   }).join("");
-
-  resultsContainer.innerHTML = html;
 }
 
-function drawFrame(result) {
-  clearCanvas();
-  drawVideoFrame();
+function drawHandResult(result) {
+  handCtx.clearRect(0, 0, ui.handCanvas.width, ui.handCanvas.height);
+  drawHandVideoFrame();
 
   const handLandmarks = result?.landmarks ?? [];
   const handednesses = getHandednessList(result);
+
   for (let index = 0; index < handLandmarks.length; index += 1) {
     const handednessLabel = handednesses[index]?.[0]?.categoryName ?? "Unknown";
-    drawHand(handLandmarks[index], handednessLabel);
+    drawHandSkeleton(handLandmarks[index], handednessLabel);
   }
 }
 
 function updateFps(now) {
   if (lastFrameAt) {
-    const instantaneousFps = 1000 / Math.max(now - lastFrameAt, 1);
-    fps = fps === 0 ? instantaneousFps : fps * 0.82 + instantaneousFps * 0.18;
-    fpsChip.textContent = `FPS: ${fps.toFixed(1)}`;
+    const currentFps = 1000 / Math.max(now - lastFrameAt, 1);
+    smoothedFps = smoothedFps === 0 ? currentFps : smoothedFps * 0.82 + currentFps * 0.18;
+    ui.fpsChip.textContent = `FPS: ${smoothedFps.toFixed(1)}`;
   }
   lastFrameAt = now;
 }
 
-function detectLoop() {
-  if (!handLandmarker || video.readyState < 2) {
-    animationFrameId = requestAnimationFrame(detectLoop);
+function handLoop() {
+  if (!handLandmarker || ui.handVideo.readyState < 2) {
+    handRafId = requestAnimationFrame(handLoop);
     return;
   }
 
-  resizeCanvasToVideo();
+  resizeHandCanvas();
   const now = performance.now();
 
-  if (video.currentTime !== lastVideoTime) {
+  if (ui.handVideo.currentTime !== lastVideoTime) {
     try {
-      lastVideoTime = video.currentTime;
-      const result = handLandmarker.detectForVideo(video, now);
-      drawFrame(result);
-      renderResults(result);
+      lastVideoTime = ui.handVideo.currentTime;
+      const result = handLandmarker.detectForVideo(ui.handVideo, now);
+      drawHandResult(result);
+      renderHandResults(result);
       updateFps(now);
     } catch (error) {
-      updateStatus("error", "推論エラー", `推論中にエラーが発生しました: ${error?.message ?? error}`);
+      setHandStatus("error", "推論エラー", `推論中にエラーが発生しました: ${error.message}`);
     }
   }
 
-  animationFrameId = requestAnimationFrame(detectLoop);
+  handRafId = requestAnimationFrame(handLoop);
 }
 
-async function startCamera() {
+async function startHandRecognition() {
   if (!isSecureEnough()) {
-    updateStatus("error", "HTTPS必須", "iPhoneではHTTPS公開が必要です。localhost は例外として利用できます。");
-    setEmptyResult("HTTPS 環境で開いてください");
+    setHandStatus("error", "HTTPS必須", "iPhoneでは HTTPS 公開が必要です。localhost は例外です。");
+    setHandEmpty("HTTPS 環境で開いてください");
     return;
   }
 
   if (!navigator.mediaDevices?.getUserMedia) {
-    updateStatus("error", "非対応", "このブラウザは getUserMedia に対応していません。");
+    setHandStatus("error", "非対応", "このブラウザは getUserMedia に対応していません。");
     return;
   }
 
-  startButton.disabled = true;
+  ui.startHandButton.disabled = true;
 
   try {
     await ensureHandLandmarker();
-    mediaStream = await navigator.mediaDevices.getUserMedia(getIdealVideoConstraints());
-    video.srcObject = mediaStream;
-    video.autoplay = true;
-    video.muted = true;
-    video.playsInline = true;
-    await video.play();
+    handStream = await navigator.mediaDevices.getUserMedia(getHandConstraints());
+    ui.handVideo.srcObject = handStream;
+    ui.handVideo.autoplay = true;
+    ui.handVideo.muted = true;
+    ui.handVideo.playsInline = true;
+    await ui.handVideo.play();
 
-    stopButton.disabled = false;
-    updateStatus("live", "検出中", "前面カメラで手指認識を実行中です。");
-    cancelAnimationFrame(animationFrameId);
-    animationFrameId = requestAnimationFrame(detectLoop);
+    ui.stopHandButton.disabled = false;
+    setHandStatus("live", "検出中", "前面カメラで手指認識を実行中です。");
+    setGlobalStatus("手指認識を開始しました。");
+    cancelAnimationFrame(handRafId);
+    handRafId = requestAnimationFrame(handLoop);
   } catch (error) {
-    startButton.disabled = false;
-    stopButton.disabled = true;
-
+    ui.startHandButton.disabled = false;
+    ui.stopHandButton.disabled = true;
     const message = error?.name === "NotAllowedError"
-      ? "カメラ権限が拒否されました。Safari の設定からカメラを許可してください。"
-      : `起動に失敗しました: ${error?.message ?? error}`;
+      ? "カメラ権限が拒否されました。Safari の設定から許可してください。"
+      : `手指認識開始に失敗しました: ${error.message}`;
 
-    updateStatus("error", "エラー", message);
-    setEmptyResult(message);
+    setHandStatus("error", "エラー", message);
+    setHandEmpty(message);
   }
 }
 
-function stopCamera() {
-  cancelAnimationFrame(animationFrameId);
-  animationFrameId = 0;
+function stopHandRecognition() {
+  cancelAnimationFrame(handRafId);
+  handRafId = 0;
   lastVideoTime = -1;
   lastFrameAt = 0;
-  fps = 0;
-  fpsChip.textContent = "FPS: --";
+  smoothedFps = 0;
+  ui.fpsChip.textContent = "FPS: --";
+  ui.handCountChip.textContent = "手の数: 0";
 
-  if (mediaStream) {
-    mediaStream.getTracks().forEach((track) => track.stop());
-    mediaStream = null;
+  if (handStream) {
+    handStream.getTracks().forEach((track) => track.stop());
+    handStream = null;
   }
 
-  video.pause();
-  video.srcObject = null;
-  clearCanvas();
-  setEmptyResult("開始ボタンを押すと再び認識を始めます");
-  handCountChip.textContent = "手の数: 0";
-  startButton.disabled = false;
-  stopButton.disabled = true;
-  updateStatus("default", "停止中", "カメラを停止しました。");
+  ui.handVideo.pause();
+  ui.handVideo.srcObject = null;
+  handCtx.clearRect(0, 0, ui.handCanvas.width, ui.handCanvas.height);
+  setHandEmpty("手をカメラに映してください");
+  ui.startHandButton.disabled = false;
+  ui.stopHandButton.disabled = true;
+  setHandStatus("default", "停止中", "手指認識を停止しました。");
 }
 
-startButton.addEventListener("click", startCamera);
-stopButton.addEventListener("click", stopCamera);
+async function startAll() {
+  await startRearCamera();
+  await startMotion();
+  startLocation();
+  await startHandRecognition();
+}
 
-attachSensorListeners();
-sensorStateChip.textContent = "監視中";
-setEmptyResult("手をカメラに映してください");
-updateSensorPanel();
+ui.cameraButton.addEventListener("click", startRearCamera);
+ui.motionButton.addEventListener("click", startMotion);
+ui.locationButton.addEventListener("click", startLocation);
+ui.startHandButton.addEventListener("click", startHandRecognition);
+ui.stopHandButton.addEventListener("click", stopHandRecognition);
+ui.startAllButton.addEventListener("click", startAll);
+
+window.addEventListener("orientationchange", updateScreenInfo);
+window.addEventListener("resize", updateScreenInfo);
+
+populateStaticInfo();
+updateScreenInfo();
+setHandEmpty("手をカメラに映してください");
+setGlobalStatus("メニューから機能を選ぶか、下のボタンでまとめて起動してください。");
