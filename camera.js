@@ -1,8 +1,3 @@
-import {
-  FilesetResolver,
-  HandLandmarker
-} from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/vision_bundle.mjs";
-
 const MODEL_ASSET_PATH =
   "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task";
 const WASM_ROOT =
@@ -51,6 +46,7 @@ let handRafId = 0;
 let lastVideoTime = -1;
 let lastFrameAt = 0;
 let smoothedFps = 0;
+let visionTasksModule = null;
 
 function setGlobalStatus(message) {
   ui.globalStatus.textContent = message;
@@ -115,8 +111,12 @@ async function ensureHandLandmarker() {
   }
 
   setHandStatus("loading", "準備中", "モデル読み込み中...");
-  const vision = await FilesetResolver.forVisionTasks(WASM_ROOT);
-  handLandmarker = await HandLandmarker.createFromOptions(vision, {
+  if (!visionTasksModule) {
+    visionTasksModule = await import("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/vision_bundle.mjs");
+  }
+
+  const vision = await visionTasksModule.FilesetResolver.forVisionTasks(WASM_ROOT);
+  handLandmarker = await visionTasksModule.HandLandmarker.createFromOptions(vision, {
     baseOptions: { modelAssetPath: MODEL_ASSET_PATH },
     runningMode: "VIDEO",
     numHands: 2,
