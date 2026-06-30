@@ -1,23 +1,27 @@
-# iPhone Sensor Lab
+# iPhoneセンサー実験室
 
-iPhone のブラウザでセンサー情報を確認するためのシンプルな静的 Web アプリです。
+iPhone Safariでカメラ、各種センサー、GPSマップトラッカーを確認するための静的Webアプリです。
 
-## 表示内容
+## メニュー構成
 
-- カメラ映像
-- 傾き `alpha / beta / gamma`
-- 加速度 `x / y / z`
-- GPS 緯度・経度
-- 画面の向き
-- 追加: コンパス方位、位置精度、高度、速度、画面サイズ、UA
+- `index.html`: 実験メニュー
+- `camera/`: カメラ実験
+  - カメラ映像表示
+  - 手指認識実験
+- `sensor/`: センサー実験
+  - 傾き・加速度
+  - GPS
+  - 画面の向き
+  - 端末情報
+- `map-tracker/`: GPSマップ実験
 
 ## 使い方
 
-1. このディレクトリを静的サーバーで配信します。
-2. iPhone Safari で HTTPS URL を開きます。
-3. `まとめて開始` か各ボタンを押して権限を許可します。
+1. `node server.js` を実行します。
+2. iPhone Safariで `http://<PCのIPアドレス>:8123/` を開きます。
+3. カメラやセンサーの権限を許可して実験します。
 
 ## 補足
 
-- iPhone Safari では `DeviceOrientationEvent` / `DeviceMotionEvent` の取得にユーザー操作が必要です。
+- iPhone Safariでは `DeviceOrientationEvent` / `DeviceMotionEvent` の取得にユーザー操作が必要です。
 - カメラや位置情報は安全なコンテキストでないと使えないことがあります。

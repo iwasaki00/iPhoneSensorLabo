@@ -21,6 +21,8 @@
 
 html,
 body {
+  margin: 0;
+  padding: 0;
   width: 100%;
   height: 100%;
   overflow: hidden;
@@ -29,7 +31,6 @@ body {
 }
 
 body {
-  margin: 0;
   position: fixed;
   inset: 0;
   color: var(--text);
@@ -54,8 +55,15 @@ button {
 }
 
 .map {
+  width: 100vw;
+  height: 100vh;
   z-index: 0;
   background: #151917;
+}
+
+.leaflet-container {
+  width: 100%;
+  height: 100%;
 }
 
 .leaflet-control-container {

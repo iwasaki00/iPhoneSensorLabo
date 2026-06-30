@@ -1,4 +1,4 @@
-const MEDIAPIPE_BASE = "./vendor/mediapipe";
+const MEDIAPIPE_BASE = "../vendor/mediapipe";
 const MODEL_ASSET_PATH = `${MEDIAPIPE_BASE}/hand_landmarker.task`;
 const WASM_ROOT = `${MEDIAPIPE_BASE}/wasm`;
 const VISION_BUNDLE_URL = `${MEDIAPIPE_BASE}/vision_bundle.mjs`;
@@ -116,7 +116,7 @@ function formatError(prefix, error) {
 }
 
 function getSetupHint() {
-  return "vendor/mediapipe/ に vision_bundle.mjs、wasm/、hand_landmarker.task を配置してください。";
+  return "../vendor/mediapipe/ に vision_bundle.mjs、wasm/、hand_landmarker.task を配置してください。";
 }
 
 async function loadVisionModule() {

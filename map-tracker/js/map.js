@@ -124,6 +124,8 @@ export function createTrackerMap({ settings, onUserDrag, onTileError }) {
   }
 
   setTileLayer(settings.mapStyle);
+  map.invalidateSize();
+  requestAnimationFrame(() => map.invalidateSize());
 
   return {
     map,

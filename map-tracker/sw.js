@@ -1,4 +1,4 @@
-const CACHE_NAME = "map-tracker-v1";
+const CACHE_NAME = "map-tracker-v2";
 const APP_SHELL = [
   "./",
   "./index.html",

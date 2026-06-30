@@ -52,7 +52,7 @@ document.addEventListener("DOMContentLoaded", () => {
   renderClock();
   setInterval(renderClock, 1000);
   setupConnectivity();
-  setupServiceWorker();
+  disableServiceWorkerDuringDevelopment();
   preventDoubleTapZoom();
 
   try {
@@ -67,6 +67,11 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
+  trackerMap.invalidateSize();
+  requestAnimationFrame(() => trackerMap?.invalidateSize());
+  window.setTimeout(() => trackerMap?.invalidateSize(), 250);
+
+  window.addEventListener("resize", () => trackerMap?.invalidateSize());
   window.addEventListener("orientationchange", () => {
     window.setTimeout(() => trackerMap?.invalidateSize(), 250);
   });
@@ -145,6 +150,7 @@ function updateSettings(partial) {
       markerSize: settings.markerSize
     });
   }
+  trackerMap?.invalidateSize();
 }
 
 function locateCurrentPosition() {
@@ -171,12 +177,16 @@ function setupConnectivity() {
   update();
 }
 
-function setupServiceWorker() {
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("./sw.js").catch(() => {
-      setMessage("Service Workerを登録できませんでした。");
-    });
+function disableServiceWorkerDuringDevelopment() {
+  if (!("serviceWorker" in navigator)) {
+    return;
   }
+
+  navigator.serviceWorker.getRegistrations?.()
+    .then((registrations) => Promise.all(registrations.map((registration) => registration.unregister())))
+    .catch(() => {
+      setMessage("Service Worker の解除に失敗しました。サイトデータを削除して再読み込みしてください。");
+    });
 }
 
 function preventDoubleTapZoom() {

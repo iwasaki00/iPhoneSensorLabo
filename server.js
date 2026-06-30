@@ -2,7 +2,7 @@ const http = require("http");
 const fs = require("fs");
 const path = require("path");
 
-const root = process.cwd();
+const root = path.resolve(process.cwd());
 const port = 8123;
 
 const contentTypes = {
@@ -12,8 +12,19 @@ const contentTypes = {
 };
 
 http.createServer((req, res) => {
-  const pathname = req.url === "/" ? "/index.html" : req.url;
-  const fullPath = path.join(root, pathname);
+  const requestUrl = new URL(req.url, `http://${req.headers.host || "127.0.0.1"}`);
+  let pathname = decodeURIComponent(requestUrl.pathname);
+  if (pathname.endsWith("/")) {
+    pathname += "index.html";
+  }
+
+  const fullPath = path.normalize(path.join(root, pathname));
+  const relativePath = path.relative(root, fullPath);
+  if (relativePath.startsWith("..") || path.isAbsolute(relativePath)) {
+    res.statusCode = 403;
+    res.end("forbidden");
+    return;
+  }
 
   fs.readFile(fullPath, (error, data) => {
     if (error) {
