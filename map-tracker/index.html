@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#101312">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Map Tracker">
+  <title>map-tracker</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="assets/icons/icon.svg">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIINfQ33XL2XZt9jZCz3jD2b6P6TQ+K0xM="
+    crossorigin="">
+  <link rel="stylesheet" href="css/style.css">
+  <script>
+    window.mapTrackerLeafletFailed = false;
+  </script>
+  <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+    onerror="window.mapTrackerLeafletFailed = true"></script>
+  <script type="module" src="js/main.js"></script>
+</head>
+<body>
+  <div id="offlineScreen" class="offline-screen" hidden>
+    <div>
+      <h1>ネットワークに接続してください</h1>
+      <p>地図タイルの取得には通信が必要です。接続後に再読み込みしてください。</p>
+    </div>
+  </div>
+
+  <main class="app" aria-label="map-tracker">
+    <div id="map" class="map" role="application" aria-label="現在地マップ"></div>
+
+    <section class="top-panel glass" aria-label="GPS情報">
+      <div class="status-row">
+        <span id="gpsStatus" class="status waiting">受信待ち</span>
+        <span id="clock">--:--:--</span>
+      </div>
+      <dl class="metrics">
+        <div data-field="speed">
+          <dt>速度</dt>
+          <dd><span id="speed">--</span> km/h</dd>
+        </div>
+        <div data-field="lat">
+          <dt>緯度</dt>
+          <dd id="lat">--</dd>
+        </div>
+        <div data-field="lng">
+          <dt>経度</dt>
+          <dd id="lng">--</dd>
+        </div>
+        <div>
+          <dt>精度</dt>
+          <dd><span id="accuracy">--</span> m</dd>
+        </div>
+        <div>
+          <dt>距離</dt>
+          <dd id="distance">0 m</dd>
+        </div>
+        <div>
+          <dt>方角</dt>
+          <dd id="heading">-</dd>
+        </div>
+      </dl>
+      <p id="message" class="message" role="status"></p>
+    </section>
+
+    <nav class="top-actions" aria-label="地図操作">
+      <button id="locateBtn" class="icon-button" type="button" title="現在地へ戻る" aria-label="現在地へ戻る">◎</button>
+      <button id="followBtn" class="icon-button active" type="button" title="追従ON/OFF" aria-label="追従ON/OFF">⌖</button>
+      <button id="fullscreenBtn" class="icon-button" type="button" title="全画面切替" aria-label="全画面切替">⛶</button>
+    </nav>
+
+    <nav class="zoom-actions" aria-label="ズーム">
+      <button id="zoomInBtn" class="icon-button" type="button" title="ズームイン" aria-label="ズームイン">＋</button>
+      <button id="zoomOutBtn" class="icon-button" type="button" title="ズームアウト" aria-label="ズームアウト">−</button>
+    </nav>
+
+    <button id="settingsBtn" class="settings-button icon-button" type="button" title="設定" aria-label="設定">⚙</button>
+  </main>
+
+  <dialog id="settingsDialog" class="settings-dialog">
+    <form method="dialog" class="settings-panel">
+      <header>
+        <h2>設定</h2>
+        <button class="icon-button compact" value="close" aria-label="閉じる">×</button>
+      </header>
+
+      <label class="setting-line">
+        <span>追従</span>
+        <input id="settingFollow" type="checkbox">
+      </label>
+      <label class="setting-line">
+        <span>軌跡表示</span>
+        <input id="settingTrack" type="checkbox">
+      </label>
+      <label class="setting-line">
+        <span>GPS高精度</span>
+        <input id="settingHighAccuracy" type="checkbox">
+      </label>
+      <label class="setting-line">
+        <span>ダークテーマ</span>
+        <input id="settingDarkTheme" type="checkbox">
+      </label>
+      <label class="setting-line">
+        <span>座標表示</span>
+        <input id="settingCoords" type="checkbox">
+      </label>
+      <label class="setting-line">
+        <span>速度表示</span>
+        <input id="settingSpeed" type="checkbox">
+      </label>
+      <label class="setting-line">
+        <span>精度円</span>
+        <input id="settingAccuracyCircle" type="checkbox">
+      </label>
+
+      <label class="setting-stack">
+        <span>現在地マーカーサイズ <b id="markerSizeValue">18</b>px</span>
+        <input id="settingMarkerSize" type="range" min="12" max="34" step="1">
+      </label>
+      <label class="setting-stack">
+        <span>軌跡の太さ <b id="trackWeightValue">5</b>px</span>
+        <input id="settingTrackWeight" type="range" min="2" max="12" step="1">
+      </label>
+      <label class="setting-stack">
+        <span>地図スタイル</span>
+        <select id="settingMapStyle">
+          <option value="standard">標準</option>
+          <option value="dark">ダーク</option>
+          <option value="satellite">衛星写真</option>
+        </select>
+      </label>
+    </form>
+  </dialog>
+</body>
+</html>
