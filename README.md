@@ -14,6 +14,7 @@ iPhone Safariでカメラ、各種センサー、GPSマップトラッカーを�
   - 画面の向き
   - 端末情報
 - `map-tracker/`: GPSマップ実験
+- `audio-diagnostics/`: 音声入出力確認ツール
 
 ## 使い方
 

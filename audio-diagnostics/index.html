@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b1220">
+  <title>音声入出力確認ツール | iPhoneセンサー実験室</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app-shell">
+    <header class="hero">
+      <a class="back-link" href="../">← 実験メニュー</a>
+      <p class="eyebrow">iPhone Sensor Lab</p>
+      <h1>音声入出力確認ツール</h1>
+      <p class="lead">接続中のマイク、入力レベル、音声出力とWeb Audio APIの動作を確認します。</p>
+      <div class="notices">
+        <p>🔒 マイク利用にはHTTPS（またはlocalhost）が必要です。</p>
+        <p>🎙️ 「マイクを開始」を押したあと、ブラウザの許可が必要です。</p>
+      </div>
+      <div class="status-line" aria-live="polite">
+        <span>現在の状態</span><strong id="statusBadge" class="status-badge idle">未開始</strong>
+      </div>
+      <p id="deviceChangeNotice" class="change-notice" hidden>音声デバイスの変更を検知しました</p>
+    </header>
+
+    <section class="panel controls" aria-labelledby="controlTitle">
+      <h2 id="controlTitle">操作</h2>
+      <div class="button-grid">
+        <button id="startButton" class="button primary">マイクを開始</button>
+        <button id="stopButton" class="button danger" disabled>マイクを停止</button>
+        <button id="monitorOnButton" class="button" disabled>モニター出力ON</button>
+        <button id="monitorOffButton" class="button" disabled>モニター出力OFF</button>
+        <button id="refreshButton" class="button">デバイス情報を再取得</button>
+        <button id="testToneButton" class="button accent">テスト音を再生</button>
+      </div>
+      <div class="monitor-settings">
+        <label for="monitorVolume">出力音量 <output id="monitorVolumeValue">5%</output></label>
+        <input id="monitorVolume" type="range" min="0" max="30" value="5" step="1">
+        <label class="check"><input id="monitorMute" type="checkbox"> ミュート</label>
+      </div>
+      <p id="feedbackWarning" class="warning" hidden>iPhone本体のスピーカーとマイクを同時に使用すると、ハウリングが発生する可能性があります。音量を低くしてお試しください。</p>
+    </section>
+
+    <section class="panel meter-panel" aria-labelledby="meterTitle">
+      <div class="section-head"><h2 id="meterTitle">マイク入力</h2><span id="levelDetection" class="small-badge">未検出</span></div>
+      <div class="meter" role="meter" aria-label="入力音量" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="meterFill"></div><i id="peakMarker"></i></div>
+      <dl class="metrics four">
+        <div><dt>入力レベル</dt><dd id="levelValue">0.0%</dd></div>
+        <div><dt>ピーク</dt><dd id="peakValue">0.0%</dd></div>
+        <div><dt>RMS</dt><dd id="rmsValue">0.0000</dd></div>
+        <div><dt>dB相当</dt><dd id="dbValue">−∞ dB</dd></div>
+      </dl>
+      <canvas id="waveform" width="640" height="180" aria-label="マイク入力の時間波形"></canvas>
+    </section>
+
+    <section class="panel" aria-labelledby="toneTitle">
+      <h2 id="toneTitle">テスト音の確認</h2>
+      <p class="hint">440Hzの短い音を再生後、実際に聞こえた場所を選んでください。ブラウザは出力先を断定できません。</p>
+      <div id="outputAnswers" class="answer-grid">
+        <button data-answer="iPhone本体スピーカー">iPhone本体スピーカーから聞こえた</button>
+        <button data-answer="有線イヤホン">有線イヤホンから聞こえた</button>
+        <button data-answer="Bluetooth機器">Bluetooth機器から聞こえた</button>
+        <button data-answer="音が聞こえない">音が聞こえない</button>
+        <button data-answer="分からない">分からない</button>
+      </div>
+      <p>回答：<strong id="outputAnswer">未回答</strong></p>
+    </section>
+
+    <section class="panel" aria-labelledby="summaryTitle">
+      <div class="section-head"><h2 id="summaryTitle">診断結果</h2><button id="copySummaryButton" class="small-button">診断結果をコピー</button></div>
+      <dl id="summaryList" class="details-grid"></dl>
+    </section>
+
+    <details class="panel" open>
+      <summary>マイク／AudioContext／遅延情報</summary>
+      <h3>マイクトラック</h3><dl id="trackInfo" class="details-grid"></dl>
+      <h3>使用中の音声設定</h3><dl id="settingsInfo" class="details-grid"></dl>
+      <h3>AudioContext</h3><dl id="contextInfo" class="details-grid"></dl>
+      <h3>遅延（参考値）</h3>
+      <p class="hint">推定合計遅延はAPIが返す値の合計であり、実測値ではありません。</p>
+      <dl id="latencyInfo" class="details-grid"></dl>
+    </details>
+
+    <details class="panel" open>
+      <summary>音声出力先と対応API</summary>
+      <p id="outputDecision" class="info-message"></p>
+      <dl id="apiSupport" class="details-grid"></dl>
+    </details>
+
+    <details class="panel">
+      <summary>認識された音声デバイス</summary>
+      <p class="hint">iPhone Safariではaudiooutputやラベルを取得できないことがあります。</p>
+      <div id="deviceLists"></div>
+    </details>
+
+    <section class="panel log-panel" aria-labelledby="logTitle">
+      <div class="section-head"><h2 id="logTitle">診断ログ</h2><div><button id="copyLogButton" class="small-button">ログをコピー</button><button id="clearLogButton" class="small-button danger">ログを消去</button></div></div>
+      <pre id="diagnosticLog" tabindex="0" aria-live="polite"></pre>
+    </section>
+  </main>
+  <script src="main.js"></script>
+</body>
+</html>
