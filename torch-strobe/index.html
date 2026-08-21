@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#091210">
+  <title>ライト・ストロボ実験 | iPhone Sensor Lab</title>
+  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="lab-body">
+  <main class="app-shell lab-shell">
+    <header class="hero lab-hero">
+      <p class="eyebrow">Torch / Strobe Laboratory</p>
+      <h1>ライト・ストロボ実験</h1>
+      <p class="lead">iPhone Safariのカメラ、LEDライト、動画録画、周期点滅を実機で検証します。</p>
+      <nav class="page-nav" aria-label="ページ移動">
+        <a href="../" class="menu-link">← 実験室へ戻る</a>
+        <button id="dropModeButton" class="menu-link button-link" type="button" aria-pressed="false">水滴実験モード</button>
+      </nav>
+      <p id="globalMessage" class="global-status" role="status">カメラ開始ボタンを押して実験してください。ページ表示だけではカメラを起動しません。</p>
+    </header>
+
+    <section class="feature-card preview-card">
+      <div class="card-head">
+        <div><p class="card-kicker">Camera Preview</p><h2>背面カメラ</h2></div>
+        <span id="cameraBadge" class="status-badge">未起動</span>
+      </div>
+      <div class="lab-preview">
+        <video id="cameraPreview" autoplay playsinline muted></video>
+        <p id="previewFallback">カメラ映像はここに表示されます</p>
+        <div id="recordingOverlay" class="recording-overlay" hidden>● REC <span id="recordingOverlayTime">00:00.0</span></div>
+      </div>
+      <div class="status-strip" aria-label="対応状況">
+        <span>Camera <b id="cameraStatus">IDLE</b></span>
+        <span>Torch <b id="torchCapability">--</b></span>
+        <span>Recorder <b id="recorderCapability">--</b></span>
+        <span>Wake Lock <b id="wakeLockCapability">--</b></span>
+      </div>
+      <label class="toggle-line"><input id="audioEnabled" type="checkbox"> 録画に音声を含める（初期値OFF）</label>
+      <div class="control-grid two">
+        <button id="startCameraButton" class="lab-button primary" type="button">カメラ開始</button>
+        <button id="stopCameraButton" class="lab-button danger" type="button" disabled>カメラ停止</button>
+      </div>
+    </section>
+
+    <section class="lab-grid">
+      <article class="feature-card">
+        <div class="card-head"><div><p class="card-kicker">Light</p><h2>ライト制御</h2></div><span id="torchBadge" class="status-badge">待機中</span></div>
+        <div class="torch-state-grid">
+          <div><span>Torch対応</span><b id="torchSupportedValue">--</b></div>
+          <div><span>要求状態</span><b id="torchRequestedValue">OFF</b></div>
+          <div><span>取得状態</span><b id="torchActualValue">取得不可</b></div>
+          <div><span>API実行結果</span><b id="torchResultValue">未実行</b></div>
+          <div><span>ON API</span><b id="torchOnLatency">-- ms</b></div>
+          <div><span>OFF API</span><b id="torchOffLatency">-- ms</b></div>
+        </div>
+        <div class="control-grid two">
+          <button id="torchOnButton" class="lab-button light" type="button">ライト ON</button>
+          <button id="torchOffButton" class="lab-button" type="button">ライト OFF</button>
+          <button id="continuousOnButton" class="lab-button light" type="button">連続点灯開始</button>
+          <button id="continuousOffButton" class="lab-button" type="button">連続点灯停止</button>
+        </div>
+      </article>
+
+      <article id="strobePanel" class="feature-card strobe-card">
+        <div class="card-head"><div><p class="card-kicker">Strobe</p><h2>周期点滅</h2></div><span id="strobeBadge" class="status-badge">停止中</span></div>
+        <output id="frequencyDisplay" class="frequency-display">5.0 <small>Hz</small></output>
+        <div class="nudge-grid">
+          <button type="button" data-delta="-1">−1.0</button><button type="button" data-delta="-0.1">−0.1</button>
+          <button type="button" data-delta="0.1">＋0.1</button><button type="button" data-delta="1">＋1.0</button>
+        </div>
+        <div class="precision-row"><button type="button" data-delta="-0.01">−0.01</button><button type="button" data-delta="0.01">＋0.01</button></div>
+        <label class="range-label">周波数 <input id="frequencyRange" type="range" min="0.5" max="60" step="0.1" value="5"></label>
+        <div id="presetButtons" class="preset-grid" aria-label="周波数プリセット"></div>
+        <p class="warning-note">30Hz以上は端末・Safariが追従しない可能性があります。表示値はLEDの実点滅を保証しません。</p>
+        <div class="settings-grid">
+          <label>点灯方式
+            <select id="timingMode"><option value="duty">Duty比</option><option value="onTime">ON時間指定</option></select>
+          </label>
+          <label id="dutyField">Duty比
+            <select id="dutySelect"><option>10</option><option>25</option><option selected>50</option><option>75</option></select>
+          </label>
+          <label id="onTimeField" hidden>ON時間
+            <input id="onTimeInput" type="number" min="1" step="1" value="10"> ms
+          </label>
+          <label>自動停止
+            <select id="autoStopSelect"><option value="10">10秒</option><option value="30">30秒</option><option value="60" selected>60秒</option><option value="120">120秒</option><option value="0">無制限</option></select>
+          </label>
+        </div>
+        <div class="timing-summary"><span>周期 <b id="periodValue">200.0 ms</b></span><span>ON <b id="onTimeValue">100.0 ms</b></span><span>OFF <b id="offTimeValue">100.0 ms</b></span></div>
+        <div class="control-grid two major-controls">
+          <button id="startStrobeButton" class="lab-button light" type="button">ストロボ START</button>
+          <button id="stopStrobeButton" class="lab-button danger" type="button">ストロボ STOP</button>
+        </div>
+      </article>
+    </section>
+
+    <section class="lab-grid">
+      <article class="feature-card">
+        <div class="card-head"><div><p class="card-kicker">Record</p><h2>動画録画</h2></div><span id="recordingBadge" class="status-badge">停止中</span></div>
+        <div id="recordingTime" class="recording-time">00:00.0</div>
+        <p id="mimeStatus" class="card-message">利用可能な動画形式を確認しています。</p>
+        <div class="control-grid two">
+          <button id="startRecordingButton" class="lab-button record" type="button">● 録画開始</button>
+          <button id="stopRecordingButton" class="lab-button danger" type="button" disabled>■ 録画停止</button>
+        </div>
+        <div id="recordedArea" class="recorded-area" hidden>
+          <video id="recordedVideo" controls playsinline></video>
+          <div class="control-grid two"><a id="saveVideoLink" class="lab-button link-button" download>動画を保存</a><button id="deleteVideoButton" class="lab-button danger" type="button">録画動画を削除</button></div>
+        </div>
+      </article>
+
+      <article class="feature-card measurement-card">
+        <div class="card-head"><div><p class="card-kicker">Measurement</p><h2>実行周期測定</h2></div></div>
+        <dl class="measurement-grid">
+          <div><dt>指定周波数</dt><dd id="targetHz">5.0 Hz</dd></div><div><dt>理論周期</dt><dd id="targetPeriod">200.00 ms</dd></div>
+          <div><dt>実測平均</dt><dd id="averagePeriod">-- ms</dd></div><div><dt>実測最小</dt><dd id="minimumPeriod">-- ms</dd></div>
+          <div><dt>実測最大</dt><dd id="maximumPeriod">-- ms</dd></div><div><dt>標準偏差</dt><dd id="standardDeviation">-- ms</dd></div>
+          <div><dt>実測周波数</dt><dd id="measuredHz">-- Hz</dd></div><div><dt>誤差</dt><dd id="frequencyError">-- %</dd></div>
+          <div class="wide"><dt>Samples</dt><dd id="sampleCount">0</dd></div>
+        </dl>
+        <div class="history-box"><strong>直近のON間隔（最大30件）</strong><div id="intervalHistory">--</div></div>
+      </article>
+    </section>
+
+    <section class="feature-card debug-card">
+      <div class="card-head"><div><p class="card-kicker">Diagnostics</p><h2>端末・Camera Track情報</h2></div><button id="copyResultButton" class="lab-button compact" type="button">検証結果をコピー</button></div>
+      <dl class="device-grid">
+        <div><dt>track.label</dt><dd id="trackLabel">--</dd></div><div><dt>readyState</dt><dd id="trackReadyState">--</dd></div>
+        <div><dt>enabled / muted</dt><dd id="trackFlags">--</dd></div><div><dt>facingMode</dt><dd id="trackFacingMode">--</dd></div>
+        <div><dt>resolution</dt><dd id="trackResolution">--</dd></div><div><dt>frameRate</dt><dd id="trackFrameRate">--</dd></div>
+        <div class="wide"><dt>browser / device</dt><dd id="browserInfo">--</dd></div>
+      </dl>
+      <details><summary>Camera Capabilities</summary><pre id="capabilitiesJson">{}</pre></details>
+      <details><summary>Camera Settings</summary><pre id="settingsJson">{}</pre></details>
+      <details><summary>Camera Constraints</summary><pre id="constraintsJson">{}</pre></details>
+    </section>
+
+    <section class="feature-card debug-card">
+      <div class="card-head"><div><p class="card-kicker">Debug Console</p><h2>イベントログ</h2></div><div class="chip-row"><button id="copyLogButton" class="lab-button compact" type="button">ログコピー</button><button id="clearLogButton" class="lab-button compact danger" type="button">ログクリア</button></div></div>
+      <pre id="debugLog" class="debug-console" aria-live="polite"></pre>
+    </section>
+  </main>
+
+  <dialog id="safetyDialog" class="safety-dialog">
+    <div class="safety-content"><p class="card-kicker">Safety</p><h2>注意</h2><p>点滅する光を使用します。</p><p>体調に異常を感じた場合は直ちに停止してください。</p><p>光を長時間直視しないでください。</p><button id="acceptSafetyButton" class="lab-button light" type="button">理解して開始</button><button id="cancelSafetyButton" class="lab-button" type="button">キャンセル</button></div>
+  </dialog>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>
