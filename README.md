@@ -15,6 +15,7 @@ iPhone Safariでカメラ、各種センサー、GPSマップトラッカーを�
   - 端末情報
 - `map-tracker/`: GPSマップ実験
 - `audio-diagnostics/`: 音声入出力確認ツール
+- `air-gap/`: エアギャップ通信実験室（Signal Lab - Frequency Test v0.1.0）
 - `torch-strobe/`: ライト・ストロボ実験
   - 背面カメラのTorch API対応・ON/OFF・連続点灯
   - 0.5〜60Hzのストロボ命令とJavaScript/API実行周期の測定

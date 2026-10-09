@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0a111b">
+  <title>Signal Lab - Frequency Test</title>
+  <link rel="stylesheet" href="style.css">
+  <script defer src="analysis.js"></script>
+  <script defer src="main.js"></script>
+</head>
+<body>
+<main>
+  <header><p class="eyebrow">エアギャップ通信実験室</p><h1>SIGNAL LAB <span>Frequency Test</span></h1><p class="version">Version 0.1.0 — FREQUENCY GENERATOR &amp; DETECTOR</p></header>
+  <div class="statusbar" role="status" aria-live="polite"><span id="tx-state">TX · STOPPED</span><span id="rx-state">RX · STOPPED</span></div>
+  <p id="message" role="status">音量を控えめにして開始してください。マイクにはHTTPSと許可が必要です。</p>
+  <nav aria-label="機能"><button data-tab="generator" aria-selected="true">GENERATOR</button><button data-tab="receiver" aria-selected="false">RECEIVER</button><button data-tab="sweep" aria-selected="false">SWEEP</button><button data-tab="log" aria-selected="false">LOG</button></nav>
+  <section id="generator" class="panel">
+    <h2>01 / GENERATOR <small>SINE WAVE</small></h2>
+    <output id="frequency-display" class="big">1,000 <small>Hz</small></output>
+    <label>周波数 · 100–20,000 Hz<input id="frequency" type="number" min="100" max="20000" step="1" value="1000" inputmode="numeric"></label>
+    <input id="frequency-slider" aria-label="周波数の粗調整" type="range" min="100" max="20000" step="10" value="1000">
+    <div id="adjustments" class="adjustments"><button data-delta="-1000">−1000</button><button data-delta="-100">−100</button><button data-delta="-10">−10</button><button data-delta="10">+10</button><button data-delta="100">+100</button><button data-delta="1000">+1000</button></div>
+    <div id="presets" class="presets" aria-label="周波数プリセット"></div>
+    <label>音量 <output id="volume-display">5 / 100</output><input id="volume" type="range" min="0" max="100" value="5"></label>
+    <p class="hint">最大ゲインは0.15に制限。端末本体の音量・スピーカー特性でも結果が変わります。</p>
+    <p id="high-warning" class="warning" hidden>15kHz以上の高周波です。聞こえないとは限りません。低音量・短時間で試してください。</p>
+    <div class="actions"><button id="tx-start" class="start">START</button><button id="tx-stop" class="stop" disabled>STOP</button></div>
+    <p id="tx-diagnostics" class="hint">AudioContextはSTART操作で作成します。</p>
+  </section>
+  <section id="receiver" class="panel" hidden>
+    <h2>02 / RECEIVER <small>LIVE MICROPHONE</small></h2>
+    <div id="detection-state" class="badge">NO SIGNAL</div>
+    <output id="detected" class="big">— <small>Hz</small></output>
+    <div class="fields"><label>TARGET FREQUENCY · Hz（空欄＝未設定）<input id="target" type="number" min="100" max="20000" step="1" inputmode="numeric" placeholder="未設定"></label><label>許容誤差 · ±Hz<input id="tolerance" type="number" min="1" max="2000" step="1" value="50" inputmode="numeric"></label></div>
+    <div class="fields"><label>FFTサイズ<select id="fft-size"><option>16384</option><option>8192</option></select></label><label>スペクトル表示<select id="band"><option value="full">全帯域 · 0–20kHz</option><option value="high">高周波 · 15–20kHz</option></select></label></div>
+    <div class="actions"><button id="rx-start" class="start">MIC START</button><button id="rx-stop" class="stop" disabled>MIC STOP</button></div>
+    <dl class="metrics"><div><dt>最強ピーク</dt><dd id="peak">—</dd></div><div><dt>差分 Hz / %</dt><dd id="difference">—</dd></div><div><dt id="level-label">ピーク強度 dBFS</dt><dd id="level">—</dd></div><div><dt>入力 RMS dBFS</dt><dd id="input-level">—</dd></div><div><dt>ノイズフロア dBFS</dt><dd id="noise">—</dd></div><div><dt>SNR参考値 dB</dt><dd id="snr">—</dd></div></dl>
+    <figure><figcaption>入力波形 <span>時間軸 / 振幅</span></figcaption><canvas id="wave" aria-label="マイクの入力波形"></canvas></figure>
+    <figure><figcaption>スペクトル <span><i class="peak-key">● 最大ピーク</i> <i class="target-key">● ターゲット</i></span></figcaption><canvas id="spectrum" aria-label="周波数スペクトル"></canvas></figure>
+    <p id="rx-diagnostics" class="hint">サンプルレート / FFT分解能：未取得</p>
+    <details><summary>マイク処理の適用状況</summary><pre id="constraints">未取得</pre></details>
+    <p class="hint">dBFSはデジタル信号の参考値で、音圧 dB SPLではありません。検出精度・高周波の受信可否は保証されません。受信音の再生・録音・外部送信は行いません。</p>
+    <button id="record" disabled>測定結果を手動記録</button>
+  </section>
+  <section id="sweep" class="panel" hidden>
+    <h2>03 / SWEEP <small>SEQUENTIAL TONES</small></h2>
+    <label>モード<select id="sweep-mode"><option value="preset">A · プリセットスイープ</option><option value="range">B · 範囲指定スイープ</option></select></label>
+    <div id="range-fields" class="fields" hidden><label>開始 Hz<input id="sweep-from" type="number" value="15000" min="100" max="20000" step="1"></label><label>終了 Hz<input id="sweep-to" type="number" value="19000" min="100" max="20000" step="1"></label><label>ステップ Hz<input id="sweep-step" type="number" value="1000" min="1" step="1"></label></div>
+    <div class="fields"><label>出力時間 · 秒<input id="duration" type="number" value="1" min="0.1" max="30" step="0.1"></label><label>無音時間 · 秒<input id="gap" type="number" value="0.5" min="0" max="30" step="0.1"></label></div>
+    <output id="sweep-current" class="big">— <small>Hz</small></output><p id="sweep-progress">STOPPED</p><progress id="progress" value="0" max="1"></progress>
+    <div class="actions"><button id="sweep-start" class="start">SWEEP START</button><button id="sweep-stop" class="stop" disabled>STOP</button></div>
+    <p class="hint">GENERATORと同じ音量設定を使用します。高周波も低音量で試してください。受信側のターゲットは別端末で手動設定します。スイープ設定は共有されません。</p>
+  </section>
+  <section id="log" class="panel" hidden>
+    <h2>04 / LOG <small>MANUAL MEASUREMENTS</small></h2>
+    <p><span id="log-count">0</span> 件 · このページを閉じると消えます（最大1000件）</p><button id="csv" disabled>CSVをダウンロード</button>
+    <div class="table-scroll"><table><thead><tr><th>日時</th><th>Target Hz</th><th>検出 Hz</th><th>状態</th></tr></thead><tbody id="log-rows"></tbody></table></div>
+    <p class="hint">CSVはUTF-8 BOM付き。音声は保存せず、手動記録した測定値だけを出力します。</p>
+  </section>
+  <footer>背景移行・割り込みでは停止します。復帰後はSTARTを押してください。</footer>
+</main>
+</body></html>
