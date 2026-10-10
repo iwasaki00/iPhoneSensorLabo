@@ -17,7 +17,7 @@ const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'signal-lab-browser-'));
 const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css' };
 const server = http.createServer((req, res) => {
   const name = new URL(req.url, 'http://localhost').pathname.slice(1) || 'index.html';
-  if (!['index.html', 'main.js', 'analysis.js', 'style.css'].includes(name)) { res.writeHead(404); return res.end(); }
+  if (!['index.html', 'main.js', 'analysis.js', 'style.css', 'simulator.js', 'simulator-ui.js'].includes(name)) { res.writeHead(404); return res.end(); }
   res.setHeader('Content-Type', `${types[path.extname(name)]}; charset=utf-8`);
   res.end(fs.readFileSync(path.join(__dirname, name)));
 });
@@ -139,14 +139,14 @@ async function run() {
   await check('LAB off exposes raw frequency without a fake stable value', 'result.stableFrequency === null && Math.abs(result.frequency - result.rawFrequency) < 0.000001 && document.getElementById("frequency-label").textContent.includes("OFF")');
   await evaluate("document.getElementById('record').click()");
   await check('LAB off is recorded with an empty stable column', 'rows.at(-1)[14] === "OFF" && rows.at(-1)[11] === ""');
-  await evaluate("document.getElementById('stabilization').checked = true; document.getElementById('stabilization').dispatchEvent(new Event('change'))");
-  await check('LAB mode change immediately clears old lock', 'result === null && document.getElementById("detected").textContent.includes("—")');
+  await evaluate("document.getElementById('stabilization').checked = true; document.getElementById('stabilization').dispatchEvent(new Event('change')); globalThis.modeResetObserved = result === null && document.getElementById('detected').textContent.includes('—')");
+  await check('LAB mode change immediately clears old lock', 'modeResetObserved');
   await until('result?.lockState === "LOCKED" && result.enabled === true');
   await evaluate("document.getElementById('lock-time').value = '1'; document.getElementById('lock-time').dispatchEvent(new Event('change'))");
   await check('invalid LAB settings are rejected and restored', 'tracker.options.lockMs === 100 && document.getElementById("lock-time").value === "100"');
   await until('result?.lockState === "LOCKED"');
-  await evaluate("syntheticOscillator.frequency.value = 2000; document.getElementById('target').value = '2000'; document.getElementById('target').dispatchEvent(new Event('input'))");
-  await check('target change clears prior stable reading', 'result === null');
+  await evaluate("syntheticOscillator.frequency.value = 2000; document.getElementById('target').value = '2000'; document.getElementById('target').dispatchEvent(new Event('input')); globalThis.targetResetObserved = result === null");
+  await check('target change clears prior stable reading', 'targetResetObserved');
   await until('result?.lockState === "LOCKED" && Math.abs(result.frequency - 2000) < 3');
   await check('changed tone/target reacquires at new frequency', 'result.target === 2000 && Math.abs(result.stableFrequency - 2000) < 3');
   await send('Emulation.setDeviceMetricsOverride', { width: 320, height: 740, deviceScaleFactor: 1, mobile: true });
@@ -161,6 +161,13 @@ async function run() {
   await evaluate('window.dispatchEvent(new Event("pagehide"))'); await sleep(150);
   await check('background cleanup stops resources and asks for explicit restart', 'tx === null && rx === null && document.getElementById("message").textContent.includes("復帰")');
   await evaluate("syntheticOscillator.stop(); await syntheticContext.close(); document.querySelector('[data-tab=generator]').click()");
+  await evaluate("document.querySelector('[data-tab=lab-tools]').click(); document.getElementById('frequency-test').click()");
+  await until('simulationReports.length > 0');
+  await check('Phase B simulator evaluates shared PCM without microphone', 'rx === null && tx === null && simulationReports[0].kind === "SYNTHETIC FREQUENCY" && simulationReports[0].detectionRate === 1');
+  await check('simulator reports reproducible conditions in mobile LAB', 'document.getElementById("sim-result").textContent.includes("seed") && document.documentElement.scrollWidth <= 390');
+  await evaluate("document.getElementById('save-sim').click()");
+  await check('simulator JSON saves seed, rate and metrics', 'JSON.parse(csvText).reports[0].conditions.seed === 42 && JSON.parse(csvText).source === "SYNTHETIC ONLY"');
+  await evaluate("document.querySelector('[data-tab=generator]').click()");
   const screenshot = await send('Page.captureScreenshot', { format: 'png' });
   const screenshotPath = path.join(os.tmpdir(), 'signal-lab-mobile.png');
   fs.writeFileSync(screenshotPath, Buffer.from(screenshot.data, 'base64'));

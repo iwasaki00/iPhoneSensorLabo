@@ -8,13 +8,15 @@
   <link rel="stylesheet" href="style.css">
   <script defer src="analysis.js"></script>
   <script defer src="main.js"></script>
+  <script defer src="simulator.js"></script>
+  <script defer src="simulator-ui.js"></script>
 </head>
 <body>
 <main>
-  <header><p class="eyebrow">エアギャップ通信実験室</p><h1>SIGNAL LAB <span>Frequency Test</span></h1><p class="version">Version 0.1.1 — SIGNAL STABILIZATION</p></header>
+  <header><p class="eyebrow">エアギャップ通信実験室</p><h1>SIGNAL LAB <span>Frequency Test</span></h1><p class="version">Version 0.1.2 — SIGNAL SIMULATOR</p></header>
   <div class="statusbar" role="status" aria-live="polite"><span id="tx-state">TX · STOPPED</span><span id="rx-state">RX · STOPPED</span></div>
   <p id="message" role="status">音量を控えめにして開始してください。マイクにはHTTPSと許可が必要です。</p>
-  <nav aria-label="機能"><button data-tab="generator" aria-selected="true">GENERATOR</button><button data-tab="receiver" aria-selected="false">RECEIVER</button><button data-tab="sweep" aria-selected="false">SWEEP</button><button data-tab="log" aria-selected="false">LOG</button></nav>
+  <nav aria-label="機能"><button data-tab="generator" aria-selected="true">GENERATOR</button><button data-tab="receiver" aria-selected="false">RECEIVER</button><button data-tab="sweep" aria-selected="false">SWEEP</button><button data-tab="log" aria-selected="false">LOG</button><button data-tab="lab-tools" aria-selected="false">LAB</button></nav>
   <section id="generator" class="panel">
     <h2>01 / GENERATOR <small>SINE WAVE</small></h2>
     <output id="frequency-display" class="big">1,000 <small>Hz</small></output>
@@ -65,6 +67,19 @@
     <p><span id="log-count">0</span> 件 · このページを閉じると消えます（最大1000件）</p><button id="csv" disabled>CSVをダウンロード</button>
     <div class="table-scroll"><table><thead><tr><th>日時</th><th>Target Hz</th><th>RAW Hz</th><th>STABLE Hz</th><th>受信状態</th><th>品質</th><th>安定化</th></tr></thead><tbody id="log-rows"></tbody></table></div>
     <p class="hint">CSVはUTF-8 BOM付き。音声は保存せず、手動記録した測定値だけを出力します。</p>
+  </section>
+  <section id="lab-tools" class="panel" hidden>
+    <h2>05 / LAB <small>SYNTHETIC ONLY</small></h2>
+    <p class="hint">SIMULATOR：合成信号の評価です。実機の成功を意味しません。マイク・スピーカーを使用しません。</p>
+    <details open><summary>周波数信号シミュレーター</summary>
+      <div class="fields"><label>sampleRate<select id="sim-rate"><option>48000</option><option>44100</option></select></label><label>FFT<select id="sim-fft"><option>8192</option><option>16384</option></select></label>
+      <label>周波数 Hz<input id="sim-frequency" type="number" value="1000"></label><label>切替 / 妨害 Hz<input id="sim-second" type="number" value="2000"></label>
+      <label>振幅<input id="sim-amplitude" type="number" value="0.08" step="0.01"></label><label>雑音振幅<input id="sim-noise" type="number" value="0" step="0.01"></label>
+      <label>継続 秒<input id="sim-duration" type="number" value="2" step="0.1"></label><label>切替間隔 秒<input id="sim-interval" type="number" value="0.6" step="0.1"></label>
+      <label>乱数シード<input id="sim-seed" type="number" value="42"></label><label>信号<select id="sim-mode"><option value="tone">単一正弦波</option><option value="switch">2周波数切替</option><option value="silence">無音</option><option value="noise">白色雑音</option><option value="interference">妨害音</option><option value="weak">音量低下</option><option value="impulse">瞬間ノイズ</option><option value="dropout">一時欠落</option></select></label></div>
+      <button id="frequency-test">RUN FREQUENCY TEST</button>
+    </details>
+    <pre id="sim-result" aria-live="polite">合成試験の結果はここに表示します。</pre><button id="save-sim" disabled>試験条件・結果をJSON保存</button>
   </section>
   <footer>背景移行・割り込みでは停止します。復帰後はSTARTを押してください。</footer>
 </main>

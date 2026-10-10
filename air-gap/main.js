@@ -229,7 +229,8 @@ function frame(time) {
     lastFrame = time;
     try {
       const settings = receiverSettings(rx.context);
-      rx.analyser.getFloatFrequencyData(spectrum); rx.analyser.getFloatTimeDomainData(samples);
+      rx.analyser.getFloatTimeDomainData(samples);
+      spectrum.set(A.spectrumPCM(samples));
       const measurement = A.analyze(spectrum, samples, rx.context.sampleRate, rx.analyser.fftSize, settings.target, settings.tolerance);
       const stabilized = tracker.update(measurement, time);
       result = { ...measurement, ...stabilized, target: settings.target, sampleRate: rx.context.sampleRate, fftSize: rx.analyser.fftSize, measuredAt: Date.now() };

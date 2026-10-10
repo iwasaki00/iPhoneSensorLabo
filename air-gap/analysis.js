@@ -145,7 +145,25 @@
       fmt(result.rawPeakFrequency, 3), fmt(result.stableFrequency, 3), result.lockState, result.quality,
       result.enabled ? 'ON' : 'OFF', fmt(result.rawFrequency, 3), fmt(result.effectiveTolerance, 3), fmt(result.durationMs, 0)];
   }
-  const api = { PRESETS, binHz, peakAt, difference, analyze, median, STABILIZATION_DEFAULTS, FrequencyTracker, sweepRange, csv, logRow };
+  function spectrumPCM(samples) {
+    const size = samples.length;
+    if (![8192, 16384].includes(size)) throw new Error('PCM解析窓は8192/16384サンプルです。');
+    const re = Float64Array.from(samples, (n, i) => n * (0.42 - 0.5 * Math.cos(2 * Math.PI * i / size) + 0.08 * Math.cos(4 * Math.PI * i / size)));
+    const im = new Float64Array(size);
+    for (let i = 1, j = 0; i < size; i++) {
+      let bit = size >> 1; for (; j & bit; bit >>= 1) j ^= bit; j ^= bit;
+      if (i < j) [re[i], re[j]] = [re[j], re[i]];
+    }
+    for (let length = 2; length <= size; length *= 2) for (let base = 0; base < size; base += length) {
+      for (let j = 0; j < length / 2; j++) {
+        const angle = -2 * Math.PI * j / length, index = base + j, other = index + length / 2;
+        const tr = re[other] * Math.cos(angle) - im[other] * Math.sin(angle), ti = re[other] * Math.sin(angle) + im[other] * Math.cos(angle);
+        re[other] = re[index] - tr; im[other] = im[index] - ti; re[index] += tr; im[index] += ti;
+      }
+    }
+    return Float32Array.from({ length: size / 2 }, (_, i) => 20 * Math.log10(Math.max(1e-12, Math.hypot(re[i], im[i]) / size)));
+  }
+  const api = { PRESETS, binHz, peakAt, difference, analyze, spectrumPCM, median, STABILIZATION_DEFAULTS, FrequencyTracker, sweepRange, csv, logRow };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.SignalAnalysis = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this);
