@@ -43,16 +43,18 @@ function updateTxButtons() {
   $('tx-stop').disabled = !tx;
   $('sweep-start').disabled = !!tx;
   $('sweep-stop').disabled = tx?.mode !== 'sweep';
+  window.SignalData?.updateButtons();
 }
 function stopTone(session) {
-  if (!session?.oscillator) return;
-  const oscillator = session.oscillator, gain = session.gain, now = session.context.currentTime;
+  if (!session?.oscillator && !session?.bufferSource) return;
+  const oscillator = session.oscillator || session.bufferSource, gain = session.gain, now = session.context.currentTime;
   gain.gain.cancelScheduledValues(now);
   gain.gain.setValueAtTime(gain.gain.value, now);
   gain.gain.linearRampToValueAtTime(0, now + 0.025);
   oscillator.stop(now + 0.03);
   oscillator.onended = () => { oscillator.disconnect(); gain.disconnect(); };
   session.oscillator = null;
+  session.bufferSource = null;
   session.gain = null;
 }
 function stopTx() {
@@ -71,6 +73,7 @@ function stopTx() {
   }
   $('tx-state').textContent = 'TX · STOPPED';
   $('sweep-progress').textContent = 'STOPPED';
+  if (old?.mode === 'data') window.SignalData?.onTxStopped(old.finishState || 'STOPPED');
   updateTxButtons();
 }
 function tone(session, frequency) {
@@ -151,6 +154,7 @@ function clearMeasurements() {
   $('record').disabled = true;
 }
 function stopRx() {
+  window.SignalData?.detachReceiver();
   rxEpoch++;
   cancelAnimationFrame(animation);
   const old = rx; rx = null;

@@ -9,11 +9,14 @@
   <script defer src="analysis.js"></script>
   <script defer src="main.js"></script>
   <script defer src="simulator.js"></script>
+  <script defer src="frame.js"></script>
+  <script defer src="fsk.js"></script>
   <script defer src="simulator-ui.js"></script>
+  <script defer src="data-ui.js"></script>
 </head>
 <body>
 <main>
-  <header><p class="eyebrow">エアギャップ通信実験室</p><h1>SIGNAL LAB <span>Frequency Test</span></h1><p class="version">Version 0.1.2 — SIGNAL SIMULATOR</p></header>
+  <header><p class="eyebrow">エアギャップ通信実験室</p><h1>SIGNAL LAB <span>Frequency Test / Audio Data Communication</span></h1><p class="version">Version 0.2.0 — AUDIO DATA COMMUNICATION</p></header>
   <div class="statusbar" role="status" aria-live="polite"><span id="tx-state">TX · STOPPED</span><span id="rx-state">RX · STOPPED</span></div>
   <p id="message" role="status">音量を控えめにして開始してください。マイクにはHTTPSと許可が必要です。</p>
   <nav aria-label="機能"><button data-tab="generator" aria-selected="true">GENERATOR</button><button data-tab="receiver" aria-selected="false">RECEIVER</button><button data-tab="sweep" aria-selected="false">SWEEP</button><button data-tab="log" aria-selected="false">LOG</button><button data-tab="lab-tools" aria-selected="false">LAB</button></nav>
@@ -69,8 +72,28 @@
     <p class="hint">CSVはUTF-8 BOM付き。音声は保存せず、手動記録した測定値だけを出力します。</p>
   </section>
   <section id="lab-tools" class="panel" hidden>
-    <h2>05 / LAB <small>SYNTHETIC ONLY</small></h2>
+    <h2>05 / LAB <small>DATA + SIMULATION</small></h2>
+    <details id="data-panel" open><summary>DATA TX/RX · 実スピーカー / マイク</summary>
+      <p class="hint">実機音声通信の性能は未確認です。送受信端末で同じビット時間を設定してください。</p>
+      <label>送信文字列 · UTF-8で最大32バイト<textarea id="data-text">HELLO</textarea></label>
+      <label>1ビットの時間<select id="data-bit-ms"><option>40</option><option selected>80</option><option>120</option></select></label>
+      <p id="data-tx-info" class="hint"></p><p id="data-tx-state" role="status">STOPPED</p>
+      <div class="actions"><button id="data-start" class="start">DATA START</button><button id="data-stop" class="stop" disabled>DATA STOP</button></div>
+      <p class="hint">GENERATORの音量設定と最大ゲイン0.15を共用。発生器・SWEEP・DATA送信は同時実行できません。</p>
+      <div class="actions"><button id="data-rx-start" class="start">DATA MIC START</button><button id="data-rx-stop" class="stop" disabled>MIC STOP</button></div>
+      <p id="data-rx-state" role="status">STOPPED</p><p>CRC：<output id="data-crc">NOT CHECKED</output></p>
+      <p>受信文字列：<output id="data-rx-text">未受信</output></p><details><summary>復調ビット列</summary><pre id="data-rx-bits">—</pre></details>
+    </details>
     <p class="hint">SIMULATOR：合成信号の評価です。実機の成功を意味しません。マイク・スピーカーを使用しません。</p>
+    <details open><summary>SIMULATOR · AUDIO DATA COMMUNICATION</summary>
+      <label>合成送信文字列<textarea id="sim-text">HELLO</textarea></label>
+      <div class="fields"><label>ビット時間 ms<select id="sim-bit-ms"><option>40</option><option selected>80</option><option>120</option></select></label><label>試験回数<input id="sim-trials" type="number" value="2" min="1" max="10"></label>
+      <label>仮想通信路<select id="sim-channel"><option value="clean">雑音なし</option><option value="weakNoise">弱い白色雑音 ±0.02</option><option value="strongNoise">強い白色雑音 ±0.30</option><option value="lowVolume">振幅1/10 + 雑音±0.005</option><option value="interference">1700Hz妨害振幅0.08</option><option value="shifted">開始位置ずれ 最大0.8秒</option><option value="dropout">3ビット欠落 + 雑音±0.002</option></select></label></div>
+      <p class="hint">sampleRateと乱数シードは下の共通設定を使用。RUN ALLは両sampleRate・HELLO/TEST123/こんにちは・2シード・全7通信路（84試験）。</p>
+      <div class="actions"><button id="communication-test" class="start">RUN TEST</button><button id="all-tests">RUN ALL TESTS</button></div>
+      <p id="communication-progress" role="status">未実行 · 合成信号のみ</p><pre id="communication-summary">結果未取得</pre>
+      <details><summary>送信 / 復調ビット列と試験詳細</summary><pre id="communication-detail">未取得</pre></details>
+    </details>
     <details open><summary>周波数信号シミュレーター</summary>
       <div class="fields"><label>sampleRate<select id="sim-rate"><option>48000</option><option>44100</option></select></label><label>FFT<select id="sim-fft"><option>8192</option><option>16384</option></select></label>
       <label>周波数 Hz<input id="sim-frequency" type="number" value="1000"></label><label>切替 / 妨害 Hz<input id="sim-second" type="number" value="2000"></label>

@@ -72,6 +72,58 @@
       lossMs: lostAt == null ? null : Math.round((lostAt - source.offset - source.options.duration) * 1000),
       changes, processingMs: performance.now() - started, records };
   }
-  const api = { random, frequencySignal, evaluateFrequency };
+  function communicationDependencies() {
+    return typeof module !== 'undefined' && module.exports ? { F: require('./frame.js'), K: require('./fsk.js') } : { F: root.SignalFrame, K: root.SignalFSK };
+  }
+  const CHANNELS = Object.freeze({
+    clean: Object.freeze({ noise: 0, gain: 1 }), weakNoise: Object.freeze({ noise: 0.02, gain: 1 }), strongNoise: Object.freeze({ noise: 0.3, gain: 1 }),
+    lowVolume: Object.freeze({ noise: 0.005, gain: 0.1 }), interference: Object.freeze({ noise: 0.005, gain: 1, interference: 1700, interferenceAmplitude: 0.08 }),
+    shifted: Object.freeze({ noise: 0, gain: 1, maxOffset: 0.8 }), dropout: Object.freeze({ noise: 0.002, gain: 1, dropoutBits: 3 })
+  });
+  function communication(options = {}) {
+    const { F, K } = communicationDependencies();
+    const o = { text: 'HELLO', sampleRate: 48000, bitMs: 80, seed: 42, channel: 'clean', ...options };
+    if (!CHANNELS[o.channel] || !Number.isInteger(o.seed)) throw new Error('通信路 / シードが不正です。');
+    const c = { ...CHANNELS[o.channel], ...(o.impairments || {}) };
+    if (![c.noise, c.gain, c.interferenceAmplitude ?? 0].every(v => Number.isFinite(v) && v >= 0 && v <= 1) ||
+        !Number.isFinite(c.maxOffset ?? 0.3) || (c.maxOffset ?? 0.3) < 0 || (c.maxOffset ?? 0.3) > 1 ||
+        !Number.isFinite(c.drift ?? 0) || Math.abs(c.drift ?? 0) > 0.02 ||
+        !Number.isInteger(c.dropoutBits ?? 0) || (c.dropoutBits ?? 0) < 0 || (c.dropoutBits ?? 0) > 10 ||
+        (c.interference != null && (!Number.isFinite(c.interference) || c.interference <= 0 || c.interference >= o.sampleRate / 2))) throw new Error('仮想通信路が範囲外です。');
+    const rng = random(o.seed), phase = rng() * 2 * Math.PI, offset = Math.floor(rng() * o.sampleRate * (c.maxOffset ?? 0.3));
+    const frame = F.encode(o.text, o.seed & 255), wave = K.modulate(frame.bits, { sampleRate: o.sampleRate, bitMs: o.bitMs, amplitude: 0.08, phase });
+    const scale = 1 + (c.drift ?? 0), length = Math.ceil(wave.pcm.length * scale), pcm = new Float32Array(offset + length);
+    const dropoutStart = Math.floor(Math.max(40, frame.bits.length * 0.55) * o.sampleRate * o.bitMs / 1000);
+    const dropoutEnd = dropoutStart + (c.dropoutBits ?? 0) * o.sampleRate * o.bitMs / 1000;
+    for (let i = 0; i < pcm.length; i++) {
+      const position = (i - offset) / scale, index = Math.floor(position), fraction = position - index;
+      let n = index >= 0 && index + 1 < wave.pcm.length ? ((1 - fraction) * wave.pcm[index] + fraction * wave.pcm[index + 1]) * c.gain : 0;
+      if (position >= dropoutStart && position < dropoutEnd) n = 0;
+      n += (rng() * 2 - 1) * c.noise;
+      if (c.interference != null) n += Math.sin(2 * Math.PI * c.interference * i / o.sampleRate + phase) * c.interferenceAmplitude;
+      pcm[i] = Math.max(-1, Math.min(1, n));
+    }
+    const started = performance.now(), events = [], decoder = new K.Decoder({ sampleRate: o.sampleRate, bitMs: o.bitMs }, event => events.push(event));
+    for (let i = 0; i < pcm.length; i += 512) decoder.push(pcm.subarray(i, i + 512)); decoder.finish();
+    const received = events.find(event => event.state === 'COMPLETE');
+    const candidate = received || [...events].reverse().find(event => event.bits?.length === frame.bits.length);
+    const comparedBits = candidate?.bits.length === frame.bits.length ? frame.bits.length : 0;
+    const bitErrors = comparedBits ? candidate.bits.reduce((sum, bit, i) => sum + (bit !== frame.bits[i] ? 1 : 0), 0) : null;
+    return { kind: 'SYNTHETIC COMMUNICATION', conditions: { ...o, impairments: c, amplitude: 0.08, phase, offsetSamples: offset, dropoutStart, dropoutEnd },
+      text: o.text, payloadBytes: frame.payloadBytes, txBits: frame.bits.join(''), rxBits: (candidate?.bits ?? decoder.lastBits).join(''),
+      receivedText: received?.text ?? null, crc: received?.crc ?? events.at(-1)?.crc ?? 'NOT CHECKED',
+      sync: events.some(e => e.state === 'RECEIVING') ? 'ACQUIRED' : 'NOT FOUND', state: received?.state ?? events.at(-1)?.state ?? 'NO SIGNAL',
+      reason: received ? '' : events.at(-1)?.reason ?? 'PREAMBLE/SYNCを検出できませんでした',
+      success: !!received && received.text === o.text && received.messageId === frame.messageId, bitErrors, comparedBits,
+      ber: comparedBits ? bitErrors / comparedBits : null, signalSeconds: wave.signalLength / o.sampleRate,
+      processingMs: performance.now() - started, events: events.map(({ bits, ...event }) => event) };
+  }
+  function summarize(reports) {
+    const errors = reports.reduce((sum, r) => sum + (r.bitErrors ?? 0), 0), compared = reports.reduce((sum, r) => sum + r.comparedBits, 0);
+    return { trials: reports.length, successes: reports.filter(r => r.success).length, successRate: reports.length ? reports.filter(r => r.success).length / reports.length : null,
+      comparedBits: compared, bitErrors: compared ? errors : null, ber: compared ? errors / compared : null,
+      unmeasurableBerTrials: reports.filter(r => r.ber == null).length, averageProcessingMs: reports.length ? reports.reduce((sum, r) => sum + r.processingMs, 0) / reports.length : null };
+  }
+  const api = { random, frequencySignal, evaluateFrequency, CHANNELS, communication, summarize };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.SignalSimulator = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this);
