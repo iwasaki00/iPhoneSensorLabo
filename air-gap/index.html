@@ -11,7 +11,7 @@
 </head>
 <body>
 <main>
-  <header><p class="eyebrow">エアギャップ通信実験室</p><h1>SIGNAL LAB <span>Frequency Test</span></h1><p class="version">Version 0.1.0 — FREQUENCY GENERATOR &amp; DETECTOR</p></header>
+  <header><p class="eyebrow">エアギャップ通信実験室</p><h1>SIGNAL LAB <span>Frequency Test</span></h1><p class="version">Version 0.1.1 — SIGNAL STABILIZATION</p></header>
   <div class="statusbar" role="status" aria-live="polite"><span id="tx-state">TX · STOPPED</span><span id="rx-state">RX · STOPPED</span></div>
   <p id="message" role="status">音量を控えめにして開始してください。マイクにはHTTPSと許可が必要です。</p>
   <nav aria-label="機能"><button data-tab="generator" aria-selected="true">GENERATOR</button><button data-tab="receiver" aria-selected="false">RECEIVER</button><button data-tab="sweep" aria-selected="false">SWEEP</button><button data-tab="log" aria-selected="false">LOG</button></nav>
@@ -31,14 +31,22 @@
   <section id="receiver" class="panel" hidden>
     <h2>02 / RECEIVER <small>LIVE MICROPHONE</small></h2>
     <div id="detection-state" class="badge">NO SIGNAL</div>
+    <span id="signal-quality" class="quality">NONE · NO SIGNAL</span>
+    <p id="frequency-label" class="readout-label">STABLE FREQUENCY</p>
     <output id="detected" class="big">— <small>Hz</small></output>
     <div class="fields"><label>TARGET FREQUENCY · Hz（空欄＝未設定）<input id="target" type="number" min="100" max="20000" step="1" inputmode="numeric" placeholder="未設定"></label><label>許容誤差 · ±Hz<input id="tolerance" type="number" min="1" max="2000" step="1" value="50" inputmode="numeric"></label></div>
     <div class="fields"><label>FFTサイズ<select id="fft-size"><option>16384</option><option>8192</option></select></label><label>スペクトル表示<select id="band"><option value="full">全帯域 · 0–20kHz</option><option value="high">高周波 · 15–20kHz</option></select></label></div>
     <div class="actions"><button id="rx-start" class="start">MIC START</button><button id="rx-stop" class="stop" disabled>MIC STOP</button></div>
-    <dl class="metrics"><div><dt>最強ピーク</dt><dd id="peak">—</dd></div><div><dt>差分 Hz / %</dt><dd id="difference">—</dd></div><div><dt id="level-label">ピーク強度 dBFS</dt><dd id="level">—</dd></div><div><dt>入力 RMS dBFS</dt><dd id="input-level">—</dd></div><div><dt>ノイズフロア dBFS</dt><dd id="noise">—</dd></div><div><dt>SNR参考値 dB</dt><dd id="snr">—</dd></div></dl>
+    <dl class="metrics"><div><dt>RAW PEAK · 全帯域</dt><dd id="peak">—</dd></div><div><dt>差分 Hz / %</dt><dd id="difference">—</dd></div><div><dt id="level-label">ピーク強度 dBFS</dt><dd id="level">—</dd></div><div><dt>入力 RMS dBFS</dt><dd id="input-level">—</dd></div><div><dt>ノイズフロア dBFS</dt><dd id="noise">—</dd></div><div><dt>SNR参考値 dB</dt><dd id="snr">—</dd></div></dl>
     <figure><figcaption>入力波形 <span>時間軸 / 振幅</span></figcaption><canvas id="wave" aria-label="マイクの入力波形"></canvas></figure>
     <figure><figcaption>スペクトル <span><i class="peak-key">● 最大ピーク</i> <i class="target-key">● ターゲット</i></span></figcaption><canvas id="spectrum" aria-label="周波数スペクトル"></canvas></figure>
     <p id="rx-diagnostics" class="hint">サンプルレート / FFT分解能：未取得</p>
+    <details id="lab"><summary>LAB · 安定化 / DEBUG</summary>
+      <label class="toggle"><input id="stabilization" type="checkbox" checked> 安定化を有効にする</label>
+      <div class="fields"><label>中央値 · フレーム数<select id="median-window"><option>3</option><option selected>5</option><option>7</option><option>9</option></select></label><label>ロック最短時間 · ms<input id="lock-time" type="number" min="100" max="1000" step="50" value="100"></label><label>ロック保持上限 · ms<input id="loss-time" type="number" min="100" max="2000" step="50" value="300"></label></div>
+      <p>RAW候補（ターゲット設定時は帯域内）：<output id="raw-candidate">—</output></p><p id="tracking-detail" class="hint">未取得</p>
+      <p class="hint">ロックは連続3解析以上。LOSTは過去のロックを失った状態です。信号消失・不一致では安定値を即座に消し、保持値を現在受信中として表示しません。品質は参考指標です。</p>
+    </details>
     <details><summary>マイク処理の適用状況</summary><pre id="constraints">未取得</pre></details>
     <p class="hint">dBFSはデジタル信号の参考値で、音圧 dB SPLではありません。検出精度・高周波の受信可否は保証されません。受信音の再生・録音・外部送信は行いません。</p>
     <button id="record" disabled>測定結果を手動記録</button>
@@ -55,7 +63,7 @@
   <section id="log" class="panel" hidden>
     <h2>04 / LOG <small>MANUAL MEASUREMENTS</small></h2>
     <p><span id="log-count">0</span> 件 · このページを閉じると消えます（最大1000件）</p><button id="csv" disabled>CSVをダウンロード</button>
-    <div class="table-scroll"><table><thead><tr><th>日時</th><th>Target Hz</th><th>検出 Hz</th><th>状態</th></tr></thead><tbody id="log-rows"></tbody></table></div>
+    <div class="table-scroll"><table><thead><tr><th>日時</th><th>Target Hz</th><th>RAW Hz</th><th>STABLE Hz</th><th>受信状態</th><th>品質</th><th>安定化</th></tr></thead><tbody id="log-rows"></tbody></table></div>
     <p class="hint">CSVはUTF-8 BOM付き。音声は保存せず、手動記録した測定値だけを出力します。</p>
   </section>
   <footer>背景移行・割り込みでは停止します。復帰後はSTARTを押してください。</footer>

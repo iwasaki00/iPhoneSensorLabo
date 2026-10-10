@@ -1,9 +1,10 @@
 'use strict';
 const $ = id => document.getElementById(id);
 const A = SignalAnalysis;
+const tracker = new A.FrequencyTracker();
 const Audio = window.AudioContext || window.webkitAudioContext;
 let tx = null, rx = null, txEpoch = 0, rxEpoch = 0, sweepTimer = null, sweepResolve = null;
-let history = [], result = null, spectrum = null, samples = null, lastFrame = 0, animation = 0;
+let result = null, spectrum = null, samples = null, lastFrame = 0, animation = 0;
 const rows = [];
 const say = message => { $('message').textContent = message; };
 const number = (id, min, max, integer = true) => {
@@ -139,10 +140,14 @@ function receiverSettings(context) {
   return { target, tolerance: number('tolerance', 1, 2000) };
 }
 function clearMeasurements() {
-  result = null; history = [];
+  result = null;
+  tracker.reset();
   for (const id of ['peak', 'difference', 'level', 'input-level', 'noise', 'snr']) $(id).textContent = '—';
   $('detected').innerHTML = '— <small>Hz</small>';
   $('detection-state').textContent = 'NO SIGNAL'; $('detection-state').dataset.state = 'NO SIGNAL';
+  $('signal-quality').textContent = 'NONE · NO SIGNAL';
+  $('raw-candidate').textContent = '—'; $('tracking-detail').textContent = '未取得';
+  if (rx) $('rx-state').textContent = 'RX · SEARCHING';
   $('record').disabled = true;
 }
 function stopRx() {
@@ -225,13 +230,16 @@ function frame(time) {
     try {
       const settings = receiverSettings(rx.context);
       rx.analyser.getFloatFrequencyData(spectrum); rx.analyser.getFloatTimeDomainData(samples);
-      const measurement = A.analyze(spectrum, samples, rx.context.sampleRate, rx.analyser.fftSize, settings.target, settings.tolerance, history);
-      history = measurement.history;
-      result = { ...measurement, target: settings.target, sampleRate: rx.context.sampleRate, fftSize: rx.analyser.fftSize, measuredAt: Date.now() };
+      const measurement = A.analyze(spectrum, samples, rx.context.sampleRate, rx.analyser.fftSize, settings.target, settings.tolerance);
+      const stabilized = tracker.update(measurement, time);
+      result = { ...measurement, ...stabilized, target: settings.target, sampleRate: rx.context.sampleRate, fftSize: rx.analyser.fftSize, measuredAt: Date.now() };
       $('detected').innerHTML = `${fmt(result.frequency)} <small>Hz</small>`;
-      $('detection-state').textContent = result.state; $('detection-state').dataset.state = result.state;
-      $('rx-state').textContent = `RX · ${result.state}`;
-      $('peak').textContent = Number.isFinite(result.peak.level) ? `${fmt(result.peak.frequency)} Hz` : '—';
+      $('detection-state').textContent = result.lockState; $('detection-state').dataset.state = result.lockState;
+      $('rx-state').textContent = `RX · ${result.lockState}`;
+      $('signal-quality').textContent = `${result.quality} · ${result.state}`;
+      $('raw-candidate').textContent = result.rawFrequency == null ? '未検出' : `${fmt(result.rawFrequency, 3)} Hz`;
+      $('tracking-detail').textContent = `実効許容 ±${fmt(result.effectiveTolerance, 2)} Hz / 継続 ${Math.round(result.durationMs)} ms / 解析最大20fps・実時間判定`;
+      $('peak').textContent = result.rawPeakFrequency == null ? '未検出' : `${fmt(result.rawPeakFrequency)} Hz`;
       $('difference').textContent = result.target == null ? 'ターゲット未設定' : `${fmt(result.hz)} / ${fmt(result.percent, 3)}%`;
       $('level-label').textContent = result.target == null ? 'ピーク強度 dBFS' : 'ターゲット付近 dBFS';
       $('level').textContent = fmt(result.level); $('noise').textContent = fmt(result.floor);
@@ -282,7 +290,7 @@ function drawSpectrum() {
     if (!x) ctx.moveTo(x, y); else ctx.lineTo(x, y);
   }
   ctx.stroke();
-  for (const [frequency, color] of [[result.peak.frequency, '#ffd084'], [result.target, '#cf9cff']]) {
+  for (const [frequency, color] of [[result.rawPeakFrequency, '#ffd084'], [result.target, '#cf9cff']]) {
     if (frequency == null || frequency < lo || frequency > hi) continue;
     ctx.strokeStyle = color; ctx.beginPath(); ctx.moveTo(xAt(frequency), 0); ctx.lineTo(xAt(frequency), 120); ctx.stroke();
   }
@@ -323,12 +331,27 @@ $('sweep-mode').addEventListener('change', () => { $('range-fields').hidden = $(
 $('rx-start').addEventListener('click', startRx); $('rx-stop').addEventListener('click', stopRx);
 $('fft-size').addEventListener('change', configureFFT);
 for (const id of ['target', 'tolerance']) $(id).addEventListener('input', clearMeasurements);
+for (const id of ['stabilization', 'median-window', 'lock-time', 'loss-time']) $(id).addEventListener('change', () => {
+  clearMeasurements();
+  try {
+    tracker.configure({ enabled: $('stabilization').checked, windowSize: Number($('median-window').value),
+      lockMs: number('lock-time', 100, 1000), lossMs: number('loss-time', 100, 2000) });
+    $('frequency-label').textContent = tracker.options.enabled ? 'STABLE FREQUENCY' : 'RAW FREQUENCY · 安定化OFF';
+    say('LABの安定化設定を変更しました。受信ロックをリセットします。');
+  } catch (error) {
+    $('stabilization').checked = tracker.options.enabled;
+    $('median-window').value = tracker.options.windowSize;
+    $('lock-time').value = tracker.options.lockMs;
+    $('loss-time').value = tracker.options.lossMs;
+    say(error.message);
+  }
+});
 $('record').addEventListener('click', () => {
   if (!result || !rx || rows.length >= 1000 || Date.now() - result.measuredAt > 500) return say('新しい測定結果がありません。');
-  const row = [new Date(result.measuredAt).toISOString(), result.target ?? '未設定', result.frequency == null ? '' : fmt(result.frequency, 3), result.hz == null ? '' : fmt(result.hz, 3), result.percent == null ? '' : fmt(result.percent, 5), fmt(result.level, 2), fmt(result.floor, 2), result.state, result.sampleRate, result.fftSize];
+  const row = A.logRow(result, result.measuredAt);
   rows.push(row);
   const tr = document.createElement('tr');
-  for (const value of [row[0], row[1], row[2] || '—', row[7]]) { const td = document.createElement('td'); td.textContent = value; tr.append(td); }
+  for (const value of [row[0], row[1], row[10] || '未検出', row[11] || '未検出', row[12], row[13], row[14]]) { const td = document.createElement('td'); td.textContent = value; tr.append(td); }
   $('log-rows').prepend(tr); $('log-count').textContent = rows.length; $('csv').disabled = false;
   if (rows.length >= 1000) $('record').disabled = true;
   say(`測定結果を記録しました（${rows.length}件）。`);
