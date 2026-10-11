@@ -252,6 +252,14 @@ async function run() {
   await evaluate("document.querySelector('[data-tab=communication]').click(); document.getElementById('copy-url').click()");
   await until('document.getElementById("public-url").value.length > 0');
   await check('URL copy is page URL and does not transmit a message', 'document.getElementById("public-url").value === location.href && copiedDiagnosticText === location.href');
+  await sleep(300);
+  await evaluate(`{ const bytes = SignalFrame.encode('A',80).bytes.slice(); bytes[7] = 255;
+    const crc = SignalFrame.crc16(bytes.subarray(4,8)); bytes[8] = crc >> 8; bytes[9] = crc & 255;
+    const wave = SignalFSK.modulate(SignalFrame.bits(bytes),{sampleRate:workletInputContext.sampleRate,bitMs:40,amplitude:0.08});
+    const buffer = workletInputContext.createBuffer(1,wave.pcm.length,workletInputContext.sampleRate); buffer.copyToChannel(wave.pcm,0);
+    const source = workletInputContext.createBufferSource(); source.buffer = buffer; source.connect(workletDestination); source.start(); }`);
+  await until('communicationLog.lastError.code === "FRAME_UTF8"'); await sleep(250);
+  await check('valid CRC with invalid UTF-8 is an error in STEP 5, never normal text', 'document.getElementById("data-rx-state").dataset.state === "FAILED" && document.getElementById("data-crc").textContent === "PASS" && document.getElementById("diag-state-5").textContent === "エラー" && document.getElementById("diag-step-5").textContent.includes("UTF-8=復元失敗") && document.getElementById("data-rx-text").textContent === "未受信" && dataCapture.decoder.completed === 2');
   await evaluate('dataCapture.node.dispatchEvent(new Event("processorerror"))');
   await check('Worklet processor failure stops resources and preserves actionable error', 'dataCapture === null && rx === null && communicationLog.lastError.code === "WORKLET_PROCESSOR" && document.getElementById("data-rx-state").dataset.state === "ERROR"');
   await evaluate('globalThis.workletDestination = workletInputContext.createMediaStreamDestination(); document.getElementById("data-retry").click()'); await until('dataCapture?.packets > 0');

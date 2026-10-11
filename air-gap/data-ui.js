@@ -86,7 +86,7 @@ function renderDiagnosis(capture = dataCapture) {
     [!s.packets ? '未開始' : stale ? 'エラー' : s.rmsDbfs < -65 ? '警告' : '正常', `入力=${level} / 直近PCM=${s.lastSampleAt || '未取得'} / 累計${s.samples || 0}sample / 欠落${s.gaps || 0}回`],
     [!s.packets ? '未開始' : e.valid ? '正常' : '警告', `1200Hz=${e.e0?.toExponential(2) ?? '未取得'} / 2200Hz=${e.e1?.toExponential(2) ?? '未取得'} / 強度比=${e.ratio?.toFixed(1) ?? '—'} / 信号成分比=${e.purity?.toFixed(2) ?? '—'} / 推定BIT=${e.valid ? e.bit : '未判定'}`],
     [!s.packets ? '未開始' : f.timing ? '正常' : f.preamble ? '処理中' : '警告', `PREAMBLE=${f.preamble ? '検出' : '未検出'} / SYNC=${f.sync ? '検出' : '未検出'} / タイミング=${f.timing ? '同期' : '未同期'} / 復調${f.bits || 0}bit`],
-    [f.crc === 'PASS' ? '正常' : ['FAILED', 'TIMEOUT'].includes(s.state) ? 'エラー' : f.header ? '処理中' : '未開始', `ヘッダー=${f.header ? '検出' : '未検出'} / VERSION=${f.version ?? '未判定'} / LENGTH=${f.length ?? '未判定'} / 受信${f.bytes || 0}byte / CRC=${f.crc || 'NOT CHECKED'} / UTF-8=${f.utf8 || '未復元'}`]
+    [['FAILED', 'TIMEOUT'].includes(s.state) || f.crc === 'FAIL' || f.utf8 === '復元失敗' ? 'エラー' : f.crc === 'PASS' && f.utf8 === '正常' ? '正常' : f.header ? '処理中' : '未開始', `ヘッダー=${f.header ? '検出' : '未検出'} / VERSION=${f.version ?? '未判定'} / LENGTH=${f.length ?? '未判定'} / 受信${f.bytes || 0}byte / CRC=${f.crc || 'NOT CHECKED'} / UTF-8=${f.utf8 || '未復元'}`]
   ];
   steps.forEach(([state, detail], i) => { dataField(`diag-state-${i + 1}`).textContent = !capture && i > 0 ? '未開始' : state; dataField(`diag-step-${i + 1}`).textContent = !capture && i > 0 && s.packets ? `前回：${detail}` : detail; });
   dataField('diagnostic-live').textContent = JSON.stringify(D.safeSnapshot(s), null, 2);
