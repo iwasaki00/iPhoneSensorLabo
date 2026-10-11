@@ -36,7 +36,8 @@
       this.options = settings(options); this.onEvent = onEvent; this.bitSamples = this.options.sampleRate * this.options.bitMs / 1000;
       this.windowSize = Math.round(this.bitSamples / 2); this.ring = new Float32Array(Math.ceil(this.bitSamples * 5)); this.window = new Float32Array(this.windowSize); this.reset();
     }
-    reset() { this.total = 0; this.step = 0; this.history = []; this.pending = null; this.receiving = null; this.state = 'SEARCHING'; this.lastBits = []; this.events = []; this.failures = 0; this.completed = 0; }
+    reset() { this.total = 0; this.step = 0; this.history = []; this.pending = null; this.receiving = null; this.state = 'SEARCHING'; this.lastBits = []; this.events = []; this.failures = 0; this.completed = 0;
+      this.diagnostic = { energy: null, preamble: false, sync: false, timing: false, bits: 0, header: false, version: null, length: null, bytes: 0, crc: 'NOT CHECKED', utf8: '未復元' }; }
     emit(event) {
       this.state = event.state; const value = { ...event, sample: this.total, timeMs: this.total / this.options.sampleRate * 1000 };
       this.events.push(value); if (this.events.length > 16) this.events.shift(); this.onEvent(value);
@@ -48,14 +49,17 @@
       return energy(this.window, this.options.sampleRate, this.options.zero, this.options.one);
     }
     fail(reason) {
+      this.diagnostic.crc = reason.includes('CRC') ? 'FAIL' : this.diagnostic.crc;
+      this.diagnostic.timing = false;
       const bits = this.receiving ? [...F.bits([...F.SPEC.preamble, ...F.SPEC.sync]), ...this.receiving.bits] : [];
       this.lastBits = bits; this.receiving = null; this.pending = null; this.history = []; this.failures++;
-      this.emit({ state: reason.includes('タイムアウト') ? 'TIMEOUT' : 'FAILED', reason, bits, crc: reason.includes('CRC') ? 'FAIL' : 'NOT CHECKED' });
+      this.emit({ state: reason.includes('タイムアウト') ? 'TIMEOUT' : 'FAILED', reason, bits, crc: reason.includes('CRC') ? 'FAIL' : this.diagnostic.crc });
     }
     receive() {
       const r = this.receiving;
       while (this.receiving && this.total >= Math.round(r.center - this.windowSize / 2) + this.windowSize) {
         const detected = this.at(r.center);
+        this.diagnostic.energy = detected;
         if (!detected?.valid) { this.fail('信号欠落 / ビット判定不能'); return; }
         const bit = detected.bit; let correction = 0;
         if (r.previous != null && r.previous !== bit) {
@@ -68,16 +72,18 @@
           }
         }
         r.previous = bit; r.bits.push(bit); r.center += this.bitSamples + correction;
+        this.diagnostic.bits = 32 + r.bits.length; this.diagnostic.bytes = Math.floor(r.bits.length / 8);
         if (r.bits.length === 24) {
           const header = F.bytesFromBits(r.bits);
+          this.diagnostic.header = true; this.diagnostic.version = header[0]; this.diagnostic.length = header[2];
           if (header[0] !== F.SPEC.version) { this.fail('VERSION不一致'); return; }
           if (header[2] > F.SPEC.maxPayload) { this.fail('LENGTHが32バイトを超えています'); return; }
           r.expected = (5 + header[2]) * 8;
         }
         if (r.expected && r.bits.length === r.expected) {
           const bits = [...F.bits([...F.SPEC.preamble, ...F.SPEC.sync]), ...r.bits]; this.lastBits = bits;
-          try { const frame = F.decodeBody(F.bytesFromBits(r.bits)); this.receiving = null; this.history = []; this.completed++; this.emit({ state: 'COMPLETE', ...frame, bits }); }
-          catch (error) { this.fail(error.message); }
+          try { const frame = F.decodeBody(F.bytesFromBits(r.bits), validation => { this.diagnostic.crc = validation.crc; }); this.diagnostic.utf8 = '正常'; this.receiving = null; this.history = []; this.completed++; this.emit({ state: 'COMPLETE', ...frame, bits }); }
+          catch (error) { if (this.diagnostic.crc === 'PASS') this.diagnostic.utf8 = '復元失敗'; this.fail(error.message); }
           return;
         }
         if (this.total > r.deadline || r.bits.length > 296) { this.fail('受信タイムアウト'); return; }
@@ -87,19 +93,30 @@
     process() {
       if (this.receiving) { this.receive(); return; }
       const center = this.windowSize / 2 + this.step * this.bitSamples / 8, detected = this.at(center);
+      this.diagnostic.energy = detected;
       this.history.push({ ...detected, center }); if (this.history.length > 264) this.history.shift();
       const pattern = F.bits([...F.SPEC.preamble, ...F.SPEC.sync]);
+      if (this.history.length >= 121 && !this.pending) {
+        const entries = Array.from({ length: 16 }, (_, i) => this.history[this.history.length - 1 - (15 - i) * 8]);
+        if (entries.every((entry, i) => entry.valid && entry.bit === pattern[i])) {
+          if (!this.diagnostic.preamble || this.diagnostic.crc !== 'NOT CHECKED') {
+            this.diagnostic = { ...this.diagnostic, preamble: true, sync: false, timing: false, header: false, bits: 16, bytes: 0, version: null, length: null, crc: 'NOT CHECKED', utf8: '未復元' };
+            this.emit({ state: 'PREAMBLE', reason: '交互ビット16bitを検出。SYNCを探索中' });
+          }
+        }
+      }
       if (this.history.length >= 249) {
         const entries = Array.from({ length: 32 }, (_, i) => this.history[this.history.length - 1 - (31 - i) * 8]);
         if (entries.every((entry, i) => entry.valid && entry.bit === pattern[i])) {
           const candidate = { score: entries.reduce((sum, e) => sum + e.score, 0), center: entries.at(-1).center };
-          if (!this.pending) { this.pending = { best: candidate, deadline: center + this.bitSamples }; this.emit({ state: 'SYNCING', reason: 'PREAMBLE/SYNC候補を確認中' }); }
+          if (!this.pending) { this.diagnostic = { ...this.diagnostic, preamble: true, sync: true, timing: false, header: false, version: null, length: null, bytes: 0, bits: 32, crc: 'NOT CHECKED', utf8: '未復元' }; this.pending = { best: candidate, deadline: center + this.bitSamples }; this.emit({ state: 'SYNCING', reason: 'PREAMBLE/SYNC候補を確認中' }); }
           else if (candidate.score > this.pending.best.score) this.pending.best = candidate;
         }
       }
       if (this.pending && center >= this.pending.deadline) {
         const firstCenter = this.pending.best.center + this.bitSamples;
         this.receiving = { center: firstCenter, previous: pattern.at(-1), bits: [], expected: null, deadline: firstCenter + this.bitSamples * 300 };
+        this.diagnostic.timing = true; this.diagnostic.bits = 32;
         this.pending = null; this.emit({ state: 'RECEIVING', reason: 'サンプル時計でフレーム受信中' }); this.receive();
       }
     }

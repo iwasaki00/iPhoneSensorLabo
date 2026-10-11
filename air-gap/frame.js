@@ -20,13 +20,14 @@
     const bytes = Uint8Array.from([...SPEC.preamble, ...SPEC.sync, ...body, crc >> 8, crc & 255]);
     return { bytes, bits: bits(bytes), payloadBytes: payload.length, messageId };
   }
-  function decodeBody(body) {
+  function decodeBody(body, onValidation = () => {}) {
     if (!(body instanceof Uint8Array) || body.length < 3) throw new Error('不完全フレームです。');
     if (body[0] !== SPEC.version) throw new Error('VERSION不一致です。');
     if (body[2] > SPEC.maxPayload) throw new Error('LENGTHが32バイトを超えています。');
     if (body.length !== 5 + body[2]) throw new Error('不完全または余分なフレームです。');
     const actual = crc16(body.subarray(0, body.length - 2)), expected = (body[body.length - 2] << 8) | body[body.length - 1];
     if (actual !== expected) throw new Error('CRC不一致です。');
+    onValidation({ crc: 'PASS' });
     return { text: new TextDecoder('utf-8', { fatal: true }).decode(body.subarray(3, body.length - 2)), messageId: body[1], payloadBytes: body[2], crc: 'PASS' };
   }
   function decode(bytes) {

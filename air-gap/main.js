@@ -73,7 +73,7 @@ function stopTx() {
   }
   $('tx-state').textContent = 'TX · STOPPED';
   $('sweep-progress').textContent = 'STOPPED';
-  if (old?.mode === 'data') window.SignalData?.onTxStopped(old.finishState || 'STOPPED');
+  if (['data', 'test-tone'].includes(old?.mode)) window.SignalData?.onTxStopped(old.finishState || 'STOPPED');
   updateTxButtons();
 }
 function tone(session, frequency) {
@@ -162,11 +162,12 @@ function stopRx() {
     old.stream?.getTracks().forEach(track => { track.onended = null; track.stop(); });
     old.source?.disconnect(); old.analyser?.disconnect(); old.silent?.disconnect();
     old.context.onstatechange = null;
-    old.context.close().catch(() => {});
+    old.context.close().then(() => window.SignalData?.onRxStopped(old.context, old.stream)).catch(() => {});
   }
   clearMeasurements();
   $('rx-state').textContent = 'RX · STOPPED';
   $('rx-start').disabled = false; $('rx-stop').disabled = true;
+  window.SignalData?.onRxStopped(old?.context, old?.stream);
   for (const id of ['wave', 'spectrum']) { const canvas = $(id); canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height); }
 }
 function configureFFT() {
@@ -221,15 +222,17 @@ async function startRx() {
     $('rx-state').textContent = 'RX · LISTENING'; say('マイク受信中。別端末の音を測定し、結果を手動記録できます。');
     animation = requestAnimationFrame(frame);
   } catch (error) {
+    if (epoch !== rxEpoch) return { cancelled: true };
     if (rx === session) stopRx();
     const reasons = { NotAllowedError: 'マイクの許可が拒否されました。ブラウザのサイト設定で許可してから再試行してください。', NotFoundError: 'マイクが見つかりません。', NotReadableError: 'マイクを利用できません。他のアプリによる使用や端末設定を確認してください。' };
     say(reasons[error.name] || error.message);
+    return { error: reasons[error.name] || error.message, code: error.name || 'MIC_INIT' };
   }
 }
 const fmt = (value, digits = 1) => Number.isFinite(value) ? value.toFixed(digits) : '—';
 function frame(time) {
   if (!rx?.analyser) return;
-  if (time - lastFrame >= 50) {
+  if (time - lastFrame >= 50 && (!window.SignalData?.isCapturing() || !$('receiver').hidden)) {
     lastFrame = time;
     try {
       const settings = receiverSettings(rx.context);
@@ -303,7 +306,9 @@ function drawSpectrum() {
 }
 for (const button of document.querySelectorAll('[data-tab]')) button.addEventListener('click', () => {
   document.querySelectorAll('.panel').forEach(panel => { panel.hidden = panel.id !== button.dataset.tab; });
-  document.querySelectorAll('[data-tab]').forEach(tab => tab.setAttribute('aria-selected', tab === button ? 'true' : 'false'));
+  const frequency = ['generator', 'receiver', 'sweep'].includes(button.dataset.tab);
+  $('frequency-nav').hidden = !frequency;
+  document.querySelectorAll('[data-tab]').forEach(tab => tab.setAttribute('aria-selected', tab === button || (tab.dataset.tab === 'generator' && tab.closest('nav') && frequency) ? 'true' : 'false'));
 });
 for (const frequency of A.PRESETS) {
   const button = document.createElement('button'); button.textContent = `${frequency / 1000}k Hz`;

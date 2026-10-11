@@ -7,7 +7,7 @@ function simSettings() {
     interval: Number(simField('sim-interval').value), seed: Number(simField('sim-seed').value), mode: simField('sim-mode').value, fftSize: Number(simField('sim-fft').value) };
 }
 function saveSimulationReports() {
-  const url = URL.createObjectURL(new Blob([JSON.stringify({ version: '0.2.0', source: 'SYNTHETIC ONLY', reports: simulationReports }, null, 2)], { type: 'application/json' }));
+  const url = URL.createObjectURL(new Blob([JSON.stringify({ version: '0.2.1', source: 'SYNTHETIC ONLY', reports: simulationReports }, null, 2)], { type: 'application/json' }));
   const link = document.createElement('a'); link.href = url; link.download = 'signal-lab-simulation.json'; document.body.append(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 simField('frequency-test').addEventListener('click', async () => {

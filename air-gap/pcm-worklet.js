@@ -7,7 +7,10 @@ class SignalCapture extends AudioWorkletProcessor {
   process(inputs, outputs) {
     for (const output of outputs) for (const channel of output) channel.fill(0);
     if (!this.active) return false;
-    const input = inputs[0]?.[0]; if (!input) return true;
+    const input = inputs[0]?.[0]; if (!input) { this.count = 0; this.nextSample = null; return true; }
+    // Never combine samples from opposite sides of an absent input quantum.
+    if (this.nextSample != null && currentFrame !== this.nextSample) this.count = 0;
+    this.nextSample = currentFrame + input.length;
     for (let i = 0; i < input.length; i++) {
       if (this.count === 0) this.startSample = currentFrame + i;
       this.buffer[this.count++] = input[i];
