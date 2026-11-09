@@ -56,8 +56,10 @@ WorkerとImageBitmap/OffscreenCanvasを優先します。非対応・初期化�
 
 実行時のモデル・WASM取得は同じサイトへのGET通信です。カメラ映像の送信・保存、解析・広告・遠隔推論SDKはありません。CSPで接続先を同一オリジンに制限します。ビルド時のnpmとアセット取得にはインターネット接続が必要です。実行時に外部CDNへアクセスしません。サービスワーカーは導入しておらず、オフライン初回起動は保証しません。
 
-`npm run build` の `dist/` が静的配布物です。相対baseによりGitHub Pagesのサブディレクトリ配置を想定しています。モデル・WASM・licensesを含めて配布します。この作業ではGit初期化、push、公開を行っていません。
+`npm run build` の `dist/` が静的配布物です。相対baseによりGitHub Pagesのサブディレクトリ配置を想定しています。モデル・WASM・licensesを含めて配布します。親リポジトリを静的公開する構成のため、`dist/` もGit管理対象とします。公開に反映する際はソースと一緒にビルド済みファイルをcommit・pushする必要があります。この作業ではpush・公開を行っていません。
 
 ソースは「iPhoneセンサー実験室/カメラ認識実験室」直下に配置しています。親の実験メニューは `カメラ認識実験室/dist/` を開きます。変更後はこのフォルダで `npm run build` を実行してから親メニューで確認してください。親フォルダの `node server.js` でPCから確認する場合は `http://localhost:8123/` を開きます。iPhoneのカメラ利用にはHTTPS配信が必要です。
+
+ビルドの最後に、静的HTMLの参照、モデル・WASMのハッシュ、配布物のGit除外設定を確認します。配布物がGit管理対象外だとビルドを失敗させ、ローカルでだけ開ける状態を検出します。既存ビルドだけを確認する場合は `npm run check:static` を実行します。
 
 詳細は [ライセンス一覧](THIRD_PARTY_NOTICES.md)、[実機確認](docs/IPHONE_CHECKLIST.md)、[実験記録](docs/EXPERIMENT_TEMPLATE.md)、[モード追加方針](docs/MODE_EXTENSION.md)、[検証結果](docs/VERIFICATION.md)を参照してください。

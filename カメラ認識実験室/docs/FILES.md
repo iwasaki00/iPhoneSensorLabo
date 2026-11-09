@@ -19,6 +19,7 @@ src/style.css
 src/modes/types.ts
 src/modes/object-detector.ts
 scripts/prepare-assets.mjs
+scripts/check-static-site.mjs
 public/vision-worker.js
 public/assets-manifest.json
 public/models/efficientdet_lite0.tflite
@@ -44,4 +45,4 @@ docs/model-source-metadata.json
 docs/pc-preview.png
 ```
 
-このほか、ローカル実行用の `node_modules/`、ビルド済み `dist/`、ブラウザテストの `test-results/` を生成しています。これらは.gitignoreで除外しています。
+このほか、ローカル実行用の `node_modules/`、ブラウザテストの `test-results/` を生成しています。これらは.gitignoreで除外しています。ビルド済み `dist/` は親メニューから静的配信するため、モデル・WASM・ライセンスを含めてGit管理対象としています。
