@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#10191e" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; connect-src 'self'; img-src 'self' data:; style-src 'self'; media-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'none'" />
+  <title>Camera Vision Lab</title>
+</head>
+<body>
+  <div id="app">
+    <header><div><span class="eyebrow">CAMERA VISION LAB / 014</span><h1>カメラ認識実験室</h1></div><span class="version">v0.1.0</span></header>
+    <main>
+      <div class="mode"><span class="dot"></span> OBJECT DETECTION FOUNDATION <span class="local">端末内AI</span></div>
+      <section class="viewport" aria-label="カメラ映像と認識結果">
+        <video id="video" autoplay muted playsinline></video><canvas id="overlay"></canvas>
+        <div id="placeholder"><span class="viewfinder">⌖</span><strong>身のまわりを、観察する。</strong><p>カメラを起動して物体認識を始めます。</p></div>
+        <div class="viewport-top"><span id="state">停止中</span><span><b id="count">0</b> 個を認識</span></div>
+      </section>
+      <div class="metrics"><div><b id="camera-fps">—</b><span>カメラ表示 FPS</span></div><div><b id="detect-fps">—</b><span>認識 FPS</span></div><div><b id="latency">—</b><span>推論 ms</span></div></div>
+      <p id="status" role="status">カメラ映像は外部に送信されません。</p>
+      <div id="error" role="alert" hidden><p id="error-message"></p><button id="retry">停止して再試行</button></div>
+      <details><summary>詳細設定 <span>認識の調整</span></summary><div class="settings">
+        <label for="threshold">信頼度の閾値 <output id="threshold-value">50%</output></label><input id="threshold" type="range" min="10" max="95" step="5" value="50" />
+        <label for="resolution">解析サイズ（長辺）</label><select id="resolution"><option value="320">320 px / 軽量</option><option value="480" selected>480 px / 標準</option><option value="640">640 px / 詳細</option></select>
+        <label for="interval">認識間隔（完了から次の開始まで）</label><select id="interval"><option value="100">100 ms</option><option value="200" selected>200 ms</option><option value="500">500 ms</option></select>
+      </div></details>
+      <details><summary>診断情報 <span>実行環境・モデル</span></summary><pre id="diagnostics"></pre></details>
+      <p class="privacy">映像の保存なし・外部AIサービス不使用<br>起動時に同じサイトからモデルと実行アセットを読み込みます。</p>
+    </main>
+    <footer><button id="start" class="primary">カメラを起動</button><div class="secondary"><button id="switch">前面に切替</button><button id="recognition" aria-pressed="true">認識 ON</button></div></footer>
+  </div>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

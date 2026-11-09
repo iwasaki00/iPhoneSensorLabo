@@ -1,0 +1,14 @@
+{
+  "checkedDate": "2026-11-09",
+  "source": "https://www.kaggle.com/api/v1/models/list?search=efficientdet&owner=tensorflow",
+  "publisher": "TensorFlow",
+  "ref": "tensorflow/efficientdet",
+  "instance": {
+    "slug": "lite0-int8",
+    "framework": "tfLite",
+    "versionNumber": 1,
+    "licenseName": "Apache 2.0",
+    "url": "https://www.kaggle.com/models/tensorflow/efficientdet/TfLite/lite0-int8"
+  },
+  "assetSource": "https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite0/int8/1/efficientdet_lite0.tflite"
+}
