@@ -8,6 +8,10 @@ iPhone Safariでカメラ、各種センサー、GPSマップトラッカーを�
 - `camera/`: カメラ実験
   - カメラ映像表示
   - 手指認識実験
+- `カメラ認識実験室/dist/`: カメラ認識実験室（Camera Vision Lab v0.1.0）
+  - 端末内AIによる物体検出・日本語表示・FPSと推論時間の実測
+  - ソースは `カメラ認識実験室/` 直下。初回は同フォルダで `npm ci`、`npm run assets`、`npm run build` を実行
+  - ソース変更後は `npm run build` でメニューから開く配布物を更新。iPhoneのカメラ利用にはHTTPS配信が必要
 - `sensor/`: センサー実験
   - 傾き・加速度
   - GPS
