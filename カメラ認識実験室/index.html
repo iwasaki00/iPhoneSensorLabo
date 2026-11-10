@@ -9,26 +9,40 @@
 </head>
 <body>
   <div id="app">
-    <header><div><span class="eyebrow">CAMERA VISION LAB / 014</span><h1>カメラ認識実験室</h1></div><span class="version">v0.1.0</span></header>
+    <header><div><span class="eyebrow">CAMERA VISION LAB / 014</span><h1>カメラ認識実験室</h1></div><span class="version">v0.2.0</span></header>
     <main>
-      <div class="mode"><span class="dot"></span> OBJECT DETECTION FOUNDATION <span class="local">端末内AI</span></div>
+      <div class="mode"><span class="dot"></span> COLOR &amp; MOTION LAB <span class="local" id="mode-kind">端末内AI</span></div>
+      <div class="view-control"><label for="view-select">比較表示</label><select id="view-select"><option value="normal">通常表示</option><option value="before">BEFORE（元映像）</option><option value="after">AFTER（認識結果）</option><option value="split">左右比較</option></select></div>
       <section class="viewport" aria-label="カメラ映像と認識結果">
         <video id="video" autoplay muted playsinline></video><canvas id="overlay"></canvas>
-        <div id="placeholder"><span class="viewfinder">⌖</span><strong>身のまわりを、観察する。</strong><p>カメラを起動して物体認識を始めます。</p></div>
+        <div id="placeholder"><span class="viewfinder">⌖</span><strong>身のまわりを、観察する。</strong><p>カメラを起動して認識実験を始めます。</p></div>
         <div class="viewport-top"><span id="state">停止中</span><span><b id="count">0</b> 個を認識</span></div>
       </section>
-      <div class="metrics"><div><b id="camera-fps">—</b><span>カメラ表示 FPS</span></div><div><b id="detect-fps">—</b><span>認識 FPS</span></div><div><b id="latency">—</b><span>推論 ms</span></div></div>
+      <div class="metrics"><div><b id="camera-fps">—</b><span>映像 FPS</span></div><div><b id="render-fps">—</b><span>描画 FPS</span></div><div><b id="detect-fps">—</b><span>認識 FPS</span></div><div><b id="latency">—</b><span>処理 ms</span></div></div>
+      <div class="mode-help" data-modes="color" hidden><span id="color-swatch" aria-hidden="true"></span><span id="color-target">追跡色：赤（初期値）</span><p>映像をタップして追跡色を指定。複数の同色領域を追跡します。</p></div>
+      <div class="mode-help" data-modes="motion" hidden><button id="reset-background">背景基準を再取得</button><p>固定カメラ用です。カメラを動かすと背景全体を検出する場合があります。速度は表示上のpx/sで、物理速度ではありません。</p></div>
+      <div class="mode-help" data-modes="shape" hidden><p>背景との境界がはっきりした図形で実験してください。判定が難しい形は「未分類の輪郭」と表示します。</p></div>
       <p id="status" role="status">カメラ映像は外部に送信されません。</p>
-      <div id="error" role="alert" hidden><p id="error-message"></p><button id="retry">停止して再試行</button></div>
+      <div id="error" role="alert" hidden><p id="error-message"></p><button id="retry">認識を再試行</button></div>
+      <p id="storage-status" hidden>このブラウザでは設定を保存できません。現在のタブ内では引き続き操作できます。</p>
+      <details id="result-panel"><summary>検出データ <span>中心・面積・速度・傾き</span></summary><pre id="result-info">認識結果を待っています。</pre></details>
       <details><summary>詳細設定 <span>認識の調整</span></summary><div class="settings">
-        <label for="threshold">信頼度の閾値 <output id="threshold-value">50%</output></label><input id="threshold" type="range" min="10" max="95" step="5" value="50" />
+        <div class="mode-settings" data-modes="object"><label for="threshold">信頼度の閾値 <output id="threshold-value">50%</output></label><input id="threshold" type="range" min="10" max="95" step="5" value="50" /></div>
+        <div class="mode-settings" data-modes="color" hidden>
+          <label for="hue-tolerance">色相の許容幅 <output id="hue-tolerance-value">±22°</output></label><input id="hue-tolerance" type="range" min="1" max="90" value="22" />
+          <label for="saturation-tolerance">彩度の許容幅 <output id="saturation-tolerance-value">±35%</output></label><input id="saturation-tolerance" type="range" min="5" max="100" value="35" />
+          <label for="value-tolerance">明るさの許容幅 <output id="value-tolerance-value">±35%</output></label><input id="value-tolerance" type="range" min="5" max="100" value="35" />
+        </div>
+        <div class="mode-settings" data-modes="motion" hidden><label for="motion-sensitivity">動体検出の感度 <output id="motion-sensitivity-value">60</output></label><input id="motion-sensitivity" type="range" min="1" max="100" value="60" /><p class="hint">値を上げると小さな明るさの差も検出します。静止判定は約1.2秒です。</p></div>
+        <div class="mode-settings" data-modes="shape" hidden><label for="shape-sensitivity">輪郭検出の感度 <output id="shape-sensitivity-value">60</output></label><input id="shape-sensitivity" type="range" min="1" max="100" value="60" /></div>
+        <div class="mode-settings" data-modes="color motion shape" hidden><label for="min-area">ノイズ除外の最小面積 <output id="min-area-value">40 px²</output></label><input id="min-area" type="range" min="8" max="1000" step="8" value="40" /><p class="hint">解析画像の座標です。直線は長さ18px以上を対象にします。</p></div>
         <label for="resolution">解析サイズ（長辺）</label><select id="resolution"><option value="320">320 px / 軽量</option><option value="480" selected>480 px / 標準</option><option value="640">640 px / 詳細</option></select>
         <label for="interval">認識間隔（完了から次の開始まで）</label><select id="interval"><option value="100">100 ms</option><option value="200" selected>200 ms</option><option value="500">500 ms</option></select>
       </div></details>
       <details><summary>診断情報 <span>実行環境・モデル</span></summary><pre id="diagnostics"></pre></details>
-      <p class="privacy">映像の保存なし・外部AIサービス不使用<br>起動時に同じサイトからモデルと実行アセットを読み込みます。</p>
+      <p class="privacy">映像の送信・保存なし。設定のみブラウザ内に保存。<br>物体認識だけが同じサイトのモデル・WASMを使用します。</p>
     </main>
-    <footer><button id="start" class="primary">カメラを起動</button><div class="secondary"><button id="switch">前面に切替</button><button id="recognition" aria-pressed="true">認識 ON</button></div></footer>
+    <footer><div class="mode-control"><label for="mode-select">認識モード</label><select id="mode-select"><option value="object">物体認識</option><option value="color">色認識</option><option value="motion">動体検出</option><option value="shape">輪郭・図形認識</option></select></div><button id="start" class="primary">カメラを起動</button><div class="secondary"><button id="switch">前面に切替</button><button id="recognition" aria-pressed="true">認識 ON</button></div></footer>
   </div>
   <script type="module" src="/src/main.ts"></script>
 </body>

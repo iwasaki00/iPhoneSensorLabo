@@ -5,8 +5,19 @@ test('実モデル推論・認識切替・停止・再起動・同一サイト�
   page.on('pageerror',e=>errors.push(e.message));
   await page.addInitScript(()=>{const get=navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);(window as any).__tracks=[];navigator.mediaDevices.getUserMedia=async c=>{const stream=await get(c);(window as any).__tracks.push(...stream.getTracks());return stream;};});
   await page.goto('/');await page.getByRole('button',{name:'カメラを起動'}).click();
+  await expect.poll(async () => await page.locator('#error').isVisible() || await page.locator('#latency').innerText() !== '—', { timeout: 30000 }).toBe(true);
+  if (await page.locator('#error').isVisible()) {
+    await expect(page.locator('#error-message')).toHaveText('カメラ接続が終了しました。再試行してください。');
+    console.log('PC模擬カメラの初回Track終了を検出。利用者向けの再試行を1回確認します。');
+    await page.locator('#retry').click();
+  }
   await expect.poll(async()=>{if(await page.locator('#error').isVisible())throw new Error(await page.locator('#error-message').innerText());return page.locator('#latency').innerText();},{timeout:30000}).not.toBe('—');
   await page.getByText('診断情報',{exact:false}).click();await expect(page.locator('#diagnostics')).toContainText('Worker / CPU');
+  await page.locator('video').evaluate((v: HTMLVideoElement) => { (window as any).__modeSwitchStream = v.srcObject; });
+  await page.locator('#mode-select').selectOption('color');await expect(page.locator('#latency')).not.toHaveText('—');
+  await expect(page.locator('#diagnostics')).toContainText('モデル・WASM不使用');
+  await page.locator('#mode-select').selectOption('object');await expect(page.locator('#latency')).not.toHaveText('—',{timeout:60000});
+  expect(await page.locator('video').evaluate((v: HTMLVideoElement) => v.srcObject === (window as any).__modeSwitchStream && (v.srcObject as MediaStream).active)).toBe(true);
   await page.screenshot({path:'docs/pc-preview.png',fullPage:true});
   await page.getByRole('button',{name:'認識 ON'}).click();await expect(page.locator('#count')).toHaveText('0');await expect(page.locator('#latency')).toHaveText('—');
   await page.getByRole('button',{name:'認識 OFF'}).click();await expect(page.locator('#latency')).not.toHaveText('—');
@@ -27,7 +38,9 @@ test('モデル取得失敗の表示と再試行',async({page})=>{
   await page.route('**/models/*.tflite',route=>route.abort());
   await page.goto('/');await page.getByRole('button',{name:'カメラを起動'}).click();await expect(page.locator('#error')).toBeVisible({timeout:60000});
   await expect(page.locator('#error-message')).toContainText('モデル読込失敗');
-  await page.unroute('**/models/*.tflite');await page.getByRole('button',{name:'停止して再試行'}).click();await expect(page.locator('#latency')).not.toHaveText('—',{timeout:60000});
+  expect(await page.locator('video').evaluate((v: HTMLVideoElement) => { (window as any).__originalStream = v.srcObject; return !!v.srcObject && (v.srcObject as MediaStream).active; })).toBe(true);
+  await page.unroute('**/models/*.tflite');await page.getByRole('button',{name:'認識を再試行'}).click();await expect(page.locator('#latency')).not.toHaveText('—',{timeout:60000});
+  expect(await page.locator('video').evaluate((v: HTMLVideoElement) => v.srcObject === (window as any).__originalStream)).toBe(true);
   await page.getByRole('button',{name:'カメラを停止'}).click();
 });
 test('Workerの推論失敗から互換方式へ切替',async({page})=>{

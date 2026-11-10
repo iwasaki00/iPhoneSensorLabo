@@ -4,6 +4,7 @@
 
 ```text
 .gitignore
+.gitattributes
 package.json
 package-lock.json
 tsconfig.json
@@ -16,10 +17,18 @@ src/env.d.ts
 src/core.ts
 src/main.ts
 src/style.css
+src/settings.ts
+src/display.ts
+src/render.ts
 src/modes/types.ts
 src/modes/object-detector.ts
+src/modes/pixels.ts
+src/modes/image-processing.ts
+src/modes/processing-worker.ts
+src/modes/session.ts
 scripts/prepare-assets.mjs
 scripts/check-static-site.mjs
+scripts/check-menu.mjs
 public/vision-worker.js
 public/assets-manifest.json
 public/models/efficientdet_lite0.tflite
@@ -35,7 +44,9 @@ public/licenses/Vite-LICENSE.md
 public/licenses/Playwright-LICENSE.txt
 public/licenses/THIRD_PARTY_NOTICES.md
 tests/core.test.ts
+tests/processing.test.ts
 tests/browser/camera.spec.ts
+tests/browser/processing.spec.ts
 docs/IPHONE_CHECKLIST.md
 docs/EXPERIMENT_TEMPLATE.md
 docs/MODE_EXTENSION.md
@@ -43,6 +54,9 @@ docs/VERIFICATION.md
 docs/FILES.md
 docs/model-source-metadata.json
 docs/pc-preview.png
+docs/V0_2_0.md
+docs/performance-v0.2.0.json
+docs/v0.2.0-shape-split.png
 ```
 
 このほか、ローカル実行用の `node_modules/`、ブラウザテストの `test-results/` を生成しています。これらは.gitignoreで除外しています。ビルド済み `dist/` は親メニューから静的配信するため、モデル・WASM・ライセンスを含めてGit管理対象としています。
