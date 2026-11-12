@@ -1,5 +1,14 @@
 # 採用ライブラリ・モデル・配布条件
 
+v0.3.0追加モデル（確認日: 2026-11-10）:
+
+| モデル | 配布版 | ライセンスと根拠 |
+| --- | --- | --- |
+| SelfieSegmenter (square) | float16 revision 1、249,537 bytes | Apache-2.0。[Googleモデルカード](https://storage.googleapis.com/mediapipe-assets/Model%20Card%20MediaPipe%20Selfie%20Segmentation.pdf)。Google / Tingbo Hou、Siargey Pisarchyk、Karthik Raveendran |
+| SelfieMulticlass 256×256 | float32 revision 1、16,371,837 bytes | Apache-2.0。[Googleモデルカード](https://storage.googleapis.com/mediapipe-assets/Model%20Card%20Multiclass%20Segmentation.pdf)。Google / Adel Ahmadyan |
+
+モデルは無改変で同梱しています。固定URL、カテゴリ、SHA-256は `public/assets-manifest.json` に記録しています。配布時は `public/licenses/Segmentation-APACHE-2.0.txt` と本ファイルを保持してください。ライセンス文書は内容を保ってLFへ改行統一しています。エンジンは既存の `@mediapipe/tasks-vision@0.10.21` を共有し、新たなnpm依存は追加していません。
+
 v0.2.0の色・動き・輪郭処理はCanvas APIと自作TypeScriptによる通常の画像処理です。OpenCV.jsや新たな依存ライブラリ・AIモデルは追加していません。対象処理を長辺320pxに制限でき、HSV・連結領域・Sobel・凸包・重心追跡に必要な処理を小さく実装できるため、OpenCV.jsの追加ダウンロード・WASM初期化・Mat管理を避けました。既存の物体認識の固定版とライセンスは維持しています。
 
 確認日: 2026-11-09。直接依存はpackage.jsonで完全固定し、推移依存はpackage-lock.jsonで固定しています。ライセンス本文は `public/licenses/` に同梱し、静的ビルドにも含めます。

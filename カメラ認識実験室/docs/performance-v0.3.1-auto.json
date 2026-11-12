@@ -1,0 +1,17 @@
+{
+  "at": "2026-11-12T06:48:35.758Z",
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36",
+  "input": "160x240 changing uniform canvas, 15 fps; auto wait base 200ms, capture long edge 256; 8+ completions per model; headless Chrome on this PC (not iPhone)",
+  "samples": {
+    "person": {
+      "performance": "使用モデル: SelfieSegmenter (square)\n実行方式: Image Segmenter / Worker / CPU\nモデル読込・初期化: 457.6 ms\n直近9回の平均推論時間: 60.1 ms\n最大推論時間: 272.8 ms\n取得映像: 160×240 / モデル入力: 256×256\n推論FPS: 3.0\nフレーム間引き: 完了後200ms待機 / キュー蓄積なし / 自動\n映像長辺設定: 256px\n映像加工: 3.7 ms（推論時間とは別）",
+      "renderFPS": "60.1",
+      "inferenceFPS": "3.0"
+    },
+    "parts": {
+      "performance": "使用モデル: SelfieMulticlass 256×256\n実行方式: Image Segmenter / Worker / CPU\nモデル読込・初期化: 1210.3 ms\n直近8回の平均推論時間: 450.0 ms\n最大推論時間: 729.1 ms\n取得映像: 160×240 / モデル入力: 256×256\n推論FPS: 0.8\nフレーム間引き: 完了後700ms待機 / キュー蓄積なし / 自動\n映像長辺設定: 256px\n映像加工: 1.5 ms（推論時間とは別）",
+      "renderFPS": "60.0",
+      "inferenceFPS": "0.8"
+    }
+  }
+}

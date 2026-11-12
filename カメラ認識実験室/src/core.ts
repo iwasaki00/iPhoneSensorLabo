@@ -54,7 +54,9 @@ export class Camera {
 }
 export class Rate {
   private times: number[] = [];
-  tick(now: number) { this.times.push(now); this.times=this.times.filter(t=>t>=now-2000); }
-  value(now: number) { this.times=this.times.filter(t=>t>=now-2000); return this.times.length<2 ? null : (this.times.length-1)*1000/(this.times.at(-1)!-this.times[0]); }
+  private windowMs: number;
+  constructor(windowMs = 2000) { this.windowMs = windowMs; }
+  tick(now: number) { this.times.push(now); this.times=this.times.filter(t=>t>=now-this.windowMs); }
+  value(now: number) { this.times=this.times.filter(t=>t>=now-this.windowMs); return this.times.length<2 ? null : (this.times.length-1)*1000/(this.times.at(-1)!-this.times[0]); }
   reset() { this.times=[]; }
 }

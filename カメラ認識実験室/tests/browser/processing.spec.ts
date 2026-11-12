@@ -58,7 +58,7 @@ test('3モード切替・HSVタップ・比較表示はカメラを再起動せ�
   await page.locator('#mode-select').selectOption('shape'); await expect(page.locator('#latency')).not.toHaveText('—');
   await expect(page.locator('#result-info')).toContainText('円形'); await expect(page.locator('#result-info')).toContainText('三角形');
   expect(await page.evaluate(() => (window as any).__cameraStarts)).toBe(1);
-  await page.screenshot({ path: 'docs/v0.2.0-shape-split.png', fullPage: true });
+  await page.screenshot({ path: 'docs/v0.3.0-legacy-modes.png', fullPage: true });
   expect(await page.evaluate(() => (document.querySelector('video') as HTMLVideoElement).srcObject === (window as any).__stream)).toBe(true);
   await page.locator('summary').filter({ hasText: '詳細設定' }).click();
   await page.locator('#shape-sensitivity').evaluate((input: HTMLInputElement) => { input.value = '73'; input.dispatchEvent(new Event('input', { bubbles: true })); });

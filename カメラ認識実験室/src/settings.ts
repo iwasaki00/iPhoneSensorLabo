@@ -1,4 +1,4 @@
-export type ModeId = 'object' | 'color' | 'motion' | 'shape';
+export type ModeId = 'object' | 'color' | 'motion' | 'shape' | 'segmentation';
 export type ViewId = 'normal' | 'before' | 'after' | 'split';
 export type HSV = { h: number; s: number; v: number };
 export type Settings = {
@@ -18,7 +18,7 @@ export function parseSettings(text: string | null): Settings {
   let v: Partial<Settings> = {};
   try { const parsed = JSON.parse(text ?? '{}'); if (parsed && typeof parsed === 'object') v = parsed; } catch { /* use defaults */ }
   return {
-    mode: ['object', 'color', 'motion', 'shape'].includes(v.mode ?? '') ? v.mode! : defaults.mode,
+    mode: ['object', 'color', 'motion', 'shape', 'segmentation'].includes(v.mode ?? '') ? v.mode! : defaults.mode,
     view: ['normal', 'before', 'after', 'split'].includes(v.view ?? '') ? v.view! : defaults.view,
     target: { h: clamp(v.target?.h, 0, 0, 359), s: clamp(v.target?.s, 0.75, 0, 1), v: clamp(v.target?.v, 0.8, 0, 1) },
     hueTolerance: clamp(v.hueTolerance, 22, 1, 90),

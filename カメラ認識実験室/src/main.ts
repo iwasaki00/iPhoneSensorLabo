@@ -7,39 +7,62 @@ import { ImageProcessingMode } from './modes/image-processing';
 import { ModeSession } from './modes/session';
 import { rgbToHsv } from './modes/pixels';
 import type { RecognitionMode } from './modes/types';
+import { loadSegmentSettings, modelForTab } from './segmentation/settings';
+import { segmentModels, InferenceStats } from './segmentation/models';
+import { SegmentPanel } from './segmentation/panel';
+import { AdaptiveLoad, maskValid } from './segmentation/stability';
+import { bindExperiments } from './experiments';
 
 const el = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const video = el<HTMLVideoElement>('video'), overlay = el<HTMLCanvasElement>('overlay');
 const start = el<HTMLButtonElement>('start'), switchButton = el<HTMLButtonElement>('switch'), recognition = el<HTMLButtonElement>('recognition');
 const threshold = el<HTMLInputElement>('threshold'), resolution = el<HTMLSelectElement>('resolution'), interval = el<HTMLSelectElement>('interval');
 const modeSelect = el<HTMLSelectElement>('mode-select'), viewSelect = el<HTMLSelectElement>('view-select');
-const camera = new Camera(video), cameraRate = new Rate(), renderRate = new Rate(), detectRate = new Rate();
+const camera = new Camera(video), cameraRate = new Rate(), renderRate = new Rate(), detectRate = new Rate(10000);
 const analysis = document.createElement('canvas'), renderer = new VisionRenderer(), session = new ModeSession();
 const settings = loadSettings();
-const titles: Record<ModeId, string> = { object: '物体認識', color: '色認識', motion: '動体検出', shape: '輪郭・図形認識' };
+const segmentSettings = loadSegmentSettings(), segmentStats = new InferenceStats();
+const load = new AdaptiveLoad();
+const titles: Record<ModeId, string> = { object: '物体認識', color: '色認識', motion: '動体検出', shape: '輪郭・図形認識', segmentation: '領域認識' };
 let mode: RecognitionMode | undefined, active = false, starting = false, enabled = true, facing: 'user' | 'environment' = 'environment';
 let cameraGeneration = 0, modeGeneration = 0, resultGeneration = 0, raf = 0, videoCallback = 0;
 let timer: ReturnType<typeof setTimeout> | undefined, latency: number | null = null;
 let raw: RawDetection[] = [], resultW = 1, resultH = 1, resultAt = 0, lastVideoTime = -1, lastInferenceTime = -1;
 let inFlight: Promise<void> | undefined;
 const status = (message: string) => { el('status').textContent = message; };
+const segmentPanel = new SegmentPanel(segmentSettings, renderer, (reload, invalidate) => {
+  if (settings.mode !== 'segmentation') return;
+  if (reload) void activateMode();
+  else { if (invalidate) clearResults(); diagnostics(); resultInfo(); }
+});
 
 function persist() { el('storage-status').hidden = saveSettings(settings); }
 function diagnostics() {
   el('diagnostics').textContent = [
-    'Version: 0.2.0 / COLOR & MOTION LAB', `認識モード: ${titles[settings.mode]}`, `比較表示: ${settings.view}`,
+    'Version: 0.3.1 / PERFORMANCE & STABILITY', `認識モード: ${titles[settings.mode]}`, `比較表示: ${settings.view}`,
     `安全な接続: ${isSecureContext}`, `カメラAPI: ${!!navigator.mediaDevices?.getUserMedia}`,
     `映像FPS: ${'requestVideoFrameCallback' in video ? '映像フレーム通知' : 'API非対応（数値なし）'}`,
-    '描画FPS: 実描画のrAF通知 / 認識FPS: 処理完了通知', `実行方式: ${mode?.runtime ?? '未初期化'}`,
-    settings.mode === 'object' ? 'モデル: EfficientDet-Lite0 int8 revision 1 / MediaPipe 0.10.21' : 'モデル・WASM不使用 / Canvas画素処理',
-    `映像: ${video.videoWidth} × ${video.videoHeight}`, `解析: ${resultW} × ${resultH}（画像処理は長辺320pxまで）`,
-    `完了後の認識間隔: ${interval.value}ms`, `カメラ設定: ${JSON.stringify(camera.settings() ?? {})}`,
+    '描画FPS: 実描画のrAF通知（2秒窓） / 認識FPS: 処理完了通知（10秒窓）', `実行方式: ${mode?.runtime ?? '未初期化'}`,
+    settings.mode === 'object' ? 'モデル: EfficientDet-Lite0 int8 revision 1 / MediaPipe 0.10.21' : settings.mode === 'segmentation' ? `モデル: ${segmentModels[modelForTab(segmentSettings.tab)].name} / MediaPipe 0.10.21 / CPU` : 'モデル・WASM不使用 / Canvas画素処理',
+    `映像: ${video.videoWidth} × ${video.videoHeight}`, `解析: ${resultW} × ${resultH}（${settings.mode === 'segmentation' ? '領域モデル入力256×256' : '画像処理は長辺320pxまで'}）`,
+    `完了後の認識間隔: ${waitMs()}ms`, `カメラ設定: ${JSON.stringify(camera.settings() ?? {})}`,
     `信頼度: ${threshold.value}% / 物体最大20件・画像処理最大24領域`, `UA: ${navigator.userAgent}`
   ].join('\n');
+  const stats = segmentStats.value;
+  el('segment-performance').textContent = [
+    `使用モデル: ${segmentModels[modelForTab(segmentSettings.tab)].name}`,
+    `実行方式: ${mode?.runtime ?? '未初期化'}`, `モデル読込・初期化: ${mode?.loadMs ? mode.loadMs.toFixed(1) + ' ms' : '未計測'}`,
+    `直近${stats.count}回の平均推論時間: ${stats.average?.toFixed(1) ?? '—'} ms`, `最大推論時間: ${stats.maximum?.toFixed(1) ?? '—'} ms`,
+    `取得映像: ${resultW}×${resultH} / モデル入力: 256×256`, `推論FPS: ${detectRate.value(performance.now())?.toFixed(1) ?? '—'}`,
+    `フレーム間引き: 完了後${waitMs()}ms待機 / キュー蓄積なし / ${segmentSettings.loadMode === 'auto' ? '自動' : '手動'}`, `映像長辺設定: ${segmentSettings.resolution}px`,
+    `映像加工: ${segmentPanel.compositionMs?.toFixed(1) ?? '—'} ms（推論時間とは別）`
+  ].join('\n');
+  el('segment-load-status').textContent = load.heavy ? `高負荷（処理時間の実測に基づく） / ${segmentSettings.loadMode === 'auto' ? '待機時間を自動調整' : '手動設定中：間隔を広げると負荷を軽減できます'} / ${waitMs()} ms待機` : `${segmentSettings.loadMode === 'auto' ? '自動調整' : '手動設定'} / ${waitMs()} ms待機`;
 }
 function showError(error: unknown) { el('error-message').textContent = errorMessage(error); el('error').hidden = false; el<HTMLButtonElement>('retry').textContent = active ? '認識を再試行' : 'カメラを再試行'; }
 function clearResults() {
   resultGeneration++; raw = []; renderer.clear(); resultAt = 0; latency = null; detectRate.reset();
+  segmentStats.reset(); load.reset(); segmentPanel.clear();
   el('count').textContent = '0'; el('result-info').textContent = '認識結果を待っています。';
   el('detect-fps').textContent = '—'; el('latency').textContent = '—';
 }
@@ -72,14 +95,15 @@ async function begin() {
   } catch (e) { if (token === cameraGeneration) cameraFailure(e); }
 }
 async function activateMode() {
-  const token = ++modeGeneration, cameraToken = cameraGeneration, selected = settings.mode;
+  const token = ++modeGeneration, cameraToken = cameraGeneration, selected = settings.mode, selectedModel = modelForTab(segmentSettings.tab);
   clearTimeout(timer); mode = undefined; clearResults(); el('error').hidden = true;
   if (!active || !enabled) { session.dispose(); return; }
-  status(selected === 'object' ? 'モデルを読み込み中… 初回は少し時間がかかります。' : `${titles[selected]}を準備中…`);
-  el('state').textContent = selected === 'object' ? 'モデル読込中' : '画像処理準備中';
+  status(selected === 'object' ? 'モデルを読み込み中… 初回は少し時間がかかります。' : selected === 'segmentation' ? `${segmentModels[selectedModel].name}を取得・初期化中… 初回は時間がかかります。` : `${titles[selected]}を準備中…`);
+  el('state').textContent = selected === 'object' || selected === 'segmentation' ? 'モデル読込中' : '画像処理準備中';
   try {
     const ready = await session.select(async () => {
       if (selected === 'object') { const { ObjectMode } = await import('./modes/object-detector'); return new ObjectMode(); }
+      if (selected === 'segmentation') { const { SegmentMode } = await import('./modes/segmenter'); return new SegmentMode(selectedModel); }
       return new ImageProcessingMode(selected, settings);
     });
     if (!ready || token !== modeGeneration || cameraToken !== cameraGeneration || !enabled) return;
@@ -87,7 +111,7 @@ async function activateMode() {
     status(`${titles[selected]}を端末内で実行中。映像は送信されません。`); el('state').textContent = `${titles[selected]}中`;
     diagnostics(); schedule();
   } catch (e) {
-    if (token === modeGeneration && cameraToken === cameraGeneration) recognitionFailure(new Error(`${selected === 'object' ? 'モデル読込失敗' : '画像処理の初期化失敗'}: ${errorMessage(e)} ${selected === 'object' ? '同じサイトのモデル・WASM配置を確認してください。' : ''}`));
+    if (token === modeGeneration && cameraToken === cameraGeneration) recognitionFailure(new Error(`${selected === 'object' || selected === 'segmentation' ? 'モデル読込失敗' : '画像処理の初期化失敗'}: ${errorMessage(e)} ${selected === 'object' || selected === 'segmentation' ? '接続、同じサイトのモデル・WASM配置、空きメモリを確認し、認識を再試行してください。' : ''}`));
   }
 }
 function frameCounter(token: number) {
@@ -96,9 +120,15 @@ function frameCounter(token: number) {
 }
 function draw(token: number) {
   if (token !== cameraGeneration || !active) return;
-  const now = performance.now(), visible = enabled && now - resultAt < 2000;
-  renderer.draw(overlay, video, settings.view, facing === 'user', visible, settings.mode); renderRate.tick(performance.now());
-  el('count').textContent = String(visible ? renderer.observations.length + renderer.regions.length : 0);
+  const now = performance.now(), visible = enabled && maskValid(resultAt, now, settings.mode === 'segmentation' ? segmentSettings.maskTtl : 2000);
+  if (settings.mode === 'segmentation' && resultAt > 0 && !visible) {
+    resultAt = 0; renderer.clear(); segmentPanel.clear();
+    el('segment-reason').textContent = 'マスクの有効期限が切れました。次の結果まで元映像を表示します。';
+  }
+  try { renderer.draw(overlay, video, settings.view, facing === 'user', visible, settings.mode); }
+  catch (error) { recognitionFailure(error); renderer.draw(overlay, video, settings.view, facing === 'user', false, settings.mode); }
+  renderRate.tick(performance.now());
+  el('count').textContent = String(visible ? settings.mode === 'segmentation' ? segmentPanel.count : renderer.observations.length + renderer.regions.length : 0);
   el('camera-fps').textContent = cameraRate.value(now)?.toFixed(1) ?? '—';
   el('render-fps').textContent = renderRate.value(performance.now())?.toFixed(1) ?? '—';
   el('detect-fps').textContent = enabled ? detectRate.value(now)?.toFixed(1) ?? '—' : '—';
@@ -107,8 +137,9 @@ function draw(token: number) {
 }
 function schedule() {
   clearTimeout(timer);
-  if (active && enabled && mode) timer = setTimeout(run, Number(interval.value));
+  if (active && enabled && mode) timer = setTimeout(run, waitMs());
 }
+function waitMs() { return settings.mode === 'segmentation' ? load.wait(segmentSettings.loadMode, segmentSettings.interval) : Number(interval.value); }
 function run() {
   if (!active || !enabled || !mode) return;
   // A disposed asynchronous mode may still be unwinding. Never overlap captures.
@@ -119,7 +150,7 @@ async function infer() {
   if (video.readyState < 2 || !video.videoWidth || video.currentTime === lastVideoTime) return;
   const current = mode!, token = modeGeneration, revision = resultGeneration;
   lastVideoTime = video.currentTime;
-  const limit = settings.mode === 'object' ? Number(resolution.value) : Math.min(320, Number(resolution.value));
+  const limit = settings.mode === 'object' ? Number(resolution.value) : settings.mode === 'segmentation' ? segmentSettings.resolution : Math.min(320, Number(resolution.value));
   const scale = Math.min(1, limit / Math.max(video.videoWidth, video.videoHeight));
   analysis.width = Math.max(1, Math.round(video.videoWidth * scale)); analysis.height = Math.max(1, Math.round(video.videoHeight * scale));
   try {
@@ -129,13 +160,30 @@ async function infer() {
     if (token !== modeGeneration || revision !== resultGeneration || mode !== current || !enabled) return;
     raw = result.detections ?? []; resultW = analysis.width; resultH = analysis.height;
     renderer.setResult(resultW, resultH, result.regions ?? [], result.mask, settings.mode);
+    segmentStats.add(result.duration);
+    if (result.segmentation) {
+      // Age is measured from capture, not completion: slow results are not made fresh.
+      if (!maskValid(timestamp, performance.now(), segmentSettings.maskTtl)) { load.add(performance.now() - timestamp); latency = result.duration; detectRate.tick(performance.now()); diagnostics(); return; }
+      segmentPanel.update(result.segmentation, timestamp);
+      load.add(performance.now() - timestamp);
+    }
     renderer.observations = convert(raw, Number(threshold.value) / 100);
-    resultAt = performance.now(); latency = result.duration; detectRate.tick(resultAt);
+    resultAt = result.segmentation ? timestamp : performance.now(); latency = result.duration; detectRate.tick(performance.now());
     if (result.note) status(result.note);
     resultInfo(); diagnostics();
   } catch (e) { if (token === modeGeneration && mode === current) recognitionFailure(new Error(`認識処理失敗: ${errorMessage(e)}`)); }
 }
+bindExperiments(() => {
+  if (!active || !mode || !segmentStats.value.count) return null;
+  const now = performance.now(), stats = segmentStats.value;
+  return { version: '0.3.1', at: new Date().toISOString(), mode: titles[settings.mode] + (settings.mode === 'segmentation' ? '/' + segmentSettings.tab : ''),
+    model: settings.mode === 'segmentation' ? segmentModels[modelForTab(segmentSettings.tab)].name : settings.mode === 'object' ? 'EfficientDet-Lite0 int8 revision 1' : 'モデル不使用',
+    resolution: `${resultW}×${resultH}`, renderFPS: renderRate.value(now), inferenceFPS: detectRate.value(now), averageMs: stats.average, maximumMs: stats.maximum,
+    waitMs: waitMs(), loadMode: settings.mode === 'segmentation' ? segmentSettings.loadMode : 'manual', runtime: mode.runtime,
+    userAgent: navigator.userAgent, language: navigator.language, platform: navigator.platform, cores: Number.isFinite(navigator.hardwareConcurrency) ? navigator.hardwareConcurrency : null };
+});
 function resultInfo() {
+  if (settings.mode === 'segmentation') { el('result-info').textContent = el('segment-categories').textContent + (segmentPanel.reason ? '\n' + segmentPanel.reason : ''); return; }
   if (settings.mode === 'object') { el('result-info').textContent = renderer.observations.map(o => `${o.label} / ${(o.score * 100).toFixed(1)}% / x:${o.box.x.toFixed(0)} y:${o.box.y.toFixed(0)} w:${o.box.width.toFixed(0)} h:${o.box.height.toFixed(0)}`).join('\n') || '検出なし'; return; }
   const pane = displayPanes(overlay.clientWidth, overlay.clientHeight, settings.view).at(-1)!;
   const displayScale = Math.min(pane.width / Math.max(1, video.videoWidth), pane.height / Math.max(1, video.videoHeight));
@@ -153,7 +201,10 @@ const controls: [keyof Settings, string, string][] = [
 function syncUI() {
   modeSelect.value = settings.mode; viewSelect.value = settings.view;
   document.querySelectorAll<HTMLElement>('[data-modes]').forEach(element => { element.hidden = !element.dataset.modes!.split(' ').includes(settings.mode); });
-  el('mode-kind').textContent = settings.mode === 'object' ? '端末内AI' : 'モデル不要';
+  el('mode-kind').textContent = settings.mode === 'object' || settings.mode === 'segmentation' ? '端末内AI' : 'モデル不要';
+  el('count-unit').textContent = settings.mode === 'segmentation' ? '種類を検出' : '個を認識';
+  el('legacy-resolution-row').hidden = settings.mode === 'segmentation';
+  el('legacy-interval-row').hidden = settings.mode === 'segmentation';
   for (const [key, id, unit] of controls) { el<HTMLInputElement>(id).value = String(settings[key]); el(id + '-value').textContent = `${id.includes('tolerance') ? '±' : ''}${settings[key]}${unit}`; }
   const target = settings.target;
   el('color-target').textContent = `追跡色 H${target.h.toFixed(0)}° S${(target.s * 100).toFixed(0)}% V${(target.v * 100).toFixed(0)}%`;

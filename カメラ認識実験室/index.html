@@ -4,21 +4,32 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#10191e" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; connect-src 'self'; img-src 'self' data:; style-src 'self'; media-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'none'" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; connect-src 'self'; img-src 'self' data: blob:; style-src 'self'; media-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'none'" />
   <title>Camera Vision Lab</title>
 </head>
 <body>
   <div id="app">
-    <header><div><span class="eyebrow">CAMERA VISION LAB / 014</span><h1>カメラ認識実験室</h1></div><span class="version">v0.2.0</span></header>
+    <header><div><span class="eyebrow">CAMERA VISION LAB / 014</span><h1>カメラ認識実験室</h1></div><span class="version">v0.3.1</span></header>
     <main>
-      <div class="mode"><span class="dot"></span> COLOR &amp; MOTION LAB <span class="local" id="mode-kind">端末内AI</span></div>
+      <div class="mode"><span class="dot"></span> PERFORMANCE &amp; STABILITY <span class="local" id="mode-kind">端末内AI</span></div>
       <div class="view-control"><label for="view-select">比較表示</label><select id="view-select"><option value="normal">通常表示</option><option value="before">BEFORE（元映像）</option><option value="after">AFTER（認識結果）</option><option value="split">左右比較</option></select></div>
       <section class="viewport" aria-label="カメラ映像と認識結果">
         <video id="video" autoplay muted playsinline></video><canvas id="overlay"></canvas>
         <div id="placeholder"><span class="viewfinder">⌖</span><strong>身のまわりを、観察する。</strong><p>カメラを起動して認識実験を始めます。</p></div>
-        <div class="viewport-top"><span id="state">停止中</span><span><b id="count">0</b> 個を認識</span></div>
+        <div class="viewport-top"><span id="state">停止中</span><span><b id="count">0</b> <span id="count-unit">個を認識</span></span></div>
       </section>
       <div class="metrics"><div><b id="camera-fps">—</b><span>映像 FPS</span></div><div><b id="render-fps">—</b><span>描画 FPS</span></div><div><b id="detect-fps">—</b><span>認識 FPS</span></div><div><b id="latency">—</b><span>処理 ms</span></div></div>
+      <section class="mode-help segment-panel" data-modes="segmentation" hidden aria-label="領域認識の操作">
+        <label for="segment-tab">実験</label><select id="segment-tab"><option value="person">人物</option><option value="parts">部位</option><option value="background">背景加工</option><option value="partial">部分加工</option></select>
+        <div class="mode-settings" data-segment-tabs="person"><label for="segment-person-view">人物の表示</label><select id="segment-person-view"><option value="original">元映像</option><option value="highlight">人物領域の強調</option><option value="person">人物だけ</option><option value="background">背景だけ</option><option value="mask">マスク可視化</option></select></div>
+        <div class="mode-settings" data-segment-tabs="background" hidden><label for="segment-background">背景の加工</label><select id="segment-background"><option value="blur">背景ぼかし</option><option value="solid">単色に変更</option><option value="image">端末内の画像に差替え</option><option value="dark">背景を暗くする</option></select></div>
+        <div class="mode-settings" data-segment-tabs="partial" hidden><label for="segment-partial">部分加工</label><select id="segment-partial"><option value="hair">髪の色を変更</option><option value="clothes">服の色を変更</option><option value="mono">対象領域だけモノクロ</option><option value="outside-mono">対象以外をモノクロ</option></select></div>
+        <div class="mode-settings" id="segment-target-row" hidden><label for="segment-target">対象部位</label><select id="segment-target"><option value="1">髪</option><option value="2">体の肌</option><option value="3">顔の肌</option><option value="4">服</option><option value="5">その他（装飾品等）</option><option value="0">背景</option></select></div>
+        <div id="segment-color-row" hidden><label for="segment-color">加工色</label><input id="segment-color" type="color" value="#744cce" /></div>
+        <div id="segment-image-row" hidden><label for="segment-image">端末内の背景画像（15MBまで）</label><input id="segment-image" type="file" accept="image/*" /><p id="segment-image-status">画像未選択。サーバーへの送信・保存は行いません。</p><button id="segment-clear-image">背景画像を解放</button></div>
+        <p id="segment-model-name"></p><div id="segment-legend" aria-label="マスクの色凡例"></div><p class="hint">元映像はライブ表示。加工は最大15 FPSで更新し、直近のマスクを使います。高速な動きでは境界が遅れる場合があります。</p><p id="segment-load-status" role="status"></p><p id="segment-reason" role="status"></p>
+        <details><summary>部位の検出状態・占有率</summary><pre id="segment-categories">マスク取得を待っています。</pre></details>
+      </section>
       <div class="mode-help" data-modes="color" hidden><span id="color-swatch" aria-hidden="true"></span><span id="color-target">追跡色：赤（初期値）</span><p>映像をタップして追跡色を指定。複数の同色領域を追跡します。</p></div>
       <div class="mode-help" data-modes="motion" hidden><button id="reset-background">背景基準を再取得</button><p>固定カメラ用です。カメラを動かすと背景全体を検出する場合があります。速度は表示上のpx/sで、物理速度ではありません。</p></div>
       <div class="mode-help" data-modes="shape" hidden><p>背景との境界がはっきりした図形で実験してください。判定が難しい形は「未分類の輪郭」と表示します。</p></div>
@@ -36,13 +47,27 @@
         <div class="mode-settings" data-modes="motion" hidden><label for="motion-sensitivity">動体検出の感度 <output id="motion-sensitivity-value">60</output></label><input id="motion-sensitivity" type="range" min="1" max="100" value="60" /><p class="hint">値を上げると小さな明るさの差も検出します。静止判定は約1.2秒です。</p></div>
         <div class="mode-settings" data-modes="shape" hidden><label for="shape-sensitivity">輪郭検出の感度 <output id="shape-sensitivity-value">60</output></label><input id="shape-sensitivity" type="range" min="1" max="100" value="60" /></div>
         <div class="mode-settings" data-modes="color motion shape" hidden><label for="min-area">ノイズ除外の最小面積 <output id="min-area-value">40 px²</output></label><input id="min-area" type="range" min="8" max="1000" step="8" value="40" /><p class="hint">解析画像の座標です。直線は長さ18px以上を対象にします。</p></div>
-        <label for="resolution">解析サイズ（長辺）</label><select id="resolution"><option value="320">320 px / 軽量</option><option value="480" selected>480 px / 標準</option><option value="640">640 px / 詳細</option></select>
-        <label for="interval">認識間隔（完了から次の開始まで）</label><select id="interval"><option value="100">100 ms</option><option value="200" selected>200 ms</option><option value="500">500 ms</option></select>
+        <div class="mode-settings" data-modes="segmentation" hidden>
+          <label for="segment-load">負荷調整</label><select id="segment-load"><option value="auto">自動（処理時間から間隔を調整）</option><option value="manual">手動（品質・間隔を自分で設定）</option></select>
+          <label><input id="segment-smoothing" type="checkbox" checked /> マスク平滑化・孤立ノイズ除去</label>
+          <label for="segment-temporal">時系列補正の強さ <output id="segment-temporal-value">50</output></label><input id="segment-temporal" type="range" min="0" max="100" value="50" />
+          <label for="segment-ttl">マスクの有効期限（撮影時点から）</label><select id="segment-ttl"><option value="500">500 ms</option><option value="1000">1000 ms</option><option value="2000" selected>2000 ms</option><option value="5000">5000 ms</option></select>
+          <div class="mode-settings" id="segment-boundary-row"><label for="segment-boundary">境界の滑らかさ・補正 <output id="segment-boundary-value">35</output></label><input id="segment-boundary" type="range" min="0" max="100" value="35" /></div>
+          <div class="mode-settings" id="segment-blur-row"><label for="segment-blur">背景ぼかし強度 <output id="segment-blur-value">10 px</output></label><input id="segment-blur" type="range" min="0" max="24" value="10" /></div>
+          <label for="segment-resolution">推論へ渡す映像の長辺</label><select id="segment-resolution"><option value="160">160 px / 軽量</option><option value="256">256 px / 標準</option><option value="384">384 px / 詳細</option></select>
+          <label for="segment-interval">推論間隔（完了後の待機・フレーム間引き）</label><select id="segment-interval"><option value="100">100 ms</option><option value="200">200 ms</option><option value="500">500 ms</option><option value="1000">1000 ms</option></select>
+          <p class="hint">モデル内部の入力は256×256に固定です。未処理フレームは蓄積せず、直近の映像だけを解析します。</p>
+          <button id="segment-reset">負荷・品質設定を初期値に戻す</button>
+        </div>
+        <div id="legacy-resolution-row" class="mode-settings"><label for="resolution">解析サイズ（長辺）</label><select id="resolution"><option value="320">320 px / 軽量</option><option value="480" selected>480 px / 標準</option><option value="640">640 px / 詳細</option></select></div>
+        <div id="legacy-interval-row" class="mode-settings"><label for="interval">認識間隔（完了から次の開始まで）</label><select id="interval"><option value="100">100 ms</option><option value="200" selected>200 ms</option><option value="500">500 ms</option></select></div>
       </div></details>
       <details><summary>診断情報 <span>実行環境・モデル</span></summary><pre id="diagnostics"></pre></details>
-      <p class="privacy">映像の送信・保存なし。設定のみブラウザ内に保存。<br>物体認識だけが同じサイトのモデル・WASMを使用します。</p>
+      <details data-modes="segmentation" hidden><summary>領域認識の性能 <span>平均・最大・読込時間</span></summary><pre id="segment-performance">未計測</pre></details>
+      <details><summary>実験記録 <span>計測値の保存・書き出し</span></summary><p>日時・設定・計測値・取得可能な端末情報のみ。映像・画像は保存しません。</p><button id="record-save">現在の計測値を記録</button><button id="record-json">JSONを書き出す</button><button id="record-csv">CSVを書き出す</button><button id="record-trim">最新10件を残す</button><button id="record-clear">記録をすべて削除</button><p id="record-status" role="status"></p><pre id="record-list"></pre></details>
+      <p class="privacy">映像の送信・保存なし。設定・実験記録をブラウザ内に保存。<br>物体・領域認識は同じサイトのモデル・WASMを使用します。</p>
     </main>
-    <footer><div class="mode-control"><label for="mode-select">認識モード</label><select id="mode-select"><option value="object">物体認識</option><option value="color">色認識</option><option value="motion">動体検出</option><option value="shape">輪郭・図形認識</option></select></div><button id="start" class="primary">カメラを起動</button><div class="secondary"><button id="switch">前面に切替</button><button id="recognition" aria-pressed="true">認識 ON</button></div></footer>
+    <footer><div class="mode-control"><label for="mode-select">認識モード</label><select id="mode-select"><option value="object">物体認識</option><option value="color">色認識</option><option value="motion">動体検出</option><option value="shape">輪郭・図形認識</option><option value="segmentation">領域認識</option></select></div><button id="start" class="primary">カメラを起動</button><div class="secondary"><button id="switch">前面に切替</button><button id="recognition" aria-pressed="true">認識 ON</button></div></footer>
   </div>
   <script type="module" src="/src/main.ts"></script>
 </body>

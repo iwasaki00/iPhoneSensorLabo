@@ -1,0 +1,8 @@
+{
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36",
+  "input": "Google MediaPipe portrait.jpg test image at 160x240; synthetic video stream",
+  "samples": {
+    "person": "使用モデル: SelfieSegmenter (square)\n実行方式: Image Segmenter / Worker / CPU\nモデル読込・初期化: 191.4 ms\n直近6回の平均推論時間: 29.3 ms\n最大推論時間: 67.8 ms\n取得映像: 160×240 / モデル入力: 256×256\n推論FPS: 7.3\nフレーム間引き: 完了後100ms待機 / キュー蓄積なし\n映像長辺設定: 256px\n映像加工: 3.2 ms（推論時間とは別）",
+    "parts": "使用モデル: SelfieMulticlass 256×256\n実行方式: Image Segmenter / Worker / CPU\nモデル読込・初期化: 1186.8 ms\n直近6回の平均推論時間: 443.5 ms\n最大推論時間: 587.4 ms\n取得映像: 160×240 / モデル入力: 256×256\n推論FPS: 1.9\nフレーム間引き: 完了後100ms待機 / キュー蓄積なし\n映像長辺設定: 256px\n映像加工: 3.8 ms（推論時間とは別）"
+  }
+}

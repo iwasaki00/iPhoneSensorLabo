@@ -6,6 +6,36 @@
     "revision": 1,
     "url": "https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite0/int8/1/efficientdet_lite0.tflite"
   },
+  "segmentModels": [
+    {
+      "name": "SelfieSegmenter (square)",
+      "file": "selfie_segmenter.tflite",
+      "variant": "float16",
+      "revision": 1,
+      "categories": [
+        "background",
+        "person"
+      ],
+      "url": "https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_segmenter/float16/1/selfie_segmenter.tflite",
+      "license": "Apache-2.0"
+    },
+    {
+      "name": "SelfieMulticlass 256x256",
+      "file": "selfie_multiclass_256x256.tflite",
+      "variant": "float32",
+      "revision": 1,
+      "categories": [
+        "background",
+        "hair",
+        "body-skin",
+        "face-skin",
+        "clothes",
+        "others"
+      ],
+      "url": "https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_multiclass_256x256/float32/1/selfie_multiclass_256x256.tflite",
+      "license": "Apache-2.0"
+    }
+  ],
   "files": [
     {
       "path": "models/efficientdet_lite0.tflite",
@@ -36,6 +66,16 @@
       "path": "vendor/wasm/vision_wasm_nosimd_internal.wasm",
       "bytes": 9448638,
       "sha256": "3821ea9b1f7fb8c549ef2a064ef5c85750bf375c545a49fd6eea0df44a95f1f4"
+    },
+    {
+      "path": "models/selfie_segmenter.tflite",
+      "bytes": 249537,
+      "sha256": "191ac9529ae506ee0beefa6b2c945a172dab9d07d1e802a290a4e4038226658b"
+    },
+    {
+      "path": "models/selfie_multiclass_256x256.tflite",
+      "bytes": 16371837,
+      "sha256": "c6748b1253a99067ef71f7e26ca71096cd449baefa8f101900ea23016507e0e0"
     }
   ]
 }

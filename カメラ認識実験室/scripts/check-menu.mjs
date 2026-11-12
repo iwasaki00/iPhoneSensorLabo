@@ -8,6 +8,7 @@ import assert from 'node:assert/strict';
 import { chromium } from '@playwright/test';
 
 const project = fileURLToPath(new URL('../', import.meta.url));
+const version = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8')).version;
 const repo = path.dirname(path.resolve(project)), folder = path.basename(path.resolve(project));
 const result = spawnSync('git', ['ls-files', '--cached', '--others', '--exclude-standard', '-z', '--', 'index.html', 'style.css', `${folder}/dist/`], { cwd: repo, encoding: 'utf8', windowsHide: true });
 assert.equal(result.status, 0, result.stderr);
@@ -46,9 +47,9 @@ try {
   });
   await page.goto(origin + '/repository/');
   const card = page.locator(`a[href="${folder}/dist/"]`);
-  assert.equal(await card.count(), 1); assert.ok((await card.innerText()).includes('0.2.0'));
+  assert.equal(await card.count(), 1); assert.ok((await card.innerText()).includes(version));
   await card.click();
-  await page.waitForFunction(() => document.querySelector('#diagnostics')?.textContent.includes('Version: 0.2.0'));
+  await page.waitForFunction(version => document.querySelector('#diagnostics')?.textContent.includes('Version: ' + version), version);
   assert.equal(decodeURI(new URL(page.url()).pathname), `/repository/${folder}/dist/`);
   await page.locator('#mode-select').selectOption('object');
   await page.locator('#start').click();
@@ -59,9 +60,12 @@ try {
   await page.waitForFunction(() => document.querySelector('#count')?.textContent === '1', null, { timeout: 15000 });
   const colorDiagnostics = await page.locator('#diagnostics').textContent();
   assert.ok(colorDiagnostics.includes('画像処理 Worker'), colorDiagnostics);
+  await page.locator('#mode-select').selectOption('segmentation');
+  await page.waitForFunction(() => { const text = document.querySelector('#segment-performance')?.textContent; return !!text && /直近[1-9]\d*回/.test(text); }, null, { timeout: 60000 });
+  assert.ok((await page.locator('#diagnostics').textContent()).includes('Image Segmenter'));
   await page.locator('#start').click();
   assert.deepEqual(errors, []); assert.deepEqual(failed, []); assert.deepEqual(external, []);
-  console.log(`PASS: ${files.length} Git-eligible static files; parent menu and repository subpath; real model + pixel Worker; no HTTP/page errors or external requests.`);
+  console.log(`PASS: ${files.length} Git-eligible static files; parent menu and repository subpath; object + pixel + segmentation; no HTTP/page errors or external requests.`);
 } finally {
   await browser?.close();
   if (server) await new Promise(resolve => server.close(resolve));

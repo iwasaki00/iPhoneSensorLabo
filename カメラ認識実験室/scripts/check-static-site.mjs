@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 const root = new URL('../', import.meta.url);
 const dist = new URL('dist/', root);
 const html = await readFile(new URL('index.html', dist), 'utf8');
-const paths = ['index.html', 'vision-worker.js', 'assets-manifest.json'];
+const paths = ['index.html', 'vision-worker.js', 'segmentation-worker.js', 'assets-manifest.json'];
 for (const [, reference] of html.matchAll(/(?:src|href)="([^"]+)"/g)) {
   assert.ok(!reference.startsWith('/') && !reference.endsWith('.ts'), `静的配信できない参照: ${reference}`);
   paths.push(reference);
