@@ -1,6 +1,8 @@
+import { parseMultiRecord, type MultiRecord } from './multi/record.ts';
 export const RECORD_KEY = 'camera-vision-lab.experiments.v1';
 export const RECORD_LIMIT = 50;
 export type Experiment = {
+  multi?: MultiRecord;
   version: string; at: string; mode: string; model: string; resolution: string;
   renderFPS: number | null; inferenceFPS: number | null; averageMs: number | null; maximumMs: number | null;
   waitMs: number; loadMode: string; runtime: string; userAgent: string; language: string; platform: string; cores: number | null;
@@ -14,6 +16,7 @@ export function readRecords(text: string | null): Experiment[] {
     return values.filter(v => v && typeof v === 'object' && typeof v.at === 'string' && Number.isFinite(Date.parse(v.at)) && fields.every(key => ['renderFPS', 'inferenceFPS', 'averageMs', 'maximumMs', 'cores'].includes(key) ? v[key] === null || (typeof v[key] === 'number' && Number.isFinite(v[key]) && v[key] >= 0) : key === 'waitMs' ? typeof v[key] === 'number' && v[key] >= 0 && v[key] <= 60000 : typeof v[key] === 'string' && v[key].length <= 2048))
       .slice(-RECORD_LIMIT).map(v => {
         const record = Object.fromEntries(fields.map(key => [key, v[key]])) as Experiment;
+        const multi = parseMultiRecord(v.multi); if (multi) record.multi = multi;
         const scene = v.scene;
         if (scene && ['indoor', 'outdoor', 'mixed'].includes(scene.context) && ['still', 'continuous'].includes(scene.inputKind) && typeof scene.inputId === 'string' && scene.inputId.length <= 64 && Number.isFinite(scene.modelBytes) && scene.modelBytes > 0 && ['loadMs', 'inferenceMs'].every(key => scene[key] === null || typeof scene[key] === 'number' && Number.isFinite(scene[key]) && scene[key] >= 0) && Array.isArray(scene.categories) && scene.categories.length <= 151 && scene.categories.every((c: any) => c && Number.isInteger(c.id) && c.id >= 0 && c.id <= 150 && typeof c.name === 'string' && c.name.length <= 120 && typeof c.ratio === 'number' && Number.isFinite(c.ratio) && c.ratio >= 0 && c.ratio <= 1)) record.scene = { context: scene.context, inputKind: scene.inputKind, inputId: scene.inputId, modelBytes: scene.modelBytes, loadMs: scene.loadMs, inferenceMs: scene.inferenceMs, categories: scene.categories.map(({ id, name, ratio }: { id: number; name: string; ratio: number }) => ({ id, name, ratio })) };
         if (record.scene && typeof scene.internalResolution === 'string' && /^(161|257|385)×\1$/.test(scene.internalResolution)) record.scene.internalResolution = scene.internalResolution;
@@ -26,8 +29,8 @@ export function exportRecords(records: Experiment[], type: 'json' | 'csv') {
   const safe = readRecords(JSON.stringify(records));
   if (type === 'json') return JSON.stringify(safe, null, 2) + '\n';
   const quote = (value: unknown) => '"' + String(value ?? '').replace(/^[=+@\-\t\r]/, "'$&").replace(/"/g, '""') + '"';
-  const extra = ['sceneContext', 'inputKind', 'inputId', 'modelBytes', 'loadMs', 'inferenceMs', 'internalResolution', 'categoryOccupancy'];
-  return [[...fields, ...extra].join(','), ...safe.map(record => [...fields.map(key => quote(record[key])), ...[record.scene?.context, record.scene?.inputKind, record.scene?.inputId, record.scene?.modelBytes, record.scene?.loadMs, record.scene?.inferenceMs, record.scene?.internalResolution, record.scene ? JSON.stringify(record.scene.categories) : ''].map(quote)].join(','))].join('\n') + '\n';
+  const extra = ['sceneContext', 'inputKind', 'inputId', 'modelBytes', 'loadMs', 'inferenceMs', 'internalResolution', 'categoryOccupancy', 'multiExperiment', 'multiInput', 'multiFrameId', 'multiEngines', 'fusionMs', 'multiThresholds', 'multiEvents', 'multiRelations', 'multiTargets', 'multiInputId'];
+  return [[...fields, ...extra].join(','), ...safe.map(record => [...fields.map(key => quote(record[key])), ...[record.scene?.context, record.scene?.inputKind, record.scene?.inputId, record.scene?.modelBytes, record.scene?.loadMs, record.scene?.inferenceMs, record.scene?.internalResolution, record.scene ? JSON.stringify(record.scene.categories) : '', record.multi?.experiment, record.multi?.input, record.multi?.frameId, record.multi ? JSON.stringify(record.multi.engines) : '', record.multi?.fusionMs, record.multi ? JSON.stringify(record.multi.thresholds) : '', record.multi ? JSON.stringify(record.multi.events) : '', record.multi ? JSON.stringify(record.multi.relations) : '', record.multi ? JSON.stringify(record.multi.targets) : '', record.multi?.inputId].map(quote)].join(','))].join('\n') + '\n';
 }
 export function bindExperiments(snapshot: () => Experiment | null) {
   const el = (id: string) => document.getElementById(id)!;

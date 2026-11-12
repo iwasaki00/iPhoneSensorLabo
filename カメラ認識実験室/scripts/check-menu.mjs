@@ -67,9 +67,13 @@ try {
   await page.locator('#scene-capture').click();
   await page.waitForFunction(() => { const text = document.querySelector('#scene-performance')?.textContent; return !!text && /直近[1-9]\d*回/.test(text); }, null, { timeout: 120000 });
   assert.ok((await page.locator('#diagnostics').textContent()).includes('TensorFlow.js'));
+  await page.locator('#mode-select').selectOption('multi');
+  await page.locator('#scene-capture').click();
+  await page.waitForFunction(() => document.querySelector('#multi-results')?.textContent.includes('EfficientDet-Lite0'), null, { timeout: 60000 });
+  assert.ok((await page.locator('#multi-results').textContent()).includes('HSV'));
   await page.locator('#start').click();
   assert.deepEqual(errors, []); assert.deepEqual(failed, []); assert.deepEqual(external, []);
-  console.log(`PASS: ${files.length} Git-eligible static files; parent menu and repository subpath; object + pixel + segmentation + scene; no HTTP/page errors or external requests.`);
+  console.log(`PASS: ${files.length} Git-eligible static files; parent menu and repository subpath; object + pixel + segmentation + scene + multi; no HTTP/page errors or external requests.`);
 } finally {
   await browser?.close();
   if (server) await new Promise(resolve => server.close(resolve));

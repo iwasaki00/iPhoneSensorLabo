@@ -1,0 +1,29 @@
+{
+  "at": "2026-11-12T17:33:22.261Z",
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36",
+  "input": "160x120 synthetic red/blue image and canvas camera; not accuracy or iPhone measurements; first inference includes model initialization; original pinned models / unchanged v0.4 scene runtime161",
+  "samples": [
+    {
+      "experiment": "object-color",
+      "wallMs": 311.8,
+      "detail": "物体＋色\nフレーム 1121.300-1 / 撮影 2:33:15 AM / 更新 2:33:15 AM\n座標・距離: 元画像基準0〜1 / 速度: 元画像幅・高さに対する変化量/秒\nEfficientDet-Lite0 int8 revision 1 / MediaPipe 0.10.21: 117.0 ms\nHSV / 物体枠内色分布: 0.0 ms\n統合処理: 0.00 ms\nイベント（最新10件）"
+    },
+    {
+      "experiment": "person-object",
+      "wallMs": 583.1,
+      "detail": "人物＋物体\nフレーム 1533.000-1 / 撮影 2:33:15 AM / 更新 2:33:16 AM\n座標・距離: 元画像基準0〜1 / 速度: 元画像幅・高さに対する変化量/秒\nEfficientDet-Lite0 int8 revision 1 / MediaPipe 0.10.21: 118.2 ms\nSelfieSegmenter square / MediaPipe 0.10.21 / CPU: 97.2 ms\n統合処理: 0.00 ms\nイベント（最新10件）"
+    },
+    {
+      "experiment": "object-scene",
+      "wallMs": 1076.1,
+      "detail": "物体＋風景（静止画）\nフレーム 2461.500-1 / 撮影 2:33:16 AM / 更新 2:33:17 AM\n座標・距離: 元画像基準0〜1 / 速度: 元画像幅・高さに対する変化量/秒\nEfficientDet-Lite0 int8 revision 1 / MediaPipe 0.10.21: 115.0 ms\nDeepLab v3 ADE20K / MobileNet-v2 / 原本uint8 version1 / v0.4実験用内部サイズ161: 510.4 ms\n統合処理: 0.00 ms\nイベント（最新10件）"
+    },
+    {
+      "experiment": "color-motion-continuous",
+      "wallMs": 10.1,
+      "renderFPS": "60.0",
+      "inferenceFPS": "4.6",
+      "detail": "色＋動体\nフレーム 7874.300-15 / 撮影 2:33:22 AM / 更新 2:33:22 AM\n座標・距離: 元画像基準0〜1 / 速度: 元画像幅・高さに対する変化量/秒\n背景差分 / PixelProcessor: 0.1 ms\nHSV / PixelProcessor: 1.3 ms\n統合処理: 0.00 ms\n#track-1 指定色 / 中心(0.228, 0.412) / 面積15.6% / 速度0.058/s / 元画像方向0° / 指定色100.0% / \ntrack-1 ↔ motion-mask (動体領域) / 枠内占有0.0% / 背景との差がある領域との重なり（移動の可能性・照明変化でも検出）\nイベント（最新10件）\n2026-11-12T17:33:19.103Z 対象出現 / track-1 / 指定色 / 継続0ms\n2026-11-12T17:33:19.103Z 指定色検出 / track-1 / 指定色割合=1.000 / 閾値=0.15\n2026-11-12T17:33:19.337Z 移動開始 / track-1 / 元画像正規化速度=0.0534/s / 閾値=0.04"
+    }
+  ]
+}

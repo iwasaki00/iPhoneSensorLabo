@@ -1,5 +1,15 @@
 # 作成ファイル一覧
 
+## v0.5.0の追加・変更
+
+- 新規ソース: `src/modes/multi.ts`、`src/multi/settings.ts`、`fusion.ts`、`presentation.ts`、`record.ts`
+- 接続変更: `src/main.ts`、`src/modes/types.ts`、`src/settings.ts`、`src/render.ts`、`src/scene/panel.ts`、`src/experiments.ts`、`src/style.css`、`index.html`
+- 配布・検証: package.json/lock、`scripts/check-menu.mjs`、`tests/multi.test.ts`、`tests/browser/multi.spec.ts`、再生成した `dist/`
+- 資料: README、IPHONE_CHECKLIST、MODE_EXTENSION、EXPERIMENT_TEMPLATE、本一覧、`docs/V0_5_0.md`、`docs/performance-v0.5.0-{chrome,edge}.json`、`docs/v0.5.0-multi-synthetic.png`
+- 親のindex.htmlとREADMEはカメラ実験室のVersion表記のみ変更。既存のモデル・WASM・風景内部調整コード・ライセンス条件・依存ライブラリの版は維持。
+
+既存ファイルの一覧は以下のとおりです。
+
 プロジェクトIDは `014_camera_vision_lab` です。ファイルは「カメラ認識実験室」直下に配置しています。旧 `014_camera_vision_lab/` フォルダは内容を移動して削除しました。親の `index.html` にメニューカードを追加し、親の `README.md` に配信先とビルド手順を追記しています。
 
 ```text

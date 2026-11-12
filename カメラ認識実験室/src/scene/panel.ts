@@ -15,6 +15,8 @@ export class ScenePanel {
   mirror = false;
   inputId = '';
   count = 0;
+  /** Reuse still-image acquisition without overwriting the scene mode's saved input. */
+  inputOverride?: 'still' | 'continuous';
   private fileGeneration = 0;
   private settings: SceneSettings;
   private renderer: VisionRenderer;
@@ -41,7 +43,9 @@ export class ScenePanel {
       try {
         const image = new Image(); image.src = url; await image.decode();
         if (token !== this.fileGeneration) return;
-        this.setInput(image, image.naturalWidth, image.naturalHeight, false); settings.input = 'still'; el('storage-status').hidden = saveSceneSettings(settings); this.sync(); change(false, true, true);
+        this.setInput(image, image.naturalWidth, image.naturalHeight, false);
+        if (this.inputOverride !== undefined) this.inputOverride = 'still'; else { settings.input = 'still'; el('storage-status').hidden = saveSceneSettings(settings); }
+        this.sync(); change(false, true, true);
       } catch { if (token === this.fileGeneration) el('scene-message').textContent = '画像を読み込めません。PNG・JPEG・WebPなど表示できる画像で再試行してください。'; }
       finally { URL.revokeObjectURL(url); }
     };
@@ -57,9 +61,11 @@ export class ScenePanel {
   }
   capture(video: HTMLVideoElement, mirror: boolean) {
     if (video.readyState < 2 || !video.videoWidth) throw new Error('カメラを起動してから1フレームを取得してください。');
-    this.fileGeneration++; this.setInput(video, video.videoWidth, video.videoHeight, mirror); this.settings.input = 'still'; saveSceneSettings(this.settings); this.sync();
+    this.fileGeneration++; this.setInput(video, video.videoWidth, video.videoHeight, mirror);
+    if (this.inputOverride !== undefined) this.inputOverride = 'still'; else { this.settings.input = 'still'; saveSceneSettings(this.settings); }
+    this.sync();
   }
-  showInput() { if (this.hasStill && !this.data && this.settings.input === 'still') this.renderer.setSceneFrames(this.input, undefined, this.mirror, false); }
+  showInput() { if (this.hasStill && !this.data && (this.inputOverride ?? this.settings.input) === 'still') this.renderer.setSceneFrames(this.input, undefined, this.mirror, false); }
   sync() {
     const s = this.settings, model = sceneModels[s.model];
     el<HTMLSelectElement>('scene-input').value = s.input;
@@ -69,7 +75,7 @@ export class ScenePanel {
     const supported = (names: string[]) => names.some(name => model.labels.includes(name));
     el('scene-support').textContent = [['空', ['sky']], ['道路', ['road']], ['歩道', ['sidewalk']], ['建物', ['building']], ['木・植物', ['tree', 'plant', 'vegetation']], ['壁', ['wall']], ['床', ['floor']], ['天井', ['ceiling']], ['家具（椅子・テーブル等）', ['chair', 'table', 'cabinet', 'sofa', 'bed']]].map(([name, labels]) => `${name}: ${supported(labels as string[]) ? '対応' : '未対応'}`).join(' / ');
     el('scene-continuous-warning').hidden = s.input !== 'continuous';
-    el<HTMLButtonElement>('scene-analyze').disabled = s.input === 'continuous';
+    el<HTMLButtonElement>('scene-analyze').disabled = (this.inputOverride ?? s.input) === 'continuous';
     el('scene-brightness-row').hidden = s.display !== 'brightness'; el('scene-color-row').hidden = s.display !== 'tint' && s.display !== 'solid';
   }
   update(data: SceneData, frame: HTMLCanvasElement) {
