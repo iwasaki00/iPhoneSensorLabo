@@ -1,0 +1,25 @@
+{
+  "at": "2026-11-12T11:34:39.555Z",
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36",
+  "input": "160x120 synthetic sky/road/building color blocks, static file, capture limit257; not an accuracy benchmark or iPhone measurement",
+  "samples": {
+    "ade20k": {
+      "performance": "使用モデル: DeepLab v3 ADE20K / MobileNet-v2\n容量: 2438371 bytes\n実行方式: TensorFlow.js / Worker / wasm\nモデル読み込み: 238.3 ms\n解析解像度: 160×120 / マスク: 160×120\n直近5回 平均推論: 2567.5 ms / 最大: 2941.1 ms\n推論FPS: 0.34\n完了後待機: 3950 ms / auto\nTensor数: 161 / Tensor管理バイト: 9178380\nTensor管理量は端末全体のメモリ使用量ではありません。",
+      "tensorCounts": [
+        161,
+        161,
+        161,
+        161
+      ]
+    },
+    "cityscapes": {
+      "performance": "使用モデル: DeepLab v3 Cityscapes / MobileNet-v2\n容量: 2237643 bytes\n実行方式: TensorFlow.js / Worker / wasm\nモデル読み込み: 295.1 ms\n解析解像度: 160×120 / マスク: 160×120\n直近5回 平均推論: 2209.4 ms / 最大: 2445.0 ms\n推論FPS: 0.33\n完了後待機: 3350 ms / auto\nTensor数: 149 / Tensor管理バイト: 8414712\nTensor管理量は端末全体のメモリ使用量ではありません。",
+      "tensorCounts": [
+        149,
+        149,
+        149,
+        149
+      ]
+    }
+  }
+}

@@ -43,7 +43,7 @@ test('auto load, live processing between inferences, no overlap, metadata record
   expect(saved[0].averageMs).toBe(400); expect(saved[0].userAgent).toContain('Chrome'); expect(saved[0].source).toBeUndefined();
   for (const format of ['json', 'csv']) {
     const download = page.waitForEvent('download'); await page.locator('#record-' + format).click();
-    const text = await readFile((await (await download).path())!, 'utf8'); expect(text).toContain('0.3.1'); expect(text).not.toContain('base64');
+    const text = await readFile((await (await download).path())!, 'utf8'); expect(text).toContain((await page.locator('.version').textContent())!.replace(/^v/, '')); expect(text).not.toContain('base64');
   }
   await page.reload(); await page.locator('summary').filter({ hasText: '実験記録' }).click(); await expect(page.locator('#record-list')).toContainText('1/50');
   await page.locator('#record-clear').click(); await expect(page.locator('#record-list')).toContainText('0/50');

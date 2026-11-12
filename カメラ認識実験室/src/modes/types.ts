@@ -2,7 +2,8 @@ import type { RawDetection } from '../core';
 import type { Settings } from '../settings';
 import type { ProcessingResult } from './pixels';
 import type { SegmentData } from '../segmentation/models';
-export type ModeResult = { detections?: RawDetection[]; duration: number; segmentation?: SegmentData } & Partial<ProcessingResult>;
+import type { SceneData } from '../scene/models';
+export type ModeResult = { detections?: RawDetection[]; duration: number; segmentation?: SegmentData; scene?: SceneData } & Partial<ProcessingResult>;
 export interface RecognitionMode {
   readonly id: string;
   readonly runtime: string;

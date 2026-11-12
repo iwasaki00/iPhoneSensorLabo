@@ -3,11 +3,14 @@ import type { SegmentData } from './models.ts';
 /** Wait after completion, never an inference queue. Quality/resolution is not changed. */
 export class AdaptiveLoad {
   private average = 0;
+  private intervals: number[];
+  private maximum: number;
+  constructor(intervals = [100, 200, 500, 1000], maximum = 2000) { this.intervals = intervals; this.maximum = maximum; }
   reset() { this.average = 0; }
   add(ms: number) { if (Number.isFinite(ms) && ms >= 0) this.average = this.average ? this.average * 0.75 + ms * 0.25 : ms; }
   wait(mode: 'auto' | 'manual', manual: number) {
-    const base = [100, 200, 500, 1000].includes(manual) ? manual : 200;
-    return mode === 'manual' ? base : Math.min(2000, Math.max(base, Math.ceil(this.average * 1.5 / 50) * 50));
+    const base = this.intervals.includes(manual) ? manual : this.intervals[1];
+    return mode === 'manual' ? base : Math.min(this.maximum, Math.max(base, Math.ceil(this.average * 1.5 / 50) * 50));
   }
   get heavy() { return this.average > 200; }
 }

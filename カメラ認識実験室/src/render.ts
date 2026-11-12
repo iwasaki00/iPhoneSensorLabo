@@ -11,6 +11,8 @@ export class VisionRenderer {
   observations: Observation[] = [];
   private hasMask = false;
   private segmentAfter?: HTMLCanvasElement;
+  private scene?: { before: HTMLCanvasElement; after?: HTMLCanvasElement; mirror: boolean; live: boolean };
+  setSceneFrames(before: HTMLCanvasElement, after: HTMLCanvasElement | undefined, mirror: boolean, live: boolean) { this.scene = { before, after, mirror, live }; }
   segmentLive?: (video: HTMLVideoElement, now: number) => void;
   setSegmentFrames(_before: HTMLCanvasElement, after: HTMLCanvasElement) { this.segmentAfter = after; }
   setResult(width: number, height: number, regions: Region[], mask: Uint8Array | undefined, mode: ModeId) {
@@ -22,26 +24,33 @@ export class VisionRenderer {
     for (let i = 0; i < mask.length; i++) if (mask[i]) { image.data[i * 4] = color[0]; image.data[i * 4 + 1] = color[1]; image.data[i * 4 + 2] = color[2]; image.data[i * 4 + 3] = 170; }
     ctx.putImageData(image, 0, 0);
   }
-  clear() { this.regions = []; this.observations = []; this.hasMask = false; this.mask.width = 1; this.mask.height = 1; this.segmentAfter = undefined; }
+  clear() { this.regions = []; this.observations = []; this.hasMask = false; this.mask.width = 1; this.mask.height = 1; this.segmentAfter = undefined; this.scene = undefined; }
   draw(canvas: HTMLCanvasElement, video: HTMLVideoElement, view: ViewId, mirror: boolean, showResult: boolean, mode: ModeId) {
     const width = canvas.clientWidth, height = canvas.clientHeight, dpr = Math.min(devicePixelRatio || 1, 2);
     if (canvas.width !== Math.round(width * dpr) || canvas.height !== Math.round(height * dpr)) { canvas.width = Math.round(width * dpr); canvas.height = Math.round(height * dpr); }
     const ctx = canvas.getContext('2d')!;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.fillStyle = '#080f12'; ctx.fillRect(0, 0, width, height);
-    const sw = video.videoWidth, sh = video.videoHeight;
+    const scene = mode === 'scene' ? this.scene : undefined, source = scene && !scene.live ? scene.before : video;
+    const sw = source instanceof HTMLVideoElement ? source.videoWidth : source.width, sh = source instanceof HTMLVideoElement ? source.videoHeight : source.height;
+    if (scene && !scene.live) mirror = scene.mirror;
     if (!sw || !sh) return;
     if (mode === 'segmentation' && showResult && view !== 'before') this.segmentLive?.(video, performance.now());
     for (const pane of displayPanes(width, height, view)) {
       ctx.save(); ctx.beginPath(); ctx.rect(pane.x, pane.y, pane.width, pane.height); ctx.clip();
       const frame = paneBox({ x: 0, y: 0, width: sw, height: sh }, sw, sh, pane, false);
-      if (pane.source || (mode === 'segmentation' && !showResult)) {
-        const source = video;
+      if (pane.source || ((mode === 'segmentation' || mode === 'scene') && !showResult)) {
         ctx.save();
         if (mirror) { ctx.translate(frame.x + frame.width, frame.y); ctx.scale(-1, 1); ctx.drawImage(source, 0, 0, frame.width, frame.height); }
         else ctx.drawImage(source, frame.x, frame.y, frame.width, frame.height);
         ctx.restore();
       }
       if (pane.result && showResult) {
+        if (scene?.after) {
+          ctx.save();
+          if (mirror) { ctx.translate(frame.x + frame.width, frame.y); ctx.scale(-1, 1); ctx.drawImage(scene.after, 0, 0, frame.width, frame.height); }
+          else ctx.drawImage(scene.after, frame.x, frame.y, frame.width, frame.height);
+          ctx.restore();
+        }
         if (mode === 'segmentation' && this.segmentAfter) {
           ctx.save();
           if (mirror) { ctx.translate(frame.x + frame.width, frame.y); ctx.scale(-1, 1); ctx.drawImage(this.segmentAfter, 0, 0, frame.width, frame.height); }

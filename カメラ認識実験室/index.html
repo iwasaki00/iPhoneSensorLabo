@@ -9,9 +9,9 @@
 </head>
 <body>
   <div id="app">
-    <header><div><span class="eyebrow">CAMERA VISION LAB / 014</span><h1>カメラ認識実験室</h1></div><span class="version">v0.3.1</span></header>
+    <header><div><span class="eyebrow">CAMERA VISION LAB / 014</span><h1>カメラ認識実験室</h1></div><span class="version">v0.4.0</span></header>
     <main>
-      <div class="mode"><span class="dot"></span> PERFORMANCE &amp; STABILITY <span class="local" id="mode-kind">端末内AI</span></div>
+      <div class="mode"><span class="dot"></span> SCENE RECOGNITION LAB <span class="local" id="mode-kind">端末内AI</span></div>
       <div class="view-control"><label for="view-select">比較表示</label><select id="view-select"><option value="normal">通常表示</option><option value="before">BEFORE（元映像）</option><option value="after">AFTER（認識結果）</option><option value="split">左右比較</option></select></div>
       <section class="viewport" aria-label="カメラ映像と認識結果">
         <video id="video" autoplay muted playsinline></video><canvas id="overlay"></canvas>
@@ -19,6 +19,28 @@
         <div class="viewport-top"><span id="state">停止中</span><span><b id="count">0</b> <span id="count-unit">個を認識</span></span></div>
       </section>
       <div class="metrics"><div><b id="camera-fps">—</b><span>映像 FPS</span></div><div><b id="render-fps">—</b><span>描画 FPS</span></div><div><b id="detect-fps">—</b><span>認識 FPS</span></div><div><b id="latency">—</b><span>処理 ms</span></div></div>
+      <section class="mode-help segment-panel" data-modes="scene" hidden aria-label="風景認識の操作">
+        <label for="scene-model">風景モデル（同時実行しません）</label><select id="scene-model"><option value="ade20k">ADE20K / 室内・屋外</option><option value="cityscapes">Cityscapes / 道路周辺</option></select>
+        <label for="scene-input">入力</label><select id="scene-input"><option value="still">静止画（推奨）</option><option value="continuous">カメラ連続認識</option></select>
+        <div class="scene-actions"><button id="scene-capture">カメラから1フレーム取得</button><button id="scene-analyze">静止画を解析</button></div>
+        <label for="scene-file">端末内画像（20MBまで・送信なし）</label><input id="scene-file" type="file" accept="image/*" />
+        <label for="scene-display">表示・加工</label><select id="scene-display"><option value="original">元映像</option><option value="mask">カテゴリ別マスク</option><option value="overlay" selected>元映像＋半透明マスク</option><option value="highlight">選択カテゴリだけ強調</option><option value="tint">選択領域の色変更（明暗を保持）</option><option value="mono">選択領域だけモノクロ</option><option value="outside-mono">選択領域以外をモノクロ</option><option value="brightness">選択領域の明度変更</option><option value="solid">選択領域の単色化</option></select>
+        <label for="scene-target">選択カテゴリ（映像タップでも選択）</label><select id="scene-target"></select>
+        <div id="scene-color-row" hidden><label for="scene-color">加工色</label><input id="scene-color" type="color" value="#825cf5" /></div>
+        <div id="scene-brightness-row" hidden><label for="scene-brightness">明度（0〜200%）</label><input id="scene-brightness" type="range" min="0" max="200" value="130" /></div>
+        <p id="scene-tap" role="status"></p><p id="scene-model-info"></p><p id="scene-message" role="status">端末内画像はカメラを起動せず解析できます。画像は永続保存しません。</p><p id="scene-load-status" role="status"></p>
+        <p id="scene-continuous-warning" hidden>連続認識は低頻度の実験用です。元映像はライブ、加工は解析時点のフレームです。重い場合は静止画へ切り替えてください。</p>
+        <div id="scene-legend" aria-label="カテゴリと占有率の凡例"></div>
+        <details><summary>対応カテゴリ・検出占有率</summary><p id="scene-support"></p><pre id="scene-categories">解析結果を待っています。</pre></details>
+        <details><summary>風景の調整・性能</summary><div class="mode-settings">
+          <label for="scene-context">実験環境（記録用・自動判定なし）</label><select id="scene-context"><option value="mixed">室内・屋外／未指定</option><option value="indoor">室内</option><option value="outdoor">屋外</option></select>
+          <label for="scene-load">負荷調整</label><select id="scene-load"><option value="auto">自動</option><option value="manual">手動</option></select>
+          <label for="scene-resolution">解析長辺</label><select id="scene-resolution"><option value="160">160 px / 軽量</option><option value="257" selected>257 px / 標準</option><option value="384">384 px / 詳細・高負荷</option></select>
+          <label for="scene-interval">連続認識の完了後待機</label><select id="scene-interval"><option value="1000">1秒</option><option value="2000" selected>2秒</option><option value="5000">5秒</option><option value="10000">10秒</option></select>
+          <p class="hint">Cityscapesは床・天井・家具の個別分類に未対応です。モデル切替後も同じ静止画で比較できます。「実験記録」で各結果を順番に保存してください。</p>
+          <button id="scene-clear-image">画像を解放</button><button id="scene-release-model">モデルを解放</button>
+        </div><pre id="scene-performance"></pre></details>
+      </section>
       <section class="mode-help segment-panel" data-modes="segmentation" hidden aria-label="領域認識の操作">
         <label for="segment-tab">実験</label><select id="segment-tab"><option value="person">人物</option><option value="parts">部位</option><option value="background">背景加工</option><option value="partial">部分加工</option></select>
         <div class="mode-settings" data-segment-tabs="person"><label for="segment-person-view">人物の表示</label><select id="segment-person-view"><option value="original">元映像</option><option value="highlight">人物領域の強調</option><option value="person">人物だけ</option><option value="background">背景だけ</option><option value="mask">マスク可視化</option></select></div>
@@ -37,7 +59,7 @@
       <div id="error" role="alert" hidden><p id="error-message"></p><button id="retry">認識を再試行</button></div>
       <p id="storage-status" hidden>このブラウザでは設定を保存できません。現在のタブ内では引き続き操作できます。</p>
       <details id="result-panel"><summary>検出データ <span>中心・面積・速度・傾き</span></summary><pre id="result-info">認識結果を待っています。</pre></details>
-      <details><summary>詳細設定 <span>認識の調整</span></summary><div class="settings">
+      <details id="recognition-settings"><summary>詳細設定 <span>認識の調整</span></summary><div class="settings">
         <div class="mode-settings" data-modes="object"><label for="threshold">信頼度の閾値 <output id="threshold-value">50%</output></label><input id="threshold" type="range" min="10" max="95" step="5" value="50" /></div>
         <div class="mode-settings" data-modes="color" hidden>
           <label for="hue-tolerance">色相の許容幅 <output id="hue-tolerance-value">±22°</output></label><input id="hue-tolerance" type="range" min="1" max="90" value="22" />
@@ -67,7 +89,7 @@
       <details><summary>実験記録 <span>計測値の保存・書き出し</span></summary><p>日時・設定・計測値・取得可能な端末情報のみ。映像・画像は保存しません。</p><button id="record-save">現在の計測値を記録</button><button id="record-json">JSONを書き出す</button><button id="record-csv">CSVを書き出す</button><button id="record-trim">最新10件を残す</button><button id="record-clear">記録をすべて削除</button><p id="record-status" role="status"></p><pre id="record-list"></pre></details>
       <p class="privacy">映像の送信・保存なし。設定・実験記録をブラウザ内に保存。<br>物体・領域認識は同じサイトのモデル・WASMを使用します。</p>
     </main>
-    <footer><div class="mode-control"><label for="mode-select">認識モード</label><select id="mode-select"><option value="object">物体認識</option><option value="color">色認識</option><option value="motion">動体検出</option><option value="shape">輪郭・図形認識</option><option value="segmentation">領域認識</option></select></div><button id="start" class="primary">カメラを起動</button><div class="secondary"><button id="switch">前面に切替</button><button id="recognition" aria-pressed="true">認識 ON</button></div></footer>
+    <footer><div class="mode-control"><label for="mode-select">認識モード</label><select id="mode-select"><option value="object">物体認識</option><option value="color">色認識</option><option value="motion">動体検出</option><option value="shape">輪郭・図形認識</option><option value="segmentation">領域認識</option><option value="scene">風景認識</option></select></div><button id="start" class="primary">カメラを起動</button><div class="secondary"><button id="switch">前面に切替</button><button id="recognition" aria-pressed="true">認識 ON</button></div></footer>
   </div>
   <script type="module" src="/src/main.ts"></script>
 </body>

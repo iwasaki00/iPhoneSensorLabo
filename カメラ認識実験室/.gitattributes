@@ -2,5 +2,7 @@
 *.png binary
 *.wasm binary
 *.tflite binary
+*.bin binary
+**/group*-shard* binary
 public/vendor/** -text
 dist/vendor/** -text

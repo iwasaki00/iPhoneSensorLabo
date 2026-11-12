@@ -1,0 +1,27 @@
+{
+  "checkedAt": "2026-11-12T07:13:52.631Z",
+  "pinnedDownloadVersion": 1,
+  "source": "https://www.kaggle.com/api/v1/models/list?search=deeplab",
+  "instances": [
+    {
+      "id": 1433,
+      "slug": "ade20k-1-quantized",
+      "framework": "tfJs",
+      "versionId": 1695,
+      "versionNumber": 2,
+      "url": "https://www.kaggle.com/models/tensorflow/deeplab/TfJs/ade20k-1-quantized",
+      "licenseName": "Apache 2.0",
+      "totalUncompressedBytes": 4733376
+    },
+    {
+      "id": 1437,
+      "slug": "cityscapes-1-quantized",
+      "framework": "tfJs",
+      "versionId": 1701,
+      "versionNumber": 2,
+      "url": "https://www.kaggle.com/models/tensorflow/deeplab/TfJs/cityscapes-1-quantized",
+      "licenseName": "Apache 2.0",
+      "totalUncompressedBytes": 4341711
+    }
+  ]
+}

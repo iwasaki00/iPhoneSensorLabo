@@ -14,7 +14,8 @@ for (const [, reference] of html.matchAll(/(?:src|href)="([^"]+)"/g)) {
 }
 for (const path of paths) assert.ok((await stat(new URL(path, dist))).isFile(), `配布ファイルがありません: ${path}`);
 const manifest = JSON.parse(await readFile(new URL('assets-manifest.json', dist), 'utf8'));
-for (const file of manifest.files) {
+const sceneManifest = JSON.parse(await readFile(new URL('scene-assets.json', dist), 'utf8'));
+for (const file of [...manifest.files, ...sceneManifest.files]) {
   const bytes = await readFile(new URL(file.path, dist));
   assert.equal(createHash('sha256').update(bytes).digest('hex'), file.sha256, `配布アセット不一致: ${file.path}`);
 }

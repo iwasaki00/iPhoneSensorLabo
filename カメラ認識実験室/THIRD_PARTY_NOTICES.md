@@ -1,5 +1,20 @@
 # 採用ライブラリ・モデル・配布条件
 
+## v0.4.0 風景認識（確認日: 2026-11-12）
+
+| 採用物 | 固定版・容量 | ライセンス |
+| --- | --- | --- |
+| DeepLab v3 ADE20K / MobileNet-v2 | 1byte量子化 revision 1、JSON＋重み2,438,371 bytes | 学習済み重みの配布元variationがApache-2.0と明示。[公式カード](https://www.kaggle.com/models/tensorflow/deeplab/TfJs/ade20k-1-quantized/1) |
+| DeepLab v3 Cityscapes / MobileNet-v2 | 1byte量子化 revision 1、JSON＋重み2,237,643 bytes | 学習済み重みの配布元variationがApache-2.0と明示。[公式カード](https://www.kaggle.com/models/tensorflow/deeplab/TfJs/cityscapes-1-quantized/1) |
+| @tensorflow/tfjs-core、tfjs-converter、tfjs-backend-wasm、tfjs-backend-webgl、tfjs-backend-cpu | すべて4.22.0 | Apache-2.0。`public/licenses/TensorFlowJS-APACHE-2.0.txt` |
+| DeepLabの公開ラベル・配色定義 | @tensorflow-models/deeplab 0.2.2からの定義 | Apache-2.0 / Copyright 2019 Google LLC。元定義と帰属表示を `public/licenses/DeepLab-config.js.txt` に保持。ラッパー自体は実行依存に追加しない。 |
+| seedrandom | 3.0.5（推移依存） | MIT / Copyright David Bau。`public/licenses/seedrandom-README-MIT.md` に許諾文・帰属表示を保持。 |
+| long | 4.0.0（推移依存） | Apache-2.0。`public/licenses/long-APACHE-2.0.txt` |
+
+モデル原本は無改変で同梱。読込時にメモリ上のコピーだけを実験用内部サイズ161/257/385へ変更します。変更するのは検証済みの非学習サイズ定数4個とグローバルプーリングのサイズ／ストライドで、学習済みフィルタ・バイアスは維持します。変更説明は [モデル選定資料](docs/SCENE_MODELS.md)、処理は `src/scene/resize.ts` に記載。標準サイズと同じ精度を保証しません。
+
+重みのライセンス確認証跡は `public/licenses/DeepLab-weights-license-metadata.json`、全モデルとWASMのSHA-256は `public/scene-assets.json`。学習データセット画像の利用条件とは区別し、ADE20K／Cityscapesの画像は配布しません。配布時には本ファイル、Apache本文、MIT許諾文、モデルの帰属・変更説明を保持してください。
+
 v0.3.0追加モデル（確認日: 2026-11-10）:
 
 | モデル | 配布版 | ライセンスと根拠 |
