@@ -22,7 +22,7 @@ test('three printable cards generate PNGs with the correct real detector IDs',as
   await page.goto('/ar-cards.html?card=slime');await expect(page.locator('#cards canvas')).toHaveCount(1);await expect(page.locator('#cards canvas')).toHaveAttribute('data-marker-id','11');
 });
 test('real two-card reactions, left/right order, missing IDs, mirror and camera lifecycle',async({page})=>{
-  await init(page);await expect(page.locator('#card-prepare')).toHaveCount(0);await expect(page.locator('.card-prepare')).toBeVisible();await expect(page.locator('#tm-reference')).toBeHidden();
+  await init(page);await expect(page.locator('#card-display')).toBeVisible();await expect(page.locator('#tm-reference')).toBeHidden();
   await page.locator('#card-start').click();await expect(page.locator('#card-diagnostics')).toContainText('ID 7',{timeout:15000});await expect(page.locator('#card-diagnostics')).toContainText('ID 19');await count(page,0);
   await page.evaluate(()=>(window as any).__near=true);await count(page,1);await expect(page.locator('#card-hint')).toContainText('充電');
   await page.locator('.viewport').screenshot({path:'docs/v0.7.0-card-charge.png'});
@@ -46,4 +46,11 @@ test('expired results remove composition and keep pair lock until real separatio
   const worker=page.workers().find(w=>w.url().endsWith('/text-worker.js'))!;await worker.evaluate('self.delay=2200');
   await expect(page.locator('#card-diagnostics')).toContainText('有効期限切れ',{timeout:10000});await expect(page.locator('#count')).toHaveText('0');await expect(page.locator('#card-hint')).not.toContainText('充電');
   await worker.evaluate('self.delay=0');await count(page,1);await page.waitForTimeout(700);await count(page,1);await page.locator('#card-start').click();
+});
+
+test('camera to simulator stops tracks and clears reactions in both directions',async({page})=>{
+  await init(page);await page.locator('#card-start').click();await page.evaluate(()=>(window as any).__near=true);await count(page,1);
+  await page.evaluate(()=>{const track=(window as any).__stream.getTracks()[0] as MediaStreamTrack,stop=track.stop.bind(track);track.stop=()=>{sessionStorage.setItem('card-camera-ended','yes');stop();};});
+  await page.locator('#card-simulator').click();await expect(page.locator('#source-label')).toContainText('カメラなし・模擬検出');expect(await page.evaluate(()=>sessionStorage.getItem('card-camera-ended'))).toBe('yes');await count(page,0);expect(page.workers()).toHaveLength(0);
+  await page.getByRole('link',{name:'実カメラのARカード実験へ'}).click();await expect(page.locator('#tm-tab')).toHaveValue('cards');await expect(page.locator('#card-diagnostics')).toHaveText('カードを映してください。');expect(await page.evaluate(()=>(window as any).__starts)).toBe(0);
 });

@@ -77,15 +77,23 @@ try {
   const marker = await page.locator('#tm-marker-preview').evaluate(canvas => canvas.toDataURL().split(',')[1]);
   await page.locator('#scene-file').setInputFiles({name:'marker.png',mimeType:'image/png',buffer:Buffer.from(marker,'base64')});
   await page.waitForFunction(() => document.querySelector('#tm-data')?.textContent.includes('ID 7'), null, {timeout:30000});
-  await page.locator('#tm-tab').selectOption('cards');
-  assert.equal(await page.locator('.card-prepare').isVisible(),true);
-  const [cardPage]=await Promise.all([page.waitForEvent('popup'),page.locator('.card-prepare').click()]);
+  await page.locator('#try-ar-cards').click();
+  assert.equal(await page.locator('#card-print').isVisible(),true);
+  const [cardPage]=await Promise.all([page.waitForEvent('popup'),page.locator('#card-print').click()]);
   await cardPage.waitForFunction(()=>document.querySelectorAll('#cards canvas').length===3);
   assert.ok(decodeURI(new URL(cardPage.url()).pathname).endsWith(`/${folder}/dist/ar-cards.html`));
   await cardPage.close();
-  await page.locator('#start').click();
+  const [displayPage]=await Promise.all([page.waitForEvent('popup'),page.locator('#card-display').click()]);
+  await displayPage.waitForFunction(()=>document.querySelectorAll('#png-links a').length===3);
+  assert.ok(decodeURI(new URL(displayPage.url()).pathname).endsWith(`/${folder}/dist/ar-playground.html`));
+  await displayPage.close();
+  await page.locator('#card-simulator').click();
+  await page.waitForFunction(()=>document.querySelector('#source-label')?.textContent.includes('カメラなし・模擬検出'));
+  await page.locator('a[href="index.html?ar-cards=1"]').click();
+  assert.equal(await page.locator('#tm-tab').inputValue(),'cards');
+  assert.equal(await page.locator('#video').evaluate(v=>v.srcObject),null);
   assert.deepEqual(errors, []); assert.deepEqual(failed, []); assert.deepEqual(external, []);
-  console.log(`PASS: ${files.length} Git-eligible static files; parent menu and repository subpath; object + pixel + segmentation + scene + multi + marker + AR cards preparation; no HTTP/page errors or external requests.`);
+  console.log(`PASS: ${files.length} Git-eligible static files; parent menu and repository subpath; legacy modes + AR cards print/display/simulator and return without camera; no HTTP/page errors or external requests.`);
 } finally {
   await browser?.close();
   if (server) await new Promise(resolve => server.close(resolve));

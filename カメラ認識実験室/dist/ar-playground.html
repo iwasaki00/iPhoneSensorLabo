@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; img-src 'self' blob: data:; style-src 'self'; object-src 'none'"><title>ARカード表示・シミュレーター</title>  <script type="module" crossorigin src="./assets/playground-lG3vv9gr.js"></script>
+  <link rel="modulepreload" crossorigin href="./assets/geometry-Dtiv7hMu.js">
+  <link rel="modulepreload" crossorigin href="./assets/card-view-CChCMowe.js">
+  <link rel="stylesheet" crossorigin href="./assets/playground-D90yt30-.css">
+</head>
+<body><main><h1 id="playground-title">カード表示</h1><nav><a href="ar-playground.html">カード表示</a><a href="ar-playground.html?mode=simulator">シミュレーター</a><a href="index.html?ar-cards=1">実カメラのARカード実験へ</a><a href="ar-cards.html">印刷用・個別カード</a></nav>
+<p id="source-label">PCでこの画面を表示し、iPhoneのARカード実験で撮る。</p>
+<div class="link-row"><input id="display-link" aria-label="カード表示ページのURL" readonly><button id="copy-display-link">リンクをコピー</button></div><p id="playground-status" role="status"></p>
+<section aria-label="カード操作"><div id="placement-controls"></div><div id="selected-controls"><label>選択中のカード <select id="selected-card"></select></label><label>大きさ <input id="card-size" type="range" min="44" max="120" value="68"><output id="size-value">68</output></label><label>回転 <input id="card-angle" type="range" min="-180" max="180" value="0"><output id="angle-value">0°</output></label></div><button id="reset-placement">配置をリセット</button></section>
+<p id="card-hint" role="status">カードを指やマウスで動かせます。</p><canvas id="playground-board" width="360" height="480" aria-label="カードを個別にドラッグする白い操作領域"></canvas>
+<div id="png-links"></div><details id="sim-diagnostics"><summary>模擬検出・反応の診断</summary><p>200msごとに模擬検出を更新します。描画は別ループで、検出回数には数えません。</p><pre id="card-diagnostics"></pre></details>
+</main></body></html>

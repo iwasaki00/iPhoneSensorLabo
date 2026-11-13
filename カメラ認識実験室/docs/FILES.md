@@ -1,5 +1,12 @@
 # 作成ファイル一覧
 
+## v0.7.1の追加・変更
+
+- 新規: `ar-playground.html`、`src/textmarker/playground.ts`／`playground-model.ts`／`playground.css`（カード表示・模擬入力・操作）
+- 接続: `src/main.ts`、`index.html`、`src/style.css`、Vite複数ページ入力、package.json／lock、静的配信・親メニュー確認スクリプト、親メニューのVersion表記、再生成したdist
+- 検証・資料: `tests/playground.test.ts`、`tests/browser/playground.spec.ts`、既存カードテストの入口セレクター、README、IPHONE_CHECKLIST、`V0_7_1.md`、本一覧
+- 既存のカード対応表・辞書・ペア判定・CardView・演出・印刷用ページは変更せず再利用。新規依存なし。
+
 ## v0.7.0の追加・変更
 
 - 新規: `src/textmarker/cards.ts`（対応表・ペア判定）、`card-art.ts`（自作描画）、`card-view.ts`（演出）、`projection.ts`（既存射影処理を共有化）、`card-page.ts`／`card-print.css`、`ar-cards.html`

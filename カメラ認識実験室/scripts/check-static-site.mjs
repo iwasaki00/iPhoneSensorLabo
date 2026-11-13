@@ -7,14 +7,14 @@ import assert from 'node:assert/strict';
 const root = new URL('../', import.meta.url);
 const dist = new URL('dist/', root);
 const paths = ['index.html', 'vision-worker.js', 'segmentation-worker.js', 'assets-manifest.json'];
-for(const entry of ['index.html','ar-cards.html']) {
+for(const entry of ['index.html','ar-cards.html','ar-playground.html']) {
 const html = await readFile(new URL(entry, dist), 'utf8');paths.push(entry);
 for (const [, reference] of html.matchAll(/(?:src|href)="([^"]+)"/g)) {
   assert.ok(!reference.startsWith('/') && !reference.endsWith('.ts'), `静的配信できない参照: ${reference}`);
   paths.push(reference);
 }
 }
-for (const path of paths) assert.ok((await stat(new URL(path, dist))).isFile(), `配布ファイルがありません: ${path}`);
+for (const path of paths) assert.ok((await stat(new URL(path.split('?')[0], dist))).isFile(), `配布ファイルがありません: ${path}`);
 const manifest = JSON.parse(await readFile(new URL('assets-manifest.json', dist), 'utf8'));
 const sceneManifest = JSON.parse(await readFile(new URL('scene-assets.json', dist), 'utf8'));
 const textManifest = JSON.parse(await readFile(new URL('text-assets.json', dist),'utf8'));

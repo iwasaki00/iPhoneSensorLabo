@@ -81,7 +81,7 @@ function drawStatic() {
 function persist() { el('storage-status').hidden = saveSettings(settings); }
 function diagnostics() {
   el('diagnostics').textContent = [
-    'Version: 0.7.0 / AR CARD LAB', `認識モード: ${titles[settings.mode]}`, `比較表示: ${settings.view}`,
+    'Version: 0.7.1 / AR CARD PLAYGROUND', `認識モード: ${titles[settings.mode]}`, `比較表示: ${settings.view}`,
     `安全な接続: ${isSecureContext}`, `カメラAPI: ${!!navigator.mediaDevices?.getUserMedia}`,
     `映像FPS: ${'requestVideoFrameCallback' in video ? '映像フレーム通知' : 'API非対応（数値なし）'}`,
     '描画FPS: 実描画のrAF通知（2秒窓） / 認識FPS: 処理完了通知（10秒窓）', `実行方式: ${mode?.runtime ?? '未初期化'}`,
@@ -369,4 +369,7 @@ for (const key of Object.keys(multiDefaults) as (keyof MultiSettings)[]) {
 }
 el('multi-reset-history').onclick = () => { clearResults(); mode?.reset?.(); sceneRequested = isSceneStill() && scenePanel.hasStill; schedule(); status('追跡・背景基準をリセットしました。'); };
 el('multi-defaults').onclick = () => { Object.assign(multiSettings, multiDefaults); saveMulti(multiSettings); syncMulti(); scenePanel.inputOverride = multiSettings.input; scenePanel.sync(); sceneRequested = scenePanel.hasStill; void activateMode(); };
+function enterCards(){modeSelect.value='textmarker';modeSelect.dispatchEvent(new Event('change'));el<HTMLSelectElement>('tm-tab').value='cards';el('tm-tab').dispatchEvent(new Event('change'));el('card-welcome').scrollIntoView({block:'nearest'});}
+el('try-ar-cards').onclick=enterCards;
 syncMulti(); syncUI(); diagnostics();
+if(new URLSearchParams(location.search).get('ar-cards')==='1')enterCards();
