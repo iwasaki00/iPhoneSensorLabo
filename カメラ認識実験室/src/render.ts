@@ -30,7 +30,7 @@ export class VisionRenderer {
     if (canvas.width !== Math.round(width * dpr) || canvas.height !== Math.round(height * dpr)) { canvas.width = Math.round(width * dpr); canvas.height = Math.round(height * dpr); }
     const ctx = canvas.getContext('2d')!;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.fillStyle = '#080f12'; ctx.fillRect(0, 0, width, height);
-    const scene = (mode === 'scene' || mode === 'multi') ? this.scene : undefined, source = scene && !scene.live ? scene.before : video;
+    const scene = (mode === 'scene' || mode === 'multi' || mode === 'textmarker') ? this.scene : undefined, source = scene && !scene.live ? scene.before : video;
     const sw = source instanceof HTMLVideoElement ? source.videoWidth : source.width, sh = source instanceof HTMLVideoElement ? source.videoHeight : source.height;
     if (scene && !scene.live) mirror = scene.mirror;
     if (!sw || !sh) return;
@@ -38,7 +38,7 @@ export class VisionRenderer {
     for (const pane of displayPanes(width, height, view)) {
       ctx.save(); ctx.beginPath(); ctx.rect(pane.x, pane.y, pane.width, pane.height); ctx.clip();
       const frame = paneBox({ x: 0, y: 0, width: sw, height: sh }, sw, sh, pane, false);
-      if (pane.source || ((mode === 'segmentation' || (mode === 'scene' || mode === 'multi')) && !showResult)) {
+      if (pane.source || ((mode === 'segmentation' || (mode === 'scene' || mode === 'multi' || mode === 'textmarker')) && !showResult)) {
         ctx.save();
         if (mirror) { ctx.translate(frame.x + frame.width, frame.y); ctx.scale(-1, 1); ctx.drawImage(source, 0, 0, frame.width, frame.height); }
         else ctx.drawImage(source, frame.x, frame.y, frame.width, frame.height);

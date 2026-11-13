@@ -5,7 +5,7 @@ import type { MultiSettings } from './settings.ts';
 
 /** Coordinates, areas and speeds are relative to the unmirrored source image. */
 export type RegionMask = { data: Uint8Array; width: number; height: number; includeZero?: boolean };
-export type Entity = { id: string; category: string; label?: string; confidence?: number; box: Box; center: Point; area: number; mask?: RegionMask; colorRatio?: number; colors?: { name: string; ratio: number }[]; speed?: number; velocity?: Point; trail?: Point[] };
+export type Entity = { id: string; category: string; label?: string; text?: string; format?: string; content?: string; referenceId?: string; markerId?: number; corners?: Point[]; homography?: number[]; confidence?: number; box: Box; center: Point; area: number; mask?: RegionMask; colorRatio?: number; colors?: { name: string; ratio: number }[]; speed?: number; velocity?: Point; trail?: Point[] };
 export type EngineResult = { engine: string; frameId: string; capturedAt: number; processedAt: number; expiresAt: number; duration: number; entities: Entity[]; mask?: RegionMask };
 export type Relation = { a: string; b: string; distance?: number; iou?: number; coverage?: number; category?: string; trend?: '接近' | '離反' | '安定' };
 export type MultiEvent = { type: string; at: string; frameId: string; target: string; evidence: string };

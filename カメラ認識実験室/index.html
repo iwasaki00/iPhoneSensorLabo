@@ -9,9 +9,9 @@
 </head>
 <body>
   <div id="app">
-    <header><div><span class="eyebrow">CAMERA VISION LAB / 014</span><h1>カメラ認識実験室</h1></div><span class="version">v0.5.0</span></header>
+    <header><div><span class="eyebrow">CAMERA VISION LAB / 014</span><h1>カメラ認識実験室</h1></div><span class="version">v0.6.0</span></header>
     <main>
-      <div class="mode"><span class="dot"></span> MULTI VISION LAB <span class="local" id="mode-kind">端末内AI</span></div>
+      <div class="mode"><span class="dot"></span> TEXT &amp; MARKER LAB <span class="local" id="mode-kind">端末内AI</span></div>
       <div class="view-control"><label for="view-select">比較表示</label><select id="view-select"><option value="normal">通常表示</option><option value="before">BEFORE（元映像）</option><option value="after">AFTER（認識結果）</option><option value="split">左右比較</option></select></div>
       <section class="viewport" aria-label="カメラ映像と認識結果">
         <video id="video" autoplay muted playsinline></video><canvas id="overlay"></canvas>
@@ -19,6 +19,28 @@
         <div class="viewport-top"><span id="state">停止中</span><span><b id="count">0</b> <span id="count-unit">個を認識</span></span></div>
       </section>
       <div class="metrics"><div><b id="camera-fps">—</b><span>映像 FPS</span></div><div><b id="render-fps">—</b><span>描画 FPS</span></div><div><b id="detect-fps">—</b><span>認識 FPS</span></div><div><b id="latency">—</b><span>処理 ms</span></div></div>
+      <section class="mode-help segment-panel" data-modes="textmarker" hidden aria-label="文字とマーカーの操作">
+        <label for="tm-tab">文字・マーカー実験</label><select id="tm-tab"><option value="ocr">OCR（文字認識）</option><option value="code">QR／バーコード</option><option value="match">登録画像照合</option><option value="marker">ARマーカー</option><option value="overlay">位置追従映像合成</option></select>
+        <label for="tm-input">入力</label><select id="tm-input"><option value="still">静止画</option><option value="continuous">カメラ連続認識</option></select>
+        <p id="tm-message" role="status">画像を選ぶか、カメラから1フレーム取得してください。OCRは静止画専用です。</p>
+        <div data-text-tabs="ocr"><label for="tm-language">読み取り言語</label><select id="tm-language"><option value="jpn">日本語</option><option value="eng">英語・数字</option><option value="jpn+eng">日英混在</option></select>
+          <details><summary>OCRの範囲・回転・前処理</summary><div class="mode-settings">
+            <label for="tm-cropX">切り取り左端（元画像の%）</label><input id="tm-cropX" type="number" min="0" max="95" />
+            <label for="tm-cropY">切り取り上端（%）</label><input id="tm-cropY" type="number" min="0" max="95" />
+            <label for="tm-cropW">切り取り幅（5〜100%）</label><input id="tm-cropW" type="number" min="5" max="100" />
+            <label for="tm-cropH">切り取り高さ（5〜100%）</label><input id="tm-cropH" type="number" min="5" max="100" />
+            <label for="tm-rotation">時計回り回転</label><select id="tm-rotation"><option value="0">0°</option><option value="90">90°</option><option value="180">180°</option><option value="270">270°</option></select>
+            <label for="tm-zoom">OCR拡大（出力長辺2048pxまで）</label><select id="tm-zoom"><option value="1">1倍</option><option value="2">2倍</option><option value="3">3倍</option></select>
+            <label for="tm-preprocessing">前処理</label><select id="tm-preprocessing"><option value="original">元の色</option><option value="gray">グレースケール</option><option value="binary">二値化（閾値140）</option></select>
+            <p>同じ静止画のまま条件を変えて再解析します。枠は元画像へ戻して表示します。下は今回OCRに渡した前処理画像です。</p><canvas id="tm-preprocess-preview" width="1" height="1"></canvas>
+          </div></details>
+        </div>
+        <div data-text-tabs="match overlay" hidden><label for="tm-reference">登録画像（20MB以下・特徴点用に長辺640pxまで縮小）</label><input id="tm-reference" type="file" accept="image/*" /><p id="tm-reference-status">登録画像なし。初期状態ではメモリだけで保持します。</p><details><summary>登録画像の明示保存・削除</summary><button id="tm-save-reference">登録画像をこの端末へ保存</button><button id="tm-load-reference">保存した登録画像を読み込む</button><button id="tm-delete-reference">保存画像・メモリ画像を削除</button></details></div>
+        <div data-text-tabs="overlay" hidden><label for="tm-overlaySource">追従する対象</label><select id="tm-overlaySource"><option value="marker">ARマーカー</option><option value="match">登録画像</option></select><label for="tm-overlayKind">重ねるもの</label><select id="tm-overlayKind"><option value="square">四角</option><option value="circle">円</option><option value="text">文字</option><option value="image">端末内画像</option></select><label for="tm-overlay-label">合成文字（保存しません）</label><input id="tm-overlay-label" type="text" value="HELLO!" maxlength="100" /><label for="tm-overlay-image">合成画像（保存しません）</label><input id="tm-overlay-image" type="file" accept="image/*" /><p>四隅への平面合成です。正確な3D位置・姿勢・物理距離は算出しません。</p></div>
+        <div data-text-tabs="ocr code"><label for="tm-output">読み取り内容（編集可能・自動保存なし）</label><textarea id="tm-output" rows="5" spellcheck="false"></textarea><button id="tm-copy">内容をコピー</button><button id="tm-open-url" disabled>確認したURLを新しいタブで開く</button><p>コードは1回に1件。同一コードの内容をまとめ、連続検出回数を表示します。URLは自動で開きません。</p></div>
+        <details data-text-tabs="marker overlay" hidden><summary>実験用マーカーの生成・印刷</summary><label for="tm-marker-id">ARUCO_MIP_36h12 / ID 0〜249</label><input id="tm-marker-id" type="number" min="0" max="249" value="7" /><button id="tm-generate">マーカーを生成</button><canvas id="tm-marker-preview" width="600" height="600"></canvas><button id="tm-download" disabled>マーカーPNGを保存</button><button id="tm-print" disabled>印刷用レイアウトを開く</button><p>白い余白ごと印刷してください。別のArUco辞書とはIDが互換ではありません。</p></details>
+        <details><summary>文字・マーカーの性能・詳細</summary><div class="mode-settings"><label for="tm-resolution">解析長辺</label><select id="tm-resolution"><option value="320">320px</option><option value="640">640px</option><option value="960">960px</option></select><label for="tm-interval">解析完了後の待機</label><select id="tm-interval"><option value="100">100ms</option><option value="200">200ms</option><option value="500">500ms</option><option value="1000">1000ms</option></select><label for="tm-loadMode">負荷調整</label><select id="tm-loadMode"><option value="auto">自動</option><option value="manual">手動</option></select><label for="tm-ttl">結果の有効期限（撮影からms）</label><input id="tm-ttl" type="number" min="500" max="5000" step="100" /></div><pre id="tm-performance"></pre><pre id="tm-data">解析結果を待っています。</pre></details>
+      </section>
       <section class="mode-help segment-panel" data-modes="multi" hidden aria-label="複合認識の操作">
         <label for="multi-experiment">複合認識の実験</label><select id="multi-experiment"><option value="object-color">物体＋色</option><option value="color-motion">色＋動体</option><option value="objects">複数物体</option><option value="object-motion">物体＋動体</option><option value="person-object">人物＋物体</option><option value="temporal">時系列認識</option><option value="object-scene">物体＋風景（静止画）</option></select>
         <label for="multi-input">入力</label><select id="multi-input"><option value="still">静止画</option><option value="continuous">カメラ連続認識</option></select>
@@ -41,7 +63,7 @@
         </div></details>
         <details><summary>複合認識の結果・性能・イベント</summary><pre id="multi-performance"></pre><pre id="multi-results">解析結果を待っています。</pre></details>
       </section>
-      <section class="mode-help segment-panel" data-modes="scene multi" hidden aria-label="静止画入力">
+      <section class="mode-help segment-panel" data-modes="scene multi textmarker" hidden aria-label="静止画入力">
         <div data-modes="scene">
         <label for="scene-model">風景モデル（同時実行しません）</label><select id="scene-model"><option value="ade20k">ADE20K / 室内・屋外</option><option value="cityscapes">Cityscapes / 道路周辺</option></select>
         <label for="scene-input">入力</label><select id="scene-input"><option value="still">静止画（推奨）</option><option value="continuous">カメラ連続認識</option></select>
@@ -116,7 +138,7 @@
       <details><summary>実験記録 <span>計測値の保存・書き出し</span></summary><p>日時・設定・計測値・取得可能な端末情報のみ。映像・画像は保存しません。</p><button id="record-save">現在の計測値を記録</button><button id="record-json">JSONを書き出す</button><button id="record-csv">CSVを書き出す</button><button id="record-trim">最新10件を残す</button><button id="record-clear">記録をすべて削除</button><p id="record-status" role="status"></p><pre id="record-list"></pre></details>
       <p class="privacy">映像の送信・保存なし。設定・実験記録をブラウザ内に保存。<br>物体・領域認識は同じサイトのモデル・WASMを使用します。</p>
     </main>
-    <footer><div class="mode-control"><label for="mode-select">認識モード</label><select id="mode-select"><option value="object">物体認識</option><option value="color">色認識</option><option value="motion">動体検出</option><option value="shape">輪郭・図形認識</option><option value="segmentation">領域認識</option><option value="multi">複合認識</option><option value="scene">風景認識</option></select></div><button id="start" class="primary">カメラを起動</button><div class="secondary"><button id="switch">前面に切替</button><button id="recognition" aria-pressed="true">認識 ON</button></div></footer>
+    <footer><div class="mode-control"><label for="mode-select">認識モード</label><select id="mode-select"><option value="object">物体認識</option><option value="color">色認識</option><option value="motion">動体検出</option><option value="shape">輪郭・図形認識</option><option value="segmentation">領域認識</option><option value="textmarker">文字・マーカー</option><option value="multi">複合認識</option><option value="scene">風景認識</option></select></div><button id="start" class="primary">カメラを起動</button><div class="secondary"><button id="switch">前面に切替</button><button id="recognition" aria-pressed="true">認識 ON</button></div></footer>
   </div>
   <script type="module" src="/src/main.ts"></script>
 </body>

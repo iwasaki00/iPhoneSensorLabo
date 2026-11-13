@@ -3,7 +3,7 @@ import type { Settings } from '../settings';
 import type { ProcessingResult } from './pixels';
 import type { SegmentData } from '../segmentation/models';
 import type { SceneData } from '../scene/models';
-export type ModeResult = { detections?: RawDetection[]; duration: number; segmentation?: SegmentData; scene?: SceneData; multi?: import('../multi/fusion').MultiData } & Partial<ProcessingResult>;
+export type ModeResult = { textMarker?: import('../textmarker/types').TextData; detections?: RawDetection[]; duration: number; segmentation?: SegmentData; scene?: SceneData; multi?: import('../multi/fusion').MultiData } & Partial<ProcessingResult>;
 export interface RecognitionMode {
   readonly id: string;
   readonly runtime: string;
