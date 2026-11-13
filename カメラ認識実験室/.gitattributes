@@ -6,3 +6,5 @@
 **/group*-shard* binary
 public/vendor/** -text
 dist/vendor/** -text
+
+*.onnx binary

@@ -30,7 +30,7 @@ export class VisionRenderer {
     if (canvas.width !== Math.round(width * dpr) || canvas.height !== Math.round(height * dpr)) { canvas.width = Math.round(width * dpr); canvas.height = Math.round(height * dpr); }
     const ctx = canvas.getContext('2d')!;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.fillStyle = '#080f12'; ctx.fillRect(0, 0, width, height);
-    const scene = (mode === 'scene' || mode === 'multi' || mode === 'textmarker') ? this.scene : undefined, source = scene && !scene.live ? scene.before : video;
+    const scene = (mode === 'depth' || mode === 'scene' || mode === 'multi' || mode === 'textmarker') ? this.scene : undefined, source = scene && !scene.live ? scene.before : video;
     const sw = source instanceof HTMLVideoElement ? source.videoWidth : source.width, sh = source instanceof HTMLVideoElement ? source.videoHeight : source.height;
     if (scene && !scene.live) mirror = scene.mirror;
     if (!sw || !sh) return;

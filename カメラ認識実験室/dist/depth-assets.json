@@ -1,0 +1,73 @@
+{
+  "model": "onnx-community/depth-anything-v2-small",
+  "revision": "4472b7362082ad9968fee890ca0f1e5aca36b93d",
+  "variant": "Q4",
+  "runtime": "onnxruntime-web 1.23.2",
+  "execution": "Worker / WASM / numThreads=1",
+  "upstream": "a561b849ebae10a6f5ef49e26c83cbbcd36c71bf",
+  "files": [
+    {
+      "path": "vendor/depth/model_q4.onnx",
+      "source": "https://huggingface.co/onnx-community/depth-anything-v2-small/resolve/4472b7362082ad9968fee890ca0f1e5aca36b93d/onnx/model_q4.onnx",
+      "license": "Apache-2.0",
+      "bytes": 27404416,
+      "sha256": "5d55b02762e1907589158af3e366bd61ddf648155852a07bbf5e3a074639fcf8"
+    },
+    {
+      "path": "vendor/depth/config.json",
+      "source": "https://huggingface.co/onnx-community/depth-anything-v2-small/resolve/4472b7362082ad9968fee890ca0f1e5aca36b93d/config.json",
+      "license": "Apache-2.0",
+      "bytes": 36,
+      "sha256": "a4bb37095b5cac2cd052a0cbb4c62e2802fd7acde1a755196e81f0b351ed5e46"
+    },
+    {
+      "path": "vendor/depth/preprocessor_config.json",
+      "source": "https://huggingface.co/onnx-community/depth-anything-v2-small/resolve/4472b7362082ad9968fee890ca0f1e5aca36b93d/preprocessor_config.json",
+      "license": "Apache-2.0",
+      "bytes": 436,
+      "sha256": "b7106e3822a52ce1fdabceea7c0e013009f5709d609a5b744c90e6599fcf4b3b"
+    },
+    {
+      "path": "vendor/depth/ort.wasm.min.mjs",
+      "source": "node_modules/onnxruntime-web/dist/ort.wasm.min.mjs",
+      "license": "MIT / bundled third-party notices",
+      "bytes": 49856,
+      "sha256": "69751720f611e37d1ce2fa3c6ebaa80f949014752636c5f8887a63d40feadcc7"
+    },
+    {
+      "path": "vendor/depth/ort-wasm-simd-threaded.mjs",
+      "source": "node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.mjs",
+      "license": "MIT / bundled third-party notices",
+      "bytes": 20321,
+      "sha256": "90a557d15c02bac4504d95b67f431d8594635ed2a0a62a7f2cd83d090ff91d3e"
+    },
+    {
+      "path": "vendor/depth/ort-wasm-simd-threaded.wasm",
+      "source": "node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.wasm",
+      "license": "MIT / bundled third-party notices",
+      "bytes": 11905541,
+      "sha256": "45eaee27761ad883742a8d4b8fce1538d60ce43b51adf1726fafccc59b8c1a15"
+    },
+    {
+      "path": "licenses/Depth-Anything-V2-Small-APACHE-2.0.txt",
+      "source": "https://raw.githubusercontent.com/DepthAnything/Depth-Anything-V2/a561b849ebae10a6f5ef49e26c83cbbcd36c71bf/LICENSE",
+      "license": "Apache-2.0",
+      "bytes": 11357,
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+    },
+    {
+      "path": "licenses/ONNX-Runtime-LICENSE.txt",
+      "source": "https://raw.githubusercontent.com/microsoft/onnxruntime/v1.23.2/LICENSE",
+      "license": "MIT / bundled third-party notices",
+      "bytes": 1073,
+      "sha256": "2f07c72751aed99790b8a4869cf2311df85a860b22ded05fa22803587a48922c"
+    },
+    {
+      "path": "licenses/ONNX-Runtime-ThirdPartyNotices.txt",
+      "source": "https://raw.githubusercontent.com/microsoft/onnxruntime/v1.23.2/ThirdPartyNotices.txt",
+      "license": "MIT / bundled third-party notices",
+      "bytes": 326866,
+      "sha256": "e9e90971a8e75a9a8ac0c6412e29c1202d079998389915aa485f46c816c3b4cc"
+    }
+  ]
+}

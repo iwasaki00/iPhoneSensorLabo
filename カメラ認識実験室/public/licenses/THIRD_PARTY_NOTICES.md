@@ -60,6 +60,16 @@ SHA-256: 0720bf247bd76e6594ea28fa9c6f7c5242be774818997dbbeffc4da460c723bb
 
 ## 配布時に保持するもの
 
+v0.8.0追加（2026-11-14確認）:
+
+| 配布物 | 固定版・容量 | ライセンス・出典 |
+| --- | --- | --- |
+| Depth Anything V2 Small Q4 ONNX | onnx-community/depth-anything-v2-small、revision `4472b7362082ad9968fee890ca0f1e5aca36b93d`、27,404,416 bytes | Apache-2.0。[ONNX配布元](https://huggingface.co/onnx-community/depth-anything-v2-small)、[Small重みのライセンスを明記した上流](https://github.com/DepthAnything/Depth-Anything-V2)。Small以外のCC-BY-NCモデルは採用しない |
+| config.json / preprocessor_config.json | 同revision、LF配布36 / 436 bytes | 同配布元のApache-2.0。設定・出典として保持。使用する前処理の差はV0_8_0.mdに記載 |
+| ONNX Runtime Web | npm完全固定1.23.2、WASM 11,905,541 bytes、関連MJS 49,856 / 20,321 bytes | MIT。[公式ソース](https://github.com/microsoft/onnxruntime/tree/v1.23.2)。LICENSEとThirdPartyNoticesの全体を同梱。WASM名にthreadedを含むが実行はnumThreads=1 |
+
+重みは無改変。設定・MJS・ライセンスの改行はLFに統一。`public/depth-assets.json`に取得元・版・容量・SHA-256を記録し、`scripts/prepare-depth-assets.mjs`で固定版から配置します。`Depth-Anything-V2-Small-APACHE-2.0.txt`、`ONNX-Runtime-LICENSE.txt`、`ONNX-Runtime-ThirdPartyNotices.txt`、本一覧と帰属を配布時も保持してください。Q4と比較したUINT8重み、および検証写真はdistへ配布しません。モデルの取得通信と画像送信は別であり、アプリに画像・深度マップの送信処理はありません。
+
 - Apache-2.0の本文、上流の著作権・帰属表示を保持する。変更した上流ファイルには変更を明示する。上流がNOTICEを提供する場合はその帰属表示も保持する。
 - MITの著作権表示・許諾文を保持する。
 - `public/licenses/`、`THIRD_PARTY_NOTICES.md`、`public/assets-manifest.json` を保持する。準備スクリプトは一覧のコピーも `public/licenses/` に配置する。

@@ -1,6 +1,6 @@
 {
   "name": "014-camera-vision-lab",
-  "version": "0.7.1",
+  "version": "0.8.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -24,6 +24,7 @@
     "@tesseract.js-data/jpn": "1.0.0",
     "@zxing/library": "0.23.0",
     "js-aruco2": "2.0.0",
+    "onnxruntime-web": "1.23.2",
     "tesseract.js": "7.0.0"
   },
   "devDependencies": {

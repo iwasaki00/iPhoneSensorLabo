@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 const root=new URL('../',import.meta.url);
 await import('./prepare-scene-assets.mjs');
 await import('./prepare-text-assets.mjs');
+await import('./prepare-depth-assets.mjs');
 const target=new URL('public/',root);
 const manifestPath=new URL('assets-manifest.json',target);
 const modelURL='https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite0/int8/1/efficientdet_lite0.tflite';

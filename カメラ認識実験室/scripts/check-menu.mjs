@@ -26,7 +26,7 @@ try {
       const full = path.resolve(fixture, relative);
       if (!full.startsWith(fixture + path.sep)) { res.writeHead(403); res.end(); return; }
       const bytes = await readFile(full);
-      res.setHeader('Content-Type', ({ '.html': 'text/html; charset=utf-8', '.js': 'application/javascript', '.css': 'text/css', '.wasm': 'application/wasm', '.json': 'application/json' })[path.extname(full)] || 'application/octet-stream');
+      res.setHeader('Content-Type', ({ '.html': 'text/html; charset=utf-8', '.js': 'application/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.wasm': 'application/wasm', '.json': 'application/json' })[path.extname(full)] || 'application/octet-stream');
       res.end(bytes);
     } catch { res.writeHead(404); res.end('not found'); }
   });
@@ -71,6 +71,10 @@ try {
   await page.locator('#scene-capture').click();
   await page.waitForFunction(() => document.querySelector('#multi-results')?.textContent.includes('EfficientDet-Lite0'), null, { timeout: 60000 });
   assert.ok((await page.locator('#multi-results').textContent()).includes('HSV'));
+  await page.locator('#mode-select').selectOption('depth');
+  await page.locator('#scene-capture').click();
+  await page.locator('#depth-analyze').click();
+  await page.waitForFunction(()=>{const error=document.querySelector('#error');if(error&&!error.hidden)throw Error(document.querySelector('#error-message')?.textContent);return document.querySelector('#depth-status')?.textContent.includes('解析完了');},null,{timeout:120000});
   await page.locator('#mode-select').selectOption('textmarker');
   await page.locator('#tm-tab').selectOption('marker');
   await page.waitForFunction(() => !document.querySelector('#tm-download').disabled);
@@ -93,7 +97,7 @@ try {
   assert.equal(await page.locator('#tm-tab').inputValue(),'cards');
   assert.equal(await page.locator('#video').evaluate(v=>v.srcObject),null);
   assert.deepEqual(errors, []); assert.deepEqual(failed, []); assert.deepEqual(external, []);
-  console.log(`PASS: ${files.length} Git-eligible static files; parent menu and repository subpath; legacy modes + AR cards print/display/simulator and return without camera; no HTTP/page errors or external requests.`);
+  console.log(`PASS: ${files.length} Git-eligible static files; parent menu and repository subpath; legacy modes + real depth WASM + AR cards print/display/simulator and return without camera; no HTTP/page errors or external requests.`);
 } finally {
   await browser?.close();
   if (server) await new Promise(resolve => server.close(resolve));

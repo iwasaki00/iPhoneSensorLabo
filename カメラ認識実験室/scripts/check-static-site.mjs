@@ -18,7 +18,8 @@ for (const path of paths) assert.ok((await stat(new URL(path.split('?')[0], dist
 const manifest = JSON.parse(await readFile(new URL('assets-manifest.json', dist), 'utf8'));
 const sceneManifest = JSON.parse(await readFile(new URL('scene-assets.json', dist), 'utf8'));
 const textManifest = JSON.parse(await readFile(new URL('text-assets.json', dist),'utf8'));
-for (const file of [...manifest.files, ...sceneManifest.files, ...textManifest.files]) {
+const depthManifest=JSON.parse(await readFile(new URL('depth-assets.json',dist),'utf8'));
+for (const file of [...manifest.files, ...sceneManifest.files, ...textManifest.files, ...depthManifest.files]) {
   const bytes = await readFile(new URL(file.path, dist));
   assert.equal(createHash('sha256').update(bytes).digest('hex'), file.sha256, `配布アセット不一致: ${file.path}`);
 }

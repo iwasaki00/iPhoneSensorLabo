@@ -1,0 +1,31 @@
+{
+  "at": "2026-11-13T18:41:29.566Z",
+  "source": "upstream real photograph demo01: near road vs distant building/sky; not cup/box test",
+  "width": 1024,
+  "height": 681,
+  "input": [
+    280,
+    182
+  ],
+  "minimum": 0,
+  "maximum": 4.784496307373047,
+  "near": 1.9989615678787231,
+  "far": 0,
+  "runs": [
+    {
+      "duration": 1002.5999999977648,
+      "loadMs": 1856.5
+    },
+    {
+      "duration": 1026.699999999255,
+      "loadMs": 1856.5
+    }
+  ],
+  "environment": {
+    "ready": true,
+    "loadMs": 1856.5,
+    "isolated": false,
+    "threads": 1
+  },
+  "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36"
+}

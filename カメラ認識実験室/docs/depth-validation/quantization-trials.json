@@ -1,0 +1,121 @@
+{
+  "at": "2026-11-13T18:46:57.341Z",
+  "sourceCommit": "a561b849ebae10a6f5ef49e26c83cbbcd36c71bf",
+  "condition": "PC browser, WASM numThreads=1, long edge 280. Photo03 is a painting: nonzero depth is a negative example, not physical depth.",
+  "trials": [
+    {
+      "variant": "Q4",
+      "photo": "01",
+      "duration": 2031.3999999985099,
+      "loadMs": 2266.199999999255,
+      "minimum": 0,
+      "maximum": 4.784496307373047,
+      "input": [
+        280,
+        182
+      ],
+      "samples": {
+        "p50_95": 1.9995347261428833,
+        "p50_38": 0.17776598036289215,
+        "p33_40": 1.0347352027893066,
+        "p46_18": 0
+      },
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36"
+    },
+    {
+      "variant": "Q4",
+      "photo": "02",
+      "duration": 1825.300000000745,
+      "loadMs": 2778.800000000745,
+      "minimum": 0,
+      "maximum": 3.188528299331665,
+      "input": [
+        280,
+        182
+      ],
+      "samples": {
+        "p50_95": 2.334318161010742,
+        "p50_38": 0,
+        "p33_40": 2.3197824954986572,
+        "p46_18": 0
+      },
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36"
+    },
+    {
+      "variant": "Q4",
+      "photo": "03",
+      "duration": 2278.699999999255,
+      "loadMs": 3717.400000002235,
+      "minimum": 0.1876128911972046,
+      "maximum": 2.8622241020202637,
+      "input": [
+        280,
+        182
+      ],
+      "samples": {
+        "p50_95": 2.5546798706054688,
+        "p50_38": 1.5332667827606201,
+        "p33_40": 2.7311513423919678,
+        "p46_18": 1.4612410068511963
+      },
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36"
+    },
+    {
+      "variant": "UINT8",
+      "photo": "01",
+      "duration": 1176.8999999985099,
+      "loadMs": 2346.099999997765,
+      "minimum": 0,
+      "maximum": 5.0446295738220215,
+      "input": [
+        280,
+        182
+      ],
+      "samples": {
+        "p50_95": 1.9833005666732788,
+        "p50_38": 0.2929634153842926,
+        "p33_40": 1.0052415132522583,
+        "p46_18": 0
+      },
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36"
+    },
+    {
+      "variant": "UINT8",
+      "photo": "02",
+      "duration": 1317.9000000022352,
+      "loadMs": 1936.5,
+      "minimum": 0,
+      "maximum": 3.4707491397857666,
+      "input": [
+        280,
+        182
+      ],
+      "samples": {
+        "p50_95": 2.9135913848876953,
+        "p50_38": 0,
+        "p33_40": 2.555765390396118,
+        "p46_18": 0
+      },
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36"
+    },
+    {
+      "variant": "UINT8",
+      "photo": "03",
+      "duration": 1212.5,
+      "loadMs": 1754.5999999977648,
+      "minimum": 0.12321824580430984,
+      "maximum": 3.148580551147461,
+      "input": [
+        280,
+        182
+      ],
+      "samples": {
+        "p50_95": 2.848597526550293,
+        "p50_38": 1.9022977352142334,
+        "p33_40": 2.854598045349121,
+        "p46_18": 2.07130765914917
+      },
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36"
+    }
+  ]
+}

@@ -1,5 +1,12 @@
 # 作成ファイル一覧
 
+## v0.8.0の追加・変更
+
+- 新規: `src/depth/{processing,panel,worker}.ts`、`src/modes/depth.ts`、`scripts/prepare-depth-assets.mjs`／`prepare-depth-validation.mjs`、固定モデル・設定・ORT実行資産・許諾文と`public/depth-assets.json`
+- 接続: `src/main.ts`、`src/settings.ts`、`src/modes/types.ts`、`src/render.ts`、`index.html`、`src/style.css`、package.json／lock、アセット準備・静的配信・親メニュー検証、親メニューのVersion表記、再生成したdist
+- 検証・資料: `tests/depth.test.ts`、`tests/browser/depth.spec.ts`、README、THIRD_PARTY_NOTICESと配布コピー、IPHONE_CHECKLIST、`docs/V0_8_0.md`、`docs/depth-validation/*.json`、本一覧
+- 実写真と比較用UINT8モデルはGit対象外の`depth-validation.local/`のみ。既存ARカード・辞書・ペア判定・演出は変更しない。画像や深度マップを検証ログへ保存しない。
+
 ## v0.7.1の追加・変更
 
 - 新規: `ar-playground.html`、`src/textmarker/playground.ts`／`playground-model.ts`／`playground.css`（カード表示・模擬入力・操作）
