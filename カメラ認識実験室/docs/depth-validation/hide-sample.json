@@ -1,0 +1,22 @@
+{
+  "at": "2026-11-13T23:47:38.704Z",
+  "kind": "real photo and real Q4 WASM model; no image or map saved",
+  "sample": "scikit-image v0.25.2 coffee.png / Rachel Michetti / CC0",
+  "placement": {
+    "x": 0.3,
+    "y": 0.6,
+    "depth": 34,
+    "quality": "ちょうどいい（本体の61%が見えています）。見える部分を確認して隠してください。"
+  },
+  "duration": 569.1999999955297,
+  "loadMs": 1394.3000000044703,
+  "input": [
+    280,
+    182
+  ],
+  "source": [
+    600,
+    400
+  ],
+  "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36"
+}

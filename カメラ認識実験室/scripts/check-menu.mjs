@@ -51,6 +51,17 @@ try {
   await card.click();
   await page.waitForFunction(version => document.querySelector('#diagnostics')?.textContent.includes('Version: ' + version), version);
   assert.equal(decodeURI(new URL(page.url()).pathname), `/repository/${folder}/dist/`);
+  if(process.argv.includes('--hide-only')){
+    await page.locator('#mode-select').selectOption('depth');
+    await page.locator('#depth-experiment').selectOption('hide');
+    await page.locator('#hide-sample').click();
+    await page.locator('#depth-analyze').click();
+    await page.waitForFunction(()=>document.querySelector('#depth-status')?.textContent.includes('解析完了'),null,{timeout:120000});
+    assert.equal(await page.locator('#video').evaluate(v=>v.srcObject),null);
+    assert.equal((await page.request.get(new URL('samples/coffee-LICENSE.txt',page.url()).href)).status(),200);
+    assert.deepEqual(errors,[]);assert.deepEqual(failed,[]);assert.deepEqual(external,[]);
+    console.log(`PASS: ${files.length} Git-eligible static files; parent menu -> v${version} -> hide-and-seek -> local sample + real WASM, no camera, HTTP/page errors or external requests.`);
+  }else{
   await page.locator('#mode-select').selectOption('object');
   await page.locator('#start').click();
   await page.waitForFunction(() => { const value = document.querySelector('#latency')?.textContent; return !!value && value !== '—'; }, null, { timeout: 60000 });
@@ -98,6 +109,7 @@ try {
   assert.equal(await page.locator('#video').evaluate(v=>v.srcObject),null);
   assert.deepEqual(errors, []); assert.deepEqual(failed, []); assert.deepEqual(external, []);
   console.log(`PASS: ${files.length} Git-eligible static files; parent menu and repository subpath; legacy modes + real depth WASM + AR cards print/display/simulator and return without camera; no HTTP/page errors or external requests.`);
+  }
 } finally {
   await browser?.close();
   if (server) await new Promise(resolve => server.close(resolve));

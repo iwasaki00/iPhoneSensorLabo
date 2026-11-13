@@ -32,3 +32,8 @@ body{-webkit-touch-callout:none}input[type=checkbox]{width:auto;min-height:20px;
 #try-ar-cards{flex:0 0 auto;font-size:12px;padding:8px;min-height:40px}#card-print{display:flex;align-items:center;justify-content:center;color:#bde8dd;font-size:13px;min-height:44px}
 .depth-legend{display:flex;justify-content:space-between;background:linear-gradient(90deg,#ff0000,#80dc80,#0000ff);color:white;text-shadow:0 1px 3px black;padding:8px;margin-top:8px}.depth-mode #scene-analyze{display:none}.depth-mode #scene-message{display:none}#overlay.depth-drag{touch-action:none;-webkit-touch-callout:none;cursor:grab}#depth-status{color:#c5ecdf}
 .depth-mode .metrics,.depth-mode .viewport-top>span:last-child{display:none}
+.depth-mode.hide-editing .view-control{display:none}
+.depth-mode.hide-editing footer{position:static}
+.depth-mode.hide-editing .viewport{height:auto;aspect-ratio:var(--depth-photo-ratio,1.5);max-height:70svh}
+.depth-mode.hide-locked main>:not(.viewport):not(#depth-lab),.depth-mode.hide-locked #depth-lab>:not(#hide-game),.depth-mode.hide-locked footer,.depth-mode.hide-locked .viewport-top{display:none!important}
+#hide-game h2{font-size:17px;margin:4px 0 10px}#hide-game button{margin:6px 0}#hide-quality{min-height:3em}#hide-lock{background:#a2ecd2;color:#102922}

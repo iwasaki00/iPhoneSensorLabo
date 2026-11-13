@@ -19,9 +19,11 @@ export class ScenePanel {
   inputOverride?: 'still' | 'continuous';
   private fileGeneration = 0;
   private settings: SceneSettings;
+  loadSample:()=>Promise<boolean>;
   private renderer: VisionRenderer;
   constructor(settings: SceneSettings, renderer: VisionRenderer, change: (reload: boolean, analyze: boolean, invalidate: boolean) => void) {
     this.settings = settings; this.renderer = renderer;
+    this.loadSample=async()=>{const token=++this.fileGeneration;try{const image=new Image();image.src=import.meta.env.BASE_URL+'samples/coffee.png';await image.decode();if(token!==this.fileGeneration)return false;this.setInput(image,image.naturalWidth,image.naturalHeight,false);this.inputOverride='still';this.sync();change(false,true,true);return true;}catch{return false;}};
     const fields: [keyof SceneSettings, string, boolean?][] = [['model', 'scene-model'], ['input', 'scene-input'], ['context', 'scene-context'], ['display', 'scene-display'], ['target', 'scene-target', true], ['color', 'scene-color'], ['brightness', 'scene-brightness', true], ['resolution', 'scene-resolution', true], ['interval', 'scene-interval', true], ['loadMode', 'scene-load']];
     for (const [key, id, numeric] of fields) {
       const input = el<HTMLInputElement>(id); input.value = String(settings[key]);

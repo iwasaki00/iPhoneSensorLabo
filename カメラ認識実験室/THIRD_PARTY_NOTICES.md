@@ -60,6 +60,8 @@ SHA-256: 0720bf247bd76e6594ea28fa9c6f7c5242be774818997dbbeffc4da460c723bb
 
 ## 配布時に保持するもの
 
+v0.8.1追加: `samples/coffee.png`、Rachel Michetti撮影、scikit-image v0.25.2配布、CC0。[公式の写真別ライセンス](https://scikit-image.org/docs/0.25.x/api/skimage.data.html#skimage.data.coffee)。600×400、466,706 bytes、無改変。出典・SHA-256・CC0リンクを`public/samples/coffee-LICENSE.txt`に記録し、写真と一緒にdistへ配置します。新しいAIモデル・認識ライブラリは追加していません。既存Q4モデルのライセンス・版・内部構造は変更しません。
+
 v0.8.0追加（2026-11-14確認）:
 
 | 配布物 | 固定版・容量 | ライセンス・出典 |

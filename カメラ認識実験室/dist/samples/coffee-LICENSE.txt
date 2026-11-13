@@ -1,0 +1,12 @@
+coffee.png — Rachel Michetti
+
+CC0 (public domain dedication). Redistribution and commercial use permitted.
+License: https://creativecommons.org/publicdomain/zero/1.0/
+Official data attribution and CC0 statement:
+https://scikit-image.org/docs/0.25.x/api/skimage.data.html#skimage.data.coffee
+Source (unmodified 600 x 400 PNG, 466706 bytes):
+https://raw.githubusercontent.com/scikit-image/scikit-image/v0.25.2/skimage/data/coffee.png
+SHA-256: cc02f8ca188b167c775a7101b5d767d1e71792cf762c33d6fa15a4599b5a8de7
+
+The sample contains a coffee cup, saucer and spoon on a wooden table.
+It is not the requested cup / box / wall position-swapped validation pair.

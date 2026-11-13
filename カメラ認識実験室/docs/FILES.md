@@ -1,5 +1,12 @@
 # 作成ファイル一覧
 
+## v0.8.1の追加・変更
+
+- 新規: `src/depth/hide.ts`、`tests/hide.test.ts`、`tests/browser/hide.spec.ts`、配布可能な`public/samples/coffee.png`と`coffee-LICENSE.txt`、`docs/V0_8_1.md`、数値のみの`docs/depth-validation/hide-sample.json`
+- 接続: `src/depth/panel.ts`、`src/scene/panel.ts`、`src/main.ts`、`index.html`、`src/style.css`。既存の画像入力・実モデル・遮蔽・座標変換・描画を再利用。新しい認識ライブラリなし。
+- 配布・検証: package.json／lock、Playwrightの任意ポート設定、静的配布・親メニュー確認、親メニューのVersion表示、README・許諾一覧・実機手順、再生成dist。
+- 実験記録に答えの位置は追加しない。テストの配置情報は公開サンプルに対する開発用メタデータだけ。利用者の写真・推定マップ・答えを保存しない。
+
 ## v0.8.0の追加・変更
 
 - 新規: `src/depth/{processing,panel,worker}.ts`、`src/modes/depth.ts`、`scripts/prepare-depth-assets.mjs`／`prepare-depth-validation.mjs`、固定モデル・設定・ORT実行資産・許諾文と`public/depth-assets.json`

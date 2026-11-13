@@ -19,6 +19,9 @@ const manifest = JSON.parse(await readFile(new URL('assets-manifest.json', dist)
 const sceneManifest = JSON.parse(await readFile(new URL('scene-assets.json', dist), 'utf8'));
 const textManifest = JSON.parse(await readFile(new URL('text-assets.json', dist),'utf8'));
 const depthManifest=JSON.parse(await readFile(new URL('depth-assets.json',dist),'utf8'));
+const sample=await readFile(new URL('samples/coffee.png',dist));
+assert.equal(createHash('sha256').update(sample).digest('hex'),'cc02f8ca188b167c775a7101b5d767d1e71792cf762c33d6fa15a4599b5a8de7','Sample photo differs from the documented CC0 source');
+assert.ok((await readFile(new URL('samples/coffee-LICENSE.txt',dist),'utf8')).includes('Rachel Michetti'));
 for (const file of [...manifest.files, ...sceneManifest.files, ...textManifest.files, ...depthManifest.files]) {
   const bytes = await readFile(new URL(file.path, dist));
   assert.equal(createHash('sha256').update(bytes).digest('hex'), file.sha256, `配布アセット不一致: ${file.path}`);
