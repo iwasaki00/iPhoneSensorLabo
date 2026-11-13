@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#10191e" />
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; connect-src 'self'; img-src 'self' data: blob:; style-src 'self'; media-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'none'" />
   <title>Camera Vision Lab</title>
-  <script type="module" crossorigin src="./assets/main-7xwjx7Ce.js"></script>
+  <script type="module" crossorigin src="./assets/main-CVRojTzH.js"></script>
   <link rel="modulepreload" crossorigin href="./assets/geometry-Dtiv7hMu.js">
   <link rel="stylesheet" crossorigin href="./assets/main-DE-u6Hov.css">
 </head>
@@ -23,7 +23,7 @@
       </section>
       <div class="metrics"><div><b id="camera-fps">—</b><span>映像 FPS</span></div><div><b id="render-fps">—</b><span>描画 FPS</span></div><div><b id="detect-fps">—</b><span>認識 FPS</span></div><div><b id="latency">—</b><span>処理 ms</span></div></div>
       <section id="text-lab" class="mode-help segment-panel" data-modes="textmarker" hidden aria-label="文字とマーカーの操作">
-        <label for="tm-tab">文字・マーカー実験</label><select id="tm-tab"><option value="ocr">OCR（文字認識）</option><option value="code">QR／バーコード</option><option value="match">登録画像照合</option><option value="marker">ARマーカー</option><option value="cards">AR?????</option><option value="overlay">位置追従映像合成</option></select>
+        <label for="tm-tab">文字・マーカー実験</label><select id="tm-tab"><option value="ocr">OCR（文字認識）</option><option value="code">QR／バーコード</option><option value="match">登録画像照合</option><option value="marker">ARマーカー</option><option value="cards">ARカード実験</option><option value="overlay">位置追従映像合成</option></select>
         <div id="card-welcome" data-text-tabs="cards" hidden><p id="card-hint" role="status">カードを映す → 2枚を近づける</p><div class="scene-actions"><a class="card-prepare" href="ar-cards.html" target="_blank" rel="noopener">カードを用意する</a><button id="card-start">カメラを起動</button></div><details><summary>カード実験の診断</summary><pre id="card-diagnostics">カードを映してください。</pre><pre id="card-performance"></pre><p>画面上の近さによる反応です。物理距離・接触は測定しません。</p></details></div>
         <label for="tm-input" class="text-input-label">入力</label><select id="tm-input"><option value="still">静止画</option><option value="continuous">カメラ連続認識</option></select>
         <p id="tm-message" role="status">画像を選ぶか、カメラから1フレーム取得してください。OCRは静止画専用です。</p>

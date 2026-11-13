@@ -50,7 +50,7 @@ test('real English and Japanese OCR, preprocessing, edited copy and private meta
   await page.locator('#tm-language').selectOption('jpn+eng');await ready(page);await upload(page,await solidText(page,'日本語 テスト ABC 123'));await ready(page);await expect(page.locator('#tm-output')).toHaveValue(/日\s*本\s*語/);
   await page.locator('#tm-output').fill('編集済みの秘密 98765');await page.locator('#tm-copy').click();expect(await page.evaluate(()=>(window as any).__copied)).toBe('編集済みの秘密 98765');
   await page.locator('summary').filter({hasText:'実験記録'}).click();await page.locator('#record-save').click();expect(await page.evaluate(()=>JSON.stringify(localStorage))).not.toContain('秘密');
-  const ua=await page.evaluate(()=>navigator.userAgent),browser=ua.includes('Edg/')?'edge':'chrome';await writeFile(`docs/performance-v0.6.0-ocr-${browser}.json`,JSON.stringify({at:new Date().toISOString(),ua,input:'900x200 synthetic text, OCR Worker, jpn+eng; PC only',metrics:await page.locator('#tm-performance').textContent(),details:await page.locator('#tm-data').textContent()},null,2)+'\n');
+  const ua=await page.evaluate(()=>navigator.userAgent),browser=ua.includes('Edg/')?'edge':'chrome';await writeFile(`docs/performance-v${JSON.parse(await readFile('package.json','utf8')).version}-ocr-${browser}.json`,JSON.stringify({at:new Date().toISOString(),ua,input:'900x200 synthetic text, OCR Worker, jpn+eng; PC only',metrics:await page.locator('#tm-performance').textContent(),details:await page.locator('#tm-data').textContent()},null,2)+'\n');
 });
 test('ORB registration, rotation/scale RANSAC match, image overlay and explicit persistence',async({page})=>{
   test.setTimeout(120000);await open(page,'match');
@@ -81,7 +81,7 @@ test('continuous multiple markers, disappearance, camera mirror, stop/restart an
   await page.locator('#switch').click();await ready(page);await expect(page.locator('#count')).toHaveText('2');
   await page.locator('#scene-capture').click();await ready(page);await expect(page.locator('#tm-input')).toHaveValue('still');await page.locator('#view-select').selectOption('split');
   const metrics=liveMetrics;
-  const browser=metrics.ua.includes('Edg/')?'edge':'chrome';await writeFile(`docs/performance-v0.6.0-marker-${browser}.json`,JSON.stringify(metrics,null,2)+'\n');
+  const browser=metrics.ua.includes('Edg/')?'edge':'chrome';await writeFile(`docs/performance-${JSON.parse(await readFile('package.json','utf8')).version}-marker-${browser}.json`,JSON.stringify(metrics,null,2)+'\n');
   await page.locator('#start').click();await expect.poll(()=>page.workers().length).toBe(0);expect(await page.evaluate(()=>(window as any).__stream.getTracks().every((t:MediaStreamTrack)=>t.readyState==='ended'))).toBe(true);
   await page.locator('#tm-input').selectOption('continuous');await page.locator('#start').click();await ready(page);await page.locator('#start').click();
 });
