@@ -1,5 +1,21 @@
 # 作成ファイル一覧
 
+## v0.7.0の追加・変更
+
+- 新規: `src/textmarker/cards.ts`（対応表・ペア判定）、`card-art.ts`（自作描画）、`card-view.ts`（演出）、`projection.ts`（既存射影処理を共有化）、`card-page.ts`／`card-print.css`、`ar-cards.html`
+- 接続: `src/textmarker/panel.ts`、`settings.ts`、`record.ts`、`src/modes/text-marker.ts`、`src/main.ts`、`src/style.css`、`index.html`、Vite複数ページ設定、package.json／lock、再生成したdist
+- 検証・資料: `tests/cards.test.ts`、`tests/browser/cards.spec.ts`、`scripts/check-menu.mjs`、README、IPHONE_CHECKLIST、`docs/V0_7_0.md`、本一覧。親メニューのVersion表記を0.7.0へ更新
+- 新規依存・モデル・大型画像素材はなし。旧フォルダは再作成しない。commit・push・公開は行わない。
+
+## v0.6.0の追加・変更
+
+- 新規: `src/modes/text-marker.ts`、`src/textmarker/{settings,types,geometry,panel,record}.ts`、同ディレクトリの`dictionary.json`、`public/text-worker.js`
+- 共通接続: `src/main.ts`、`src/modes/types.ts`、`src/multi/fusion.ts`、`src/settings.ts`、`src/scene/panel.ts`、`src/render.ts`、`src/experiments.ts`、`src/style.css`、`index.html`
+- 配布: `package.json`／lock、`scripts/prepare-text-assets.mjs`、`prepare-assets.mjs`、`check-static-site.mjs`、`check-menu.mjs`、`public/text-assets.json`、`public/vendor/{ocr,text}/`、追加許諾文、再ビルドした`dist/`
+- 検証: `tests/textmarker.test.ts`、`tests/browser/textmarker.spec.ts`、`docs/performance-v0.6.0-*.json`、`docs/v0.6.0-marker-overlay.png`
+- 資料: README、THIRD_PARTY_NOTICESと配布コピー、IPHONE_CHECKLIST、MODE_EXTENSION、EXPERIMENT_TEMPLATE、本一覧、`V0_6_0.md`、`TEXT_MARKER_FORMATS.md`
+- 親メニューの起動先は維持しVersion表示を0.6.0へ更新。旧フォルダは再作成しない。既存AIモデル原本・風景モデル調整を変更しない。
+
 ## v0.5.0の追加・変更
 
 - 新規ソース: `src/modes/multi.ts`、`src/multi/settings.ts`、`fusion.ts`、`presentation.ts`、`record.ts`

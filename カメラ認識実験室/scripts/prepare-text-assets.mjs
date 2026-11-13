@@ -11,6 +11,7 @@ if (process.argv.includes('--verify')) {
   const files = [];
   async function copy(source, path, license) {
     const dest = new URL(path, target); await mkdir(new URL('./', dest), { recursive: true }); await copyFile(new URL('node_modules/' + source, root), dest);
+    if (/\.(js|txt)$/.test(path)) await writeFile(dest,(await readFile(dest,'utf8')).replace(/\r\n?/g,'\n'));
     const b = await readFile(dest); files.push({ path, bytes: b.length, sha256: hash(b), source, license });
   }
   for (const f of await readdir(new URL('node_modules/tesseract.js-core/', root))) if (f.endsWith('.wasm.js')) await copy('tesseract.js-core/' + f, 'vendor/ocr/core/' + f, 'Apache-2.0');

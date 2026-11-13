@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-13T12:49:38.059Z",
+  "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36",
+  "input": "640x480 Canvas camera with two generated markers; PC only",
+  "metrics": "描画FPS 54.9 / 解析FPS 4.23\n平均 39.4 ms / 最大 103.7 ms（初回ロードを含む）\n解析 640×480 / 完了後200ms待機 / auto",
+  "details": "js-aruco2 2.0.0 / ARUCO_MIP_36h12 / 20.3 ms\nフレーム text-2047.000-5 / 更新 9:49:37 PM\n特徴点 0 / 一致 0 / RANSAC内点 0\nOCR信頼度 —\nマーカー ID 7 / 中心(0.255,0.489) / 画像回転0.0°\nマーカー ID 7 / 中心(0.743,0.489) / 画像回転0.0°"
+}

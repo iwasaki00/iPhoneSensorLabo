@@ -45,6 +45,7 @@ self.onmessage = async ({ data }) => {
   try {
     const {base,kind,image,settings:s}=data; let result; const start=performance.now();
     if (kind === 'ocr') {
+      if (!NativeWorker) throw Error('このブラウザではOCR用の入れ子Workerを起動できません。Safariを更新するか、Chrome／Edgeで試してください。');
       if (!ocr || ocrLanguage !== s.language) {
         if (!self.Tesseract) importScripts(new URL('vendor/ocr/tesseract.min.js',base).href);
         self.postMessage({progress:'OCRモデル・言語データを同じサイトから読み込み中…'});
@@ -75,3 +76,4 @@ self.onmessage = async ({ data }) => {
   } catch(e) { if(!disposed)self.postMessage({error:e instanceof Error?e.message:String(e)}); }
   finally {busy=false;}
 };
+self.postMessage({ready:true});

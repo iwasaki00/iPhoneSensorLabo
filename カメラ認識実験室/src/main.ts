@@ -63,7 +63,7 @@ const scenePanel = new ScenePanel(sceneSettings, renderer, (reload, analyze, inv
 });
 const textPanel = new TextPanel(textSettings,renderer,reload=>{
   if(settings.mode!=='textmarker')return;
-  if(reload){scenePanel.inputOverride=textSettings.input;scenePanel.sync();sceneRequested=isSceneStill()&&scenePanel.hasStill;void activateMode();}
+  if(reload){document.body.classList.toggle('ar-cards',textSettings.tab==='cards');scenePanel.inputOverride=textSettings.input;scenePanel.sync();sceneRequested=isSceneStill()&&scenePanel.hasStill;void activateMode();}
   else if(!active)drawStatic();
 });
 function sharedInputMode() { return settings.mode === 'scene' || settings.mode === 'multi' || settings.mode === 'textmarker'; }
@@ -74,24 +74,25 @@ function drawStatic() {
   if (active || !sharedInputMode()) return;
   if (settings.mode === 'multi' && multiData) multiFrames(); else if(!(settings.mode==='textmarker'&&textPanel.data))scenePanel.showInput(); el('placeholder').hidden = isSceneStill() && scenePanel.hasStill;
   renderer.draw(overlay, video, settings.view, false, enabled && hasResult(), settings.mode);
-  renderRate.tick(performance.now()); el('count').textContent = String(settings.mode === 'textmarker' ? textPanel.data?.result.entities.length ?? 0 : settings.mode === 'multi' ? multiData?.entities.length ?? 0 : scenePanel.count);
+  renderRate.tick(performance.now()); el('count').textContent = String(settings.mode === 'textmarker' ? textPanel.count : settings.mode === 'multi' ? multiData?.entities.length ?? 0 : scenePanel.count);
   el('latency').textContent = latency?.toFixed(1) ?? '—'; el('detect-fps').textContent = detectRate.value(performance.now())?.toFixed(1) ?? '—';
 }
 
 function persist() { el('storage-status').hidden = saveSettings(settings); }
 function diagnostics() {
   el('diagnostics').textContent = [
-    'Version: 0.6.0 / TEXT & MARKER LAB', `認識モード: ${titles[settings.mode]}`, `比較表示: ${settings.view}`,
+    'Version: 0.7.0 / AR CARD LAB', `認識モード: ${titles[settings.mode]}`, `比較表示: ${settings.view}`,
     `安全な接続: ${isSecureContext}`, `カメラAPI: ${!!navigator.mediaDevices?.getUserMedia}`,
     `映像FPS: ${'requestVideoFrameCallback' in video ? '映像フレーム通知' : 'API非対応（数値なし）'}`,
     '描画FPS: 実描画のrAF通知（2秒窓） / 認識FPS: 処理完了通知（10秒窓）', `実行方式: ${mode?.runtime ?? '未初期化'}`,
-    settings.mode === 'multi' ? `複合: ${combinations[multiSettings.experiment]} / ${multiData?.engines.map(e => e.engine).join(' + ') ?? '必要なエンジンのみ遅延読込'}` : settings.mode === 'object' ? 'モデル: EfficientDet-Lite0 int8 revision 1 / MediaPipe 0.10.21' : settings.mode === 'segmentation' ? `モデル: ${segmentModels[modelForTab(segmentSettings.tab)].name} / MediaPipe 0.10.21 / CPU` : settings.mode === 'scene' ? `モデル: ${sceneModels[sceneSettings.model].name} / TensorFlow.js 4.22.0` : 'モデル・WASM不使用 / Canvas画素処理',
-    `映像: ${video.videoWidth} × ${video.videoHeight}`, `解析: ${resultW} × ${resultH}（${settings.mode === 'scene' ? '風景モデル内部 ' + internalSceneSize(sceneSettings.resolution) + '×' + internalSceneSize(sceneSettings.resolution) : settings.mode === 'multi' ? '複合解析の長辺上限' + multiSettings.resolution + 'px' : settings.mode === 'segmentation' ? '領域モデル入力256×256' : '画像処理は長辺320pxまで'}）`,
+    settings.mode === 'textmarker' ? `エンジン: ${textPanel.data?.result.engine ?? '未初期化'} / 必要なアセットのみ同一サイトから取得` : settings.mode === 'multi' ? `複合: ${combinations[multiSettings.experiment]} / ${multiData?.engines.map(e => e.engine).join(' + ') ?? '必要なエンジンのみ遅延読込'}` : settings.mode === 'object' ? 'モデル: EfficientDet-Lite0 int8 revision 1 / MediaPipe 0.10.21' : settings.mode === 'segmentation' ? `モデル: ${segmentModels[modelForTab(segmentSettings.tab)].name} / MediaPipe 0.10.21 / CPU` : settings.mode === 'scene' ? `モデル: ${sceneModels[sceneSettings.model].name} / TensorFlow.js 4.22.0` : 'モデル・WASM不使用 / Canvas画素処理',
+    `映像: ${video.videoWidth} × ${video.videoHeight}`, `解析: ${resultW} × ${resultH}（${settings.mode === 'scene' ? '風景モデル内部 ' + internalSceneSize(sceneSettings.resolution) + '×' + internalSceneSize(sceneSettings.resolution) : settings.mode === 'textmarker' ? '文字・マーカー解析の長辺上限'+textSettings.resolution+'px' : settings.mode === 'multi' ? '複合解析の長辺上限' + multiSettings.resolution + 'px' : settings.mode === 'segmentation' ? '領域モデル入力256×256' : '画像処理は長辺320pxまで'}）`,
     `完了後の認識間隔: ${waitMs()}ms`, `カメラ設定: ${JSON.stringify(camera.settings() ?? {})}`,
     `信頼度: ${threshold.value}% / 物体最大20件・画像処理最大24領域`, `UA: ${navigator.userAgent}`
   ].join('\n');
   const stats = segmentStats.value;
   el('tm-performance').textContent = `描画FPS ${renderRate.value(performance.now())?.toFixed(1)??'—'} / 解析FPS ${detectRate.value(performance.now())?.toFixed(2)??'—'}\n平均 ${stats.average?.toFixed(1)??'—'} ms / 最大 ${stats.maximum?.toFixed(1)??'—'} ms（初回ロードを含む）\n解析 ${resultW}×${resultH} / 完了後${waitMs()}ms待機 / ${textSettings.loadMode}${textLoad.heavy?' / 高負荷：静止画または低解像度を推奨':''}`;
+  el('card-performance').textContent=el('tm-performance').textContent;el('card-start').textContent=start.textContent;
   el('multi-performance').textContent = [`解析: ${resultW}×${resultH} / ${multiSettings.input}`, `直近${stats.count}回 平均処理: ${stats.average?.toFixed(1) ?? '—'} ms / 最大: ${stats.maximum?.toFixed(1) ?? '—'} ms（モデル初期化・逐次推論・統合を含む）`, `描画FPS: ${renderRate.value(performance.now())?.toFixed(1) ?? '—'} / 推論FPS: ${detectRate.value(performance.now())?.toFixed(2) ?? '—（単発）'}`, `完了後${waitMs()}ms / ${multiSettings.loadMode} / キュー蓄積なし`, `風景設定: ${sceneModels[sceneSettings.model].name} / 原本uint8 version1 / v0.4実験用内部サイズ${internalSceneSize(sceneSettings.resolution)}×${internalSceneSize(sceneSettings.resolution)}`].join('\n');
   el('segment-performance').textContent = [
     `使用モデル: ${segmentModels[modelForTab(segmentSettings.tab)].name}`,
@@ -178,17 +179,18 @@ function frameCounter(token: number) {
 function draw(token: number) {
   if (token !== cameraGeneration || !active) return;
   const now = performance.now(), visible = enabled && (isSceneStill() && hasResult() || maskValid(resultAt, now, settings.mode === 'textmarker' ? textSettings.ttl : settings.mode === 'segmentation' ? segmentSettings.maskTtl : settings.mode === 'multi' ? multiSettings.ttl : settings.mode === 'scene' ? 15000 : 2000));
-  if(settings.mode==='textmarker'&&!isSceneStill()&&resultAt>0&&!visible){resultAt=0;renderer.clear();textPanel.clear();textPanel.message('結果の有効期限切れ。次の解析まで元映像を表示します。');}
+  if(settings.mode==='textmarker'&&!isSceneStill()&&resultAt>0&&!visible){resultAt=0;renderer.clear();textPanel.clear(true);textPanel.message('結果の有効期限切れ。次の解析まで元映像を表示します。');}
   if (settings.mode === 'multi' && !isSceneStill() && resultAt > 0 && !visible) { resultAt = 0; renderer.clear(); multiData = undefined; el('multi-results').textContent = '結果の有効期限切れ。'; resultInfo(); el('multi-message').textContent = '結果の有効期限切れ。次の結果まで元映像を表示します。'; }
   if (settings.mode === 'scene' && !isSceneStill() && resultAt > 0 && !visible) { resultAt = 0; renderer.clear(); scenePanel.clear(); }
   if (settings.mode === 'segmentation' && resultAt > 0 && !visible) {
     resultAt = 0; renderer.clear(); segmentPanel.clear();
     el('segment-reason').textContent = 'マスクの有効期限が切れました。次の結果まで元映像を表示します。';
   }
+  if(settings.mode==='textmarker'&&visible)textPanel.animate(now);
   try { renderer.draw(overlay, video, settings.view, facing === 'user', visible, settings.mode); }
   catch (error) { recognitionFailure(error); renderer.draw(overlay, video, settings.view, facing === 'user', false, settings.mode); }
   renderRate.tick(performance.now());
-  el('count').textContent = String(visible ? settings.mode === 'textmarker' ? textPanel.data?.result.entities.length ?? 0 : settings.mode === 'multi' ? multiData?.entities.length ?? 0 : settings.mode === 'scene' ? scenePanel.count : settings.mode === 'segmentation' ? segmentPanel.count : renderer.observations.length + renderer.regions.length : 0);
+  el('count').textContent = String(visible ? settings.mode === 'textmarker' ? textPanel.count : settings.mode === 'multi' ? multiData?.entities.length ?? 0 : settings.mode === 'scene' ? scenePanel.count : settings.mode === 'segmentation' ? segmentPanel.count : renderer.observations.length + renderer.regions.length : 0);
   el('camera-fps').textContent = cameraRate.value(now)?.toFixed(1) ?? '—';
   el('render-fps').textContent = renderRate.value(performance.now())?.toFixed(1) ?? '—';
   el('detect-fps').textContent = enabled ? detectRate.value(now)?.toFixed(1) ?? '—' : '—';
@@ -227,9 +229,9 @@ async function infer() {
     renderer.setResult(resultW, resultH, result.regions ?? [], result.mask, settings.mode);
     segmentStats.add(result.duration);
     if(result.textMarker){
-      textLoad.add(performance.now()-timestamp);
-      if(!still&&performance.now()>=result.textMarker.result.expiresAt){renderer.clear();textPanel.clear();textPanel.message('解析結果が古いため破棄しました。静止画か低解像度で再試行してください。');latency=result.duration;detectRate.tick(performance.now());diagnostics();return;}
+      if(!still&&performance.now()>=result.textMarker.result.expiresAt){textLoad.add(performance.now()-timestamp);renderer.clear();textPanel.clear();textPanel.message('解析結果が古いため破棄しました。静止画か低解像度で再試行してください。');latency=result.duration;detectRate.tick(performance.now());diagnostics();return;}
       textPanel.update(result.textMarker,analysis,still?scenePanel.mirror:facing==='user',still,scenePanel.input);
+      textLoad.add(performance.now()-timestamp);
     }
     if (settings.mode === 'multi') {
       multiLoad.add(performance.now() - timestamp);
@@ -291,6 +293,7 @@ const controls: [keyof Settings, string, string][] = [
   ['motionSensitivity', 'motion-sensitivity', ''], ['shapeSensitivity', 'shape-sensitivity', ''], ['minArea', 'min-area', ' px²']
 ];
 function syncUI() {
+  document.body.classList.toggle('ar-cards',settings.mode==='textmarker'&&textSettings.tab==='cards');
   modeSelect.value = settings.mode; viewSelect.value = settings.view;
   document.querySelectorAll<HTMLElement>('[data-modes]').forEach(element => { element.hidden = !element.dataset.modes!.split(' ').includes(settings.mode); });
   el('mode-kind').textContent = settings.mode === 'object' || settings.mode === 'segmentation' || settings.mode === 'scene' ? '端末内AI' : 'モデル不要';

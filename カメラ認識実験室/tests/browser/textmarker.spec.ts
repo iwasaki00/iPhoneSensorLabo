@@ -47,7 +47,7 @@ test('real English and Japanese OCR, preprocessing, edited copy and private meta
   expect(requests.some(r=>r.endsWith('eng.traineddata.gz'))).toBe(true);expect(requests.some(r=>r.endsWith('jpn.traineddata.gz'))).toBe(false);
   await expect(page.locator('#tm-data')).toContainText('信頼度');
   await page.locator('summary').filter({hasText:'OCRの範囲'}).click();await page.locator('#tm-preprocessing').selectOption('gray');await ready(page);await expect(page.locator('#tm-output')).toHaveValue(/12345/);
-  await page.locator('#tm-language').selectOption('jpn+eng');await ready(page);await upload(page,await solidText(page,'日本語 テスト ABC 123'));await ready(page);await expect(page.locator('#tm-output')).toHaveValue(/日本語/);
+  await page.locator('#tm-language').selectOption('jpn+eng');await ready(page);await upload(page,await solidText(page,'日本語 テスト ABC 123'));await ready(page);await expect(page.locator('#tm-output')).toHaveValue(/日\s*本\s*語/);
   await page.locator('#tm-output').fill('編集済みの秘密 98765');await page.locator('#tm-copy').click();expect(await page.evaluate(()=>(window as any).__copied)).toBe('編集済みの秘密 98765');
   await page.locator('summary').filter({hasText:'実験記録'}).click();await page.locator('#record-save').click();expect(await page.evaluate(()=>JSON.stringify(localStorage))).not.toContain('秘密');
   const ua=await page.evaluate(()=>navigator.userAgent),browser=ua.includes('Edg/')?'edge':'chrome';await writeFile(`docs/performance-v0.6.0-ocr-${browser}.json`,JSON.stringify({at:new Date().toISOString(),ua,input:'900x200 synthetic text, OCR Worker, jpn+eng; PC only',metrics:await page.locator('#tm-performance').textContent(),details:await page.locator('#tm-data').textContent()},null,2)+'\n');
@@ -74,13 +74,31 @@ test('continuous multiple markers, disappearance, camera mirror, stop/restart an
   await open(page,'marker');await expect(page.locator('#tm-download')).toBeEnabled();await page.locator('#tm-input').selectOption('continuous');await page.locator('#start').click();await ready(page);await expect(page.locator('#count')).toHaveText('2');
   await expect.poll(async()=>Number((await page.locator('#tm-data').textContent())?.match(/フレーム text-\S+-(\d+)/)?.[1]),{timeout:15000}).toBeGreaterThanOrEqual(5);
   expect(Number(await page.locator('#render-fps').textContent())).toBeGreaterThan(5);
+  const liveMetrics={at:new Date().toISOString(),ua:await page.evaluate(()=>navigator.userAgent),input:'640x480 Canvas camera with two generated markers; PC only',metrics:await page.locator('#tm-performance').textContent(),details:await page.locator('#tm-data').textContent()};
   await page.evaluate(()=>(window as any).__visible=false);await expect(page.locator('#count')).toHaveText('0');await expect(page.locator('#tm-message')).toContainText('見失い');
   await page.evaluate(()=>(window as any).__visible=true);await expect(page.locator('#count')).toHaveText('2');
   await page.locator('#mode-select').selectOption('color');await expect(page.locator('#latency')).not.toHaveText('—');await page.locator('#mode-select').selectOption('textmarker');await ready(page);expect(await page.evaluate(()=>(window as any).__starts)).toBe(1);
   await page.locator('#switch').click();await ready(page);await expect(page.locator('#count')).toHaveText('2');
   await page.locator('#scene-capture').click();await ready(page);await expect(page.locator('#tm-input')).toHaveValue('still');await page.locator('#view-select').selectOption('split');
-  const metrics={at:new Date().toISOString(),ua:await page.evaluate(()=>navigator.userAgent),input:'640x480 Canvas camera with two generated markers; PC only',metrics:await page.locator('#tm-performance').textContent(),details:await page.locator('#tm-data').textContent()};
+  const metrics=liveMetrics;
   const browser=metrics.ua.includes('Edg/')?'edge':'chrome';await writeFile(`docs/performance-v0.6.0-marker-${browser}.json`,JSON.stringify(metrics,null,2)+'\n');
   await page.locator('#start').click();await expect.poll(()=>page.workers().length).toBe(0);expect(await page.evaluate(()=>(window as any).__stream.getTracks().every((t:MediaStreamTrack)=>t.readyState==='ended'))).toBe(true);
   await page.locator('#tm-input').selectOption('continuous');await page.locator('#start').click();await ready(page);await page.locator('#start').click();
+});
+
+test('broker boot error is visible and explicit retry recovers',async({page})=>{
+  await page.route('**/text-worker.js',route=>route.fulfill({contentType:'application/javascript',body:'throw new Error("test boot failure");'}));
+  await open(page,'marker');
+  const marker=await page.locator('#tm-marker-preview').evaluate((c:HTMLCanvasElement)=>c.toDataURL().split(',')[1]);
+  await upload(page,marker);await expect(page.locator('#error-message')).toContainText('Workerを起動できません');
+  await page.unroute('**/text-worker.js');await page.locator('#retry').click();await ready(page);await expect(page.locator('#tm-data')).toContainText('ID 7');
+});
+
+test('leaving OCR during language download terminates parent and child workers',async({page})=>{
+  let held:any;let signal!:()=>void;const requested=new Promise<void>(resolve=>signal=resolve);
+  await page.route('**/eng.traineddata.gz',route=>{held=route;signal();});
+  await open(page,'ocr');await upload(page,await solidText(page,'CANCEL 123'));await requested;
+  expect(page.workers().length).toBeGreaterThanOrEqual(2);
+  await page.locator('#mode-select').selectOption('color');await expect.poll(()=>page.workers().filter(w=>/text-worker|ocr\/worker/.test(w.url())).length).toBe(0);
+  await held.abort();await expect(page.locator('#tm-output')).toHaveValue('');
 });

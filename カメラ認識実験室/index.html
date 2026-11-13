@@ -9,9 +9,9 @@
 </head>
 <body>
   <div id="app">
-    <header><div><span class="eyebrow">CAMERA VISION LAB / 014</span><h1>カメラ認識実験室</h1></div><span class="version">v0.6.0</span></header>
+    <header><div><span class="eyebrow">CAMERA VISION LAB / 014</span><h1>カメラ認識実験室</h1></div><span class="version">v0.7.0</span></header>
     <main>
-      <div class="mode"><span class="dot"></span> TEXT &amp; MARKER LAB <span class="local" id="mode-kind">端末内AI</span></div>
+      <div class="mode"><span class="dot"></span> AR CARD LAB <span class="local" id="mode-kind">端末内AI</span></div>
       <div class="view-control"><label for="view-select">比較表示</label><select id="view-select"><option value="normal">通常表示</option><option value="before">BEFORE（元映像）</option><option value="after">AFTER（認識結果）</option><option value="split">左右比較</option></select></div>
       <section class="viewport" aria-label="カメラ映像と認識結果">
         <video id="video" autoplay muted playsinline></video><canvas id="overlay"></canvas>
@@ -19,9 +19,10 @@
         <div class="viewport-top"><span id="state">停止中</span><span><b id="count">0</b> <span id="count-unit">個を認識</span></span></div>
       </section>
       <div class="metrics"><div><b id="camera-fps">—</b><span>映像 FPS</span></div><div><b id="render-fps">—</b><span>描画 FPS</span></div><div><b id="detect-fps">—</b><span>認識 FPS</span></div><div><b id="latency">—</b><span>処理 ms</span></div></div>
-      <section class="mode-help segment-panel" data-modes="textmarker" hidden aria-label="文字とマーカーの操作">
-        <label for="tm-tab">文字・マーカー実験</label><select id="tm-tab"><option value="ocr">OCR（文字認識）</option><option value="code">QR／バーコード</option><option value="match">登録画像照合</option><option value="marker">ARマーカー</option><option value="overlay">位置追従映像合成</option></select>
-        <label for="tm-input">入力</label><select id="tm-input"><option value="still">静止画</option><option value="continuous">カメラ連続認識</option></select>
+      <section id="text-lab" class="mode-help segment-panel" data-modes="textmarker" hidden aria-label="文字とマーカーの操作">
+        <label for="tm-tab">文字・マーカー実験</label><select id="tm-tab"><option value="ocr">OCR（文字認識）</option><option value="code">QR／バーコード</option><option value="match">登録画像照合</option><option value="marker">ARマーカー</option><option value="cards">ARカード実験</option><option value="overlay">位置追従映像合成</option></select>
+        <div id="card-welcome" data-text-tabs="cards" hidden><p id="card-hint" role="status">カードを映す → 2枚を近づける</p><div class="scene-actions"><a class="card-prepare" href="ar-cards.html" target="_blank" rel="noopener">カードを用意する</a><button id="card-start">カメラを起動</button></div><details><summary>カード実験の診断</summary><pre id="card-diagnostics">カードを映してください。</pre><pre id="card-performance"></pre><p>画面上の近さによる反応です。物理距離・接触は測定しません。</p></details></div>
+        <label for="tm-input" class="text-input-label">入力</label><select id="tm-input"><option value="still">静止画</option><option value="continuous">カメラ連続認識</option></select>
         <p id="tm-message" role="status">画像を選ぶか、カメラから1フレーム取得してください。OCRは静止画専用です。</p>
         <div data-text-tabs="ocr"><label for="tm-language">読み取り言語</label><select id="tm-language"><option value="jpn">日本語</option><option value="eng">英語・数字</option><option value="jpn+eng">日英混在</option></select>
           <details><summary>OCRの範囲・回転・前処理</summary><div class="mode-settings">
@@ -63,7 +64,7 @@
         </div></details>
         <details><summary>複合認識の結果・性能・イベント</summary><pre id="multi-performance"></pre><pre id="multi-results">解析結果を待っています。</pre></details>
       </section>
-      <section class="mode-help segment-panel" data-modes="scene multi textmarker" hidden aria-label="静止画入力">
+      <section id="shared-image-input" class="mode-help segment-panel" data-modes="scene multi textmarker" hidden aria-label="静止画入力">
         <div data-modes="scene">
         <label for="scene-model">風景モデル（同時実行しません）</label><select id="scene-model"><option value="ade20k">ADE20K / 室内・屋外</option><option value="cityscapes">Cityscapes / 道路周辺</option></select>
         <label for="scene-input">入力</label><select id="scene-input"><option value="still">静止画（推奨）</option><option value="continuous">カメラ連続認識</option></select>

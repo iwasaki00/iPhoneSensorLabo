@@ -46,6 +46,18 @@ SHA-256: 0720bf247bd76e6594ea28fa9c6f7c5242be774818997dbbeffc4da460c723bb
 サイズ: 4,602,795 bytes
 ```
 
+## v0.6.0 文字・マーカー追加（確認日2026-11-13）
+
+| 採用物 | 固定版 | ライセンス・再配布条件 |
+| --- | --- | --- |
+| Tesseract.js / tesseract.js-core（WASM内包JS） | 7.0.0 / 7.0.0 | Apache-2.0。[本体](https://github.com/naptha/tesseract.js)、[core](https://github.com/naptha/tesseract.js-core)。本文と同梱依存の帰属を `tesseract.js-LICENSE.txt`、`tesseract.js-core-LICENSE.txt`、2つの `*.js.LICENSE.txt` に保持 |
+| 英語・日本語LSTM学習済みデータ | @tesseract.js-data/eng・jpn 各1.0.0、4.0.0_best_int | 学習済み重みはApache-2.0。[上流tessdata](https://github.com/naptha/tessdata)のLICENSEを確認。npmラッパーはMITで、配布するのはgzipのtraineddataのみ。eng 2,952,873 bytes、jpn 2,030,256 bytes。OCRコードのライセンスだけから重みの条件を推定していない |
+| @zxing/library | 0.23.0 | Apache-2.0。[公式](https://github.com/zxing-js/library)、`@zxing-library-LICENSE.txt` |
+| @techstark/opencv-js / OpenCV WASM内包JS | 4.12.0-release.1 | Apache-2.0。[配布元](https://github.com/TechStark/opencv-js)、`@techstark-opencv-js-LICENSE.txt`。ORBなどのAPIを利用、バイナリ内部は変更しない |
+| js-aruco2 / CV・AR・ARUCO_MIP_36h12辞書 | 2.0.0 | MITおよび同梱ArUco/OpenCVのBSD帰属。[公式](https://github.com/damianofalcioni/js-aruco2)、`js-aruco2-LICENSE.txt`を全体保持。生成辞書は固定版から抽出 |
+
+新規JavaScript・許諾文は内容を変えずLFへ改行統一しています。新規実行資産のコピー元・bytes・SHA-256・パッケージ版は `public/text-assets.json` に記録し、buildで照合します。`npm ci && npm run assets` で固定版から再配置できます。上記の許諾・著作権表示、Apache本文、同梱依存のnotice、既存モデルの帰属・変更説明を配布時も保持してください。@zxing/browserは調査のみで採用・配布していません。調査と容量・採否は [v0.6設計資料](docs/V0_6_0.md) に記録しています。
+
 ## 配布時に保持するもの
 
 - Apache-2.0の本文、上流の著作権・帰属表示を保持する。変更した上流ファイルには変更を明示する。上流がNOTICEを提供する場合はその帰属表示も保持する。

@@ -71,9 +71,15 @@ try {
   await page.locator('#scene-capture').click();
   await page.waitForFunction(() => document.querySelector('#multi-results')?.textContent.includes('EfficientDet-Lite0'), null, { timeout: 60000 });
   assert.ok((await page.locator('#multi-results').textContent()).includes('HSV'));
+  await page.locator('#mode-select').selectOption('textmarker');
+  await page.locator('#tm-tab').selectOption('marker');
+  await page.waitForFunction(() => !document.querySelector('#tm-download').disabled);
+  const marker = await page.locator('#tm-marker-preview').evaluate(canvas => canvas.toDataURL().split(',')[1]);
+  await page.locator('#scene-file').setInputFiles({name:'marker.png',mimeType:'image/png',buffer:Buffer.from(marker,'base64')});
+  await page.waitForFunction(() => document.querySelector('#tm-data')?.textContent.includes('ID 7'), null, {timeout:30000});
   await page.locator('#start').click();
   assert.deepEqual(errors, []); assert.deepEqual(failed, []); assert.deepEqual(external, []);
-  console.log(`PASS: ${files.length} Git-eligible static files; parent menu and repository subpath; object + pixel + segmentation + scene + multi; no HTTP/page errors or external requests.`);
+  console.log(`PASS: ${files.length} Git-eligible static files; parent menu and repository subpath; object + pixel + segmentation + scene + multi + marker; no HTTP/page errors or external requests.`);
 } finally {
   await browser?.close();
   if (server) await new Promise(resolve => server.close(resolve));
