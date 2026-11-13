@@ -15,7 +15,7 @@ test('three printable cards generate PNGs with the correct real detector IDs',as
   await page.goto('/ar-cards.html');await expect(page.locator('#cards canvas')).toHaveCount(3);
   const sources=await page.locator('#cards canvas').evaluateAll((nodes:HTMLCanvasElement[])=>nodes.map(c=>({id:c.dataset.markerId!,png:c.toDataURL().split(',')[1]})));
   expect(sources.map(s=>s.id)).toEqual(['7','11','19']);
-  await page.emulateMedia({media:'print'});await expect(page.locator('#cards article')).toHaveCount(3);await page.emulateMedia({media:'screen'});
+  await page.setViewportSize({width:794,height:1123});await page.emulateMedia({media:'print'});await expect(page.locator('#cards article')).toHaveCount(3);expect(await page.locator('#cards').evaluate(e=>e.scrollWidth)).toBeLessThanOrEqual(794);await page.screenshot({path:'docs/v0.7.0-card-print-layout.png',fullPage:true});await page.emulateMedia({media:'screen'});
   const download=page.waitForEvent('download');await page.locator('#cards button').first().click();expect((await readFile((await(await download).path())!)).slice(1,4).toString()).toBe('PNG');
   await page.addInitScript(()=>{localStorage.setItem('camera-vision-lab.v2',JSON.stringify({mode:'textmarker'}));localStorage.setItem('camera-vision-lab.text.v1',JSON.stringify({tab:'marker',input:'still'}));});await page.goto('/');
   for(const source of sources){await page.locator('#scene-file').setInputFiles({name:'card.png',mimeType:'image/png',buffer:Buffer.from(source.png,'base64')});await expect(page.locator('#tm-data')).toContainText('ID '+source.id,{timeout:15000});}
