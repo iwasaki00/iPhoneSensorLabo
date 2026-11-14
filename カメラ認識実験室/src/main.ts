@@ -1,3 +1,4 @@
+import type { DepthMode } from './modes/depth';
 import { DepthPanel } from './depth/panel';
 import './style.css';
 import { Camera, Rate, convert, errorMessage, type RawDetection } from './core';
@@ -84,7 +85,7 @@ function drawStatic() {
 function persist() { el('storage-status').hidden = saveSettings(settings); }
 function diagnostics() {
   el('diagnostics').textContent = [
-    'Version: 0.8.1 / PHOTO HIDE & SEEK', `認識モード: ${titles[settings.mode]}`, `比較表示: ${settings.view}`,
+    'Version: 0.8.2 / HIGH DETAIL DEPTH LAB', `認識モード: ${titles[settings.mode]}`, `比較表示: ${settings.view}`,
     `安全な接続: ${isSecureContext}`, `カメラAPI: ${!!navigator.mediaDevices?.getUserMedia}`,
     `映像FPS: ${'requestVideoFrameCallback' in video ? '映像フレーム通知' : 'API非対応（数値なし）'}`,
     '描画FPS: 実描画のrAF通知（2秒窓） / 認識FPS: 処理完了通知（10秒窓）', `実行方式: ${mode?.runtime ?? '未初期化'}`,
@@ -232,7 +233,7 @@ async function infer() {
     raw = result.detections ?? []; resultW = analysis.width; resultH = analysis.height;
     renderer.setResult(resultW, resultH, result.regions ?? [], result.mask, settings.mode);
     segmentStats.add(result.duration);
-    if(result.depth){depthPanel.update(result.depth,analysis,scenePanel.mirror);}
+    if(result.depth){depthPanel.update(result.depth,scenePanel.depthDisplay,scenePanel.mirror,scenePanel.originalSize);}
     if(result.textMarker){
       if(!still&&performance.now()>=result.textMarker.result.expiresAt){textLoad.add(performance.now()-timestamp);renderer.clear();textPanel.clear();textPanel.message('解析結果が古いため破棄しました。静止画か低解像度で再試行してください。');latency=result.duration;detectRate.tick(performance.now());diagnostics();return;}
       textPanel.update(result.textMarker,analysis,still?scenePanel.mirror:facing==='user',still,scenePanel.input);
@@ -269,7 +270,7 @@ bindExperiments(() => {
   if (settings.mode === 'multi' && !multiData) return null;
   if(settings.mode==='textmarker'&&!textPanel.data)return null;
   const now = performance.now(), stats = segmentStats.value;
-  return { version: '0.8.1', at: new Date().toISOString(), mode: titles[settings.mode] + (settings.mode === 'segmentation' ? '/' + segmentSettings.tab : ''),
+  return { version: '0.8.2', at: new Date().toISOString(), mode: titles[settings.mode] + (settings.mode === 'segmentation' ? '/' + segmentSettings.tab : ''),
     model: settings.mode === 'depth' ? 'Depth Anything V2 Small Q4' : settings.mode === 'textmarker' ? textPanel.data?.result.engine ?? 'Worker' : settings.mode === 'multi' ? multiData?.engines.map(e => e.engine).join(' + ') ?? '未計測' : settings.mode === 'scene' ? sceneModels[sceneSettings.model].name : settings.mode === 'segmentation' ? segmentModels[modelForTab(segmentSettings.tab)].name : settings.mode === 'object' ? 'EfficientDet-Lite0 int8 revision 1' : 'モデル不使用',
     resolution: `${resultW}×${resultH}`, renderFPS: renderRate.value(now), inferenceFPS: detectRate.value(now), averageMs: stats.average, maximumMs: stats.maximum,
     waitMs: waitMs(), loadMode: settings.mode === 'textmarker' ? textSettings.loadMode : settings.mode === 'multi' ? multiSettings.loadMode : settings.mode === 'scene' ? sceneSettings.loadMode : settings.mode === 'segmentation' ? segmentSettings.loadMode : 'manual', runtime: mode.runtime,
@@ -383,7 +384,7 @@ el('try-ar-cards').onclick=enterCards;
 syncMulti(); syncUI(); diagnostics();
 if(new URLSearchParams(location.search).get('ar-cards')==='1')enterCards();
 
-let depthUserRequest=false;el('depth-analyze').onclick=async()=>{if(settings.mode!=='depth'||depthPanel.busy||inFlight||depthUserRequest||!scenePanel.hasStill)return;const inputId=scenePanel.inputId;depthUserRequest=true;try{if(!mode||preparingScene)await activateMode();if(settings.mode!=='depth'||!mode||inputId!==scenePanel.inputId)return;depthPanel.setBusy(true);depthPanel.message('読み込み・解析を開始します…');sceneRequested=true;run();}finally{depthUserRequest=false;}};
+let depthUserRequest=false;el('depth-analyze').onclick=async()=>{if(settings.mode!=='depth'||depthPanel.busy||inFlight||depthUserRequest||!scenePanel.hasStill)return;const inputId=scenePanel.inputId;depthUserRequest=true;try{if(!mode||preparingScene)await activateMode();if(settings.mode!=='depth'||!mode||inputId!==scenePanel.inputId)return;(mode as DepthMode).setSize(Number(el<HTMLSelectElement>('depth-size').value));depthPanel.setBusy(true);depthPanel.message('読み込み・解析を開始します…');sceneRequested=true;run();}finally{depthUserRequest=false;}};
 el('hide-sample').onclick=async()=>{if(settings.mode!=='depth')return;depthPanel.message('サンプル写真を読み込み中…');if(!await scenePanel.loadSample()&&settings.mode==='depth')depthPanel.message('サンプル写真を取得できません。再試行するか端末の写真を選択してください。');};
-el('depth-size').onchange=()=>{if(settings.mode==='depth'){sceneRequested=false;void activateMode();}};
+el('depth-size').onchange=()=>{depthPanel.requestQuality(Number(el<HTMLSelectElement>('depth-size').value));};
 let depthPointer:number|undefined;overlay.addEventListener('pointerdown',e=>{if(settings.mode==='depth'&&depthPanel.draggable){depthPointer=e.pointerId;overlay.setPointerCapture(e.pointerId);depthPanel.interact(e.clientX,e.clientY,overlay,settings.view,true);e.preventDefault();}});overlay.addEventListener('pointermove',e=>{if(depthPointer===e.pointerId&&settings.mode==='depth')depthPanel.interact(e.clientX,e.clientY,overlay,settings.view,true);});const endDepth=(e:PointerEvent)=>{if(depthPointer===e.pointerId){depthPointer=undefined;if(overlay.hasPointerCapture(e.pointerId))overlay.releasePointerCapture(e.pointerId);}};overlay.addEventListener('pointerup',endDepth);overlay.addEventListener('pointercancel',endDepth);

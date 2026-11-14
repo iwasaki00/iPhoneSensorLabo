@@ -6,16 +6,16 @@
   <meta name="theme-color" content="#10191e" />
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; connect-src 'self'; img-src 'self' data: blob:; style-src 'self'; media-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'none'" />
   <title>Camera Vision Lab</title>
-  <script type="module" crossorigin src="./assets/main-ow3l8jH0.js"></script>
+  <script type="module" crossorigin src="./assets/main-KOJBPzB9.js"></script>
   <link rel="modulepreload" crossorigin href="./assets/geometry-Dtiv7hMu.js">
   <link rel="modulepreload" crossorigin href="./assets/card-view-BZXkDuV2.js">
   <link rel="stylesheet" crossorigin href="./assets/main-DV9jWWtk.css">
 </head>
 <body>
   <div id="app">
-    <header><div><span class="eyebrow">CAMERA VISION LAB / 014</span><h1>カメラ認識実験室</h1></div><span class="version">v0.8.1</span></header>
+    <header><div><span class="eyebrow">CAMERA VISION LAB / 014</span><h1>カメラ認識実験室</h1></div><span class="version">v0.8.2</span></header>
     <main>
-      <div class="mode"><span class="dot"></span> PHOTO HIDE & SEEK <span class="local" id="mode-kind">端末内AI</span></div>
+      <div class="mode"><span class="dot"></span> HIGH DETAIL DEPTH LAB <span class="local" id="mode-kind">端末内AI</span></div>
       <div class="view-control"><label for="view-select">比較表示</label><select id="view-select"><option value="normal">通常表示</option><option value="before">BEFORE（元映像）</option><option value="after">AFTER（認識結果）</option><option value="split">左右比較</option></select></div>
       <section class="viewport" aria-label="カメラ映像と認識結果">
         <video id="video" autoplay muted playsinline></video><canvas id="overlay"></canvas>
@@ -24,7 +24,7 @@
       </section>
       <div class="metrics"><div><b id="camera-fps">—</b><span>映像 FPS</span></div><div><b id="render-fps">—</b><span>描画 FPS</span></div><div><b id="detect-fps">—</b><span>認識 FPS</span></div><div><b id="latency">—</b><span>処理 ms</span></div></div>
       <section id="depth-lab" class="mode-help segment-panel" data-modes="depth" hidden aria-label="奥行き認識の操作">
-        <p>画像を読み込むか、カメラから1フレーム取得して解析します。</p><button id="depth-analyze" disabled>奥行きを解析</button><p id="depth-status" role="status">未解析。解析ボタンを押すまでモデルを取得しません。</p>
+        <p>画像を読み込むか、カメラから1フレーム取得して解析します。</p><label for="depth-size">解析画質</label><select id="depth-size"><option value="280">標準</option><option value="518">高精細（時間がかかります）</option></select><button id="depth-analyze" disabled>奥行きを解析</button><p id="depth-status" role="status">未解析。解析ボタンを押すまでモデルを取得しません。</p>
         <label for="depth-experiment">実験</label><select id="depth-experiment"><option value="color">A. 奥行きの色分け</option><option value="points">B. 2点の前後比較</option><option value="character">C. 物陰に隠れるキャラクター</option><option value="hide">D. かくれんぼ</option></select>
         <div id="hide-game" data-depth-experiment="hide" hidden>
           <h2>写真の中のかくれんぼ</h2>
@@ -38,7 +38,7 @@
         <div data-depth-experiment="points" hidden><p id="depth-comparison">画像を2か所タップしてください。</p><button id="depth-reset-points">A・Bを選び直す</button></div>
         <div data-depth-experiment="character" hidden><p>キャラクターを画像上でドラッグできます。</p><label for="depth-character-depth">キャラクターの奥行き（手前 ↔ 奥）</label><input id="depth-character-depth" type="range" min="0" max="100" value="50"><label><input id="depth-occlusion" type="checkbox" checked> 隠れ処理 ON／OFF</label></div>
         <p>相対的な奥行きです。距離は測れません。透明なコップ・反射・細い輪郭では推定が崩れることがあります。</p>
-        <details><summary>奥行きの設定・診断</summary><label for="depth-size">モデル入力の長辺（低解像度は細部を失うことがあります）</label><select id="depth-size"><option value="280">280px / 軽量</option><option value="392">392px</option><option value="518">518px / 高精細</option></select><pre id="depth-diagnostics">未解析</pre></details>
+        <details><summary>奥行きの設定・診断</summary><p>標準はモデル入力の長辺280px、高精細は518px。選択だけでは解析しません。</p><pre id="depth-diagnostics">未解析</pre></details>
       </section>
       <section id="text-lab" class="mode-help segment-panel" data-modes="textmarker" hidden aria-label="文字とマーカーの操作">
         <label for="tm-tab">文字・マーカー実験</label><select id="tm-tab"><option value="ocr">OCR（文字認識）</option><option value="code">QR／バーコード</option><option value="match">登録画像照合</option><option value="marker">ARマーカー</option><option value="cards">ARカード実験</option><option value="overlay">位置追従映像合成</option></select>

@@ -2,6 +2,7 @@ import type { Observation } from './core';
 import { displayPanes, paneBox, type Pane } from './display';
 import type { ModeId, ViewId } from './settings';
 import type { Point, Region } from './modes/pixels';
+import { renderDensity } from './depth/detail';
 
 export class VisionRenderer {
   private mask = document.createElement('canvas');
@@ -26,7 +27,7 @@ export class VisionRenderer {
   }
   clear() { this.regions = []; this.observations = []; this.hasMask = false; this.mask.width = 1; this.mask.height = 1; this.segmentAfter = undefined; this.scene = undefined; }
   draw(canvas: HTMLCanvasElement, video: HTMLVideoElement, view: ViewId, mirror: boolean, showResult: boolean, mode: ModeId) {
-    const width = canvas.clientWidth, height = canvas.clientHeight, dpr = Math.min(devicePixelRatio || 1, 2);
+    const width = canvas.clientWidth, height = canvas.clientHeight, dpr = mode==='depth'?renderDensity(width,height,devicePixelRatio):Math.min(devicePixelRatio || 1, 2);
     if (canvas.width !== Math.round(width * dpr) || canvas.height !== Math.round(height * dpr)) { canvas.width = Math.round(width * dpr); canvas.height = Math.round(height * dpr); }
     const ctx = canvas.getContext('2d')!;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.fillStyle = '#080f12'; ctx.fillRect(0, 0, width, height);

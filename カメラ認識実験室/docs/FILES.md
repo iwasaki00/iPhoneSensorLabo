@@ -1,5 +1,11 @@
 # 作成ファイル一覧
 
+## v0.8.2の追加・変更
+
+- 新規: `src/depth/detail.ts`（表示バッファ制限）、`tests/depth-detail.test.ts`、`tests/browser/detail.spec.ts`、`docs/V0_8_2.md`、`docs/depth-validation/v0.8.2-detail.json`と公開サンプルの拡大比較PNG。
+- 変更: `src/scene/panel.ts`（元写真からの表示バッファ）、`src/depth/{panel,processing,worker}.ts`（描画・生出力寸法・マスク境界）、`src/modes/depth.ts`（モデル再利用時の入力切替）、`src/render.ts`（奥行きのみDPR上限3）、`src/main.ts`（接続）、`index.html`、package.json／lock、親メニューのVersion表記、README・実機手順、本一覧、再生成dist。
+- AI重み・ONNX Runtime・ARカード素材・辞書・ペア判定・ゲーム進行は変更しない。比較PNGは配布可能な同梱サンプルから、依頼に基づく開発検証で明示的に出力したもの。アプリに画像やマップの自動保存を追加しない。
+
 ## v0.8.1の追加・変更
 
 - 新規: `src/depth/hide.ts`、`tests/hide.test.ts`、`tests/browser/hide.spec.ts`、配布可能な`public/samples/coffee.png`と`coffee-LICENSE.txt`、`docs/V0_8_1.md`、数値のみの`docs/depth-validation/hide-sample.json`

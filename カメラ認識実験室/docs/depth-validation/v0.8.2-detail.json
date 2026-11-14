@@ -1,0 +1,77 @@
+{
+  "at": "2026-11-14T00:23:42.362Z",
+  "photo": "CC0 coffee.png / 600x400",
+  "position": [
+    0.3,
+    0.6
+  ],
+  "sizeFraction": 0.35,
+  "anchor": [
+    0.34,
+    0.6
+  ],
+  "deviceScaleFactor": 3,
+  "runs": [
+    {
+      "input": [
+        280,
+        182
+      ],
+      "output": [
+        280,
+        182
+      ],
+      "analysis": [
+        600,
+        400
+      ],
+      "duration": 1652.7000000029802,
+      "loadMs": 3148.60000000149
+    },
+    {
+      "input": [
+        518,
+        350
+      ],
+      "output": [
+        518,
+        350
+      ],
+      "analysis": [
+        600,
+        400
+      ],
+      "duration": 6368.10000000149,
+      "loadMs": 3148.60000000149
+    }
+  ],
+  "settings": [
+    {
+      "size": "280",
+      "slider": 33,
+      "diagnostics": "Depth Anything V2 Small Q4 / Worker WASM 1 thread\n元写真 600×400\n解析用写真 600×400\n実モデル入力 280×182\n生深度出力 280×182\n写真・ロボット・遮蔽バッファ 600×400\nロボット素材 256×256 / DPR上限3\nモデル読込・初期化 3148.6 ms\n今回の解析（前処理・復元込み）1652.7 ms\n大きい値ほど手前。描画用マップ拡大は推論解像度ではありません。",
+      "buffer": [
+        1092,
+        1236
+      ],
+      "css": [
+        364,
+        412
+      ]
+    },
+    {
+      "size": "518",
+      "slider": 46,
+      "diagnostics": "Depth Anything V2 Small Q4 / Worker WASM 1 thread\n元写真 600×400\n解析用写真 600×400\n実モデル入力 518×350\n生深度出力 518×350\n写真・ロボット・遮蔽バッファ 600×400\nロボット素材 256×256 / DPR上限3\nモデル読込・初期化 3148.6 ms\n今回の解析（前処理・復元込み）6368.1 ms\n大きい値ほど手前。描画用マップ拡大は推論解像度ではありません。",
+      "buffer": [
+        1092,
+        1236
+      ],
+      "css": [
+        364,
+        412
+      ]
+    }
+  ],
+  "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36"
+}

@@ -6,6 +6,7 @@ export class DepthMode implements RecognitionMode {
   private progress:(text:string)=>void;private size:number;
   constructor(size:number,progress:(text:string)=>void){this.size=size;this.progress=progress;}
   async initialize(){} // Heavy assets are loaded only after the explicit Analyze button.
+  setSize(size:number){if(!this.busy)this.size=size===518?518:280;}
   private request(data:object,transfer:Transferable[]=[]){return new Promise<any>((resolve,reject)=>{if(this.disposed||this.pending){reject(Error('深度解析を停止しました。'));return;}const timer=setTimeout(()=>{this.pending=undefined;reject(Error('奥行き解析がタイムアウトしました。入力サイズを下げて再試行してください。'));this.dispose();},180000);this.pending={resolve,reject,timer};this.worker!.postMessage(data,transfer);});}
   async infer(canvas:HTMLCanvasElement):Promise<ModeResult>{
     if(this.busy||this.disposed)throw Error('深度解析の重複要求または停止');this.busy=true;

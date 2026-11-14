@@ -5,9 +5,12 @@ import { displayPanes, sourcePoint } from '../display';
 import type { VisionRenderer } from '../render';
 import type { ViewId } from '../settings';
 import { internalSceneSize } from './resize';
+import { displaySize } from '../depth/detail';
 const el = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 export class ScenePanel {
   readonly input = document.createElement('canvas');
+  readonly depthDisplay=document.createElement('canvas');
+  originalSize={width:0,height:0};
   private before = document.createElement('canvas');
   private after = document.createElement('canvas');
   data?: SceneData;
@@ -55,6 +58,12 @@ export class ScenePanel {
     this.sync();
   }
   private setInput(source: CanvasImageSource, width: number, height: number, mirror: boolean) {
+    this.originalSize={width,height};
+    if(document.body.classList.contains('depth-mode')){
+      const viewport=el('overlay').parentElement!,size=displaySize(width,height,viewport.clientWidth,innerHeight*.7,devicePixelRatio);
+      this.depthDisplay.width=size.width;this.depthDisplay.height=size.height;
+      const ctx=this.depthDisplay.getContext('2d')!;ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';ctx.drawImage(source,0,0,size.width,size.height);
+    }else this.depthDisplay.width=this.depthDisplay.height=1;
     const scale = Math.min(1, 1024 / Math.max(width, height));
     this.input.width = Math.max(1, Math.round(width * scale)); this.input.height = Math.max(1, Math.round(height * scale));
     this.input.getContext('2d')!.drawImage(source, 0, 0, this.input.width, this.input.height);
@@ -67,7 +76,7 @@ export class ScenePanel {
     if (this.inputOverride !== undefined) this.inputOverride = 'still'; else { this.settings.input = 'still'; saveSceneSettings(this.settings); }
     this.sync();
   }
-  showInput() { if (this.hasStill && !this.data && (this.inputOverride ?? this.settings.input) === 'still') this.renderer.setSceneFrames(this.input, undefined, this.mirror, false); }
+  showInput() { if (this.hasStill && !this.data && (this.inputOverride ?? this.settings.input) === 'still') this.renderer.setSceneFrames(document.body.classList.contains('depth-mode')&&this.depthDisplay.width>1?this.depthDisplay:this.input, undefined, this.mirror, false); }
   sync() {
     const s = this.settings, model = sceneModels[s.model];
     el<HTMLSelectElement>('scene-input').value = s.input;
@@ -109,5 +118,5 @@ export class ScenePanel {
     el('scene-tap').textContent = `推定: ${sceneLabel(data.model, id)} / ID ${id} / マスク (${mx}, ${my})`;
   }
   clear() { this.data = undefined; this.count = 0; this.before.width = this.before.height = this.after.width = this.after.height = 1; el('scene-categories').textContent = '解析結果を待っています。'; el('scene-legend').replaceChildren(); el('scene-tap').textContent = ''; }
-  releaseInput() { this.fileGeneration++; this.hasStill = false; this.inputId = ''; this.input.width = this.input.height = 1; this.clear(); el<HTMLInputElement>('scene-file').value = ''; el('scene-message').textContent = '画像を解放しました。'; }
+  releaseInput() { this.fileGeneration++; this.hasStill = false; this.inputId = ''; this.input.width = this.input.height = this.depthDisplay.width=this.depthDisplay.height=1;this.originalSize={width:0,height:0}; this.clear(); el<HTMLInputElement>('scene-file').value = ''; el('scene-message').textContent = '画像を解放しました。'; }
 }

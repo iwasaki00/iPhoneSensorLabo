@@ -14,7 +14,7 @@ self.onmessage=async({data})=>{
     }else{
       self.postMessage({progress:'解析中…単一スレッドWASMで相対奥行きを推定しています。'});
       const at=performance.now(),p=preprocess(data.pixels,data.width,data.height,data.size),input=new ort.Tensor('float32',p.data,[1,3,p.height,p.width]);let outputs:any;
-      try{outputs=await session.run({pixel_values:input});const tensor=outputs.predicted_depth,shape=tensor.dims,values=resizeFloat(tensor.data,shape[shape.length-1],shape[shape.length-2],data.width,data.height);const result={width:data.width,height:data.height,values,...range(values),inputWidth:p.width,inputHeight:p.height,loadMs,duration:performance.now()-at};self.postMessage(result,[values.buffer]);}
+      try{outputs=await session.run({pixel_values:input});const tensor=outputs.predicted_depth,shape=tensor.dims,outputWidth=shape[shape.length-1],outputHeight=shape[shape.length-2],values=resizeFloat(tensor.data,outputWidth,outputHeight,data.width,data.height);const nativeValues=new Float32Array(tensor.data);const result={nativeValues,width:data.width,height:data.height,values,...range(values),inputWidth:p.width,inputHeight:p.height,outputWidth,outputHeight,loadMs,duration:performance.now()-at};self.postMessage(result,[values.buffer,nativeValues.buffer]);}
       finally{input.dispose();if(outputs)Object.values(outputs).forEach((v:any)=>v.dispose());}
     }
   }catch(e){self.postMessage({error:e instanceof Error?e.message:String(e)});}finally{busy=false;}
