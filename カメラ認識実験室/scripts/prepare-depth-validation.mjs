@@ -3,6 +3,7 @@ import {createHash} from 'node:crypto';
 const target=new URL('../depth-validation.local/',import.meta.url);await mkdir(target,{recursive:true});
 const photos='https://raw.githubusercontent.com/DepthAnything/Depth-Anything-V2/a561b849ebae10a6f5ef49e26c83cbbcd36c71bf/assets/examples/';
 const files=[
+  ['astronaut.png','https://raw.githubusercontent.com/scikit-image/scikit-image/v0.25.2/skimage/data/astronaut.png','88431cd9653ccd539741b555fb0a46b61558b301d4110412b5bc28b5e3ea6cb5'],
   ['demo01.jpg',photos+'demo01.jpg','35ef1bbb63f6540e49aa9b6302b9b938be4fe8b9c08c07c3694b02396b0e87e0'],
   ['demo02.jpg',photos+'demo02.jpg','c1f116034aa5abd5b5470226be2bb03bd938c8affe90389c52d10fe8b1ac7e21'],
   ['demo03.jpg',photos+'demo03.jpg','764dffd4d97bbacd620bc005fa86837018393ccb5ffd1059c2245a3cacff7782'],

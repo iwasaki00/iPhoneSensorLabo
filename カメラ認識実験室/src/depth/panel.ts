@@ -6,6 +6,7 @@ import type { VisionRenderer } from '../render';
 import type { ViewId } from '../settings';
 import { visibility, visibleHit, type HideVisibility } from './hide';
 import { renderDensity } from './detail';
+import { photoEdges, refineContour, correctionRadius, type PhotoEdges } from './edge';
 const el=<T extends HTMLElement>(id:string)=>document.getElementById(id) as T;
 export class DepthPanel {
   data?:DepthMap;busy=false;hasInput=false;
@@ -14,13 +15,16 @@ export class DepthPanel {
   private source=document.createElement('canvas');private after=document.createElement('canvas');private layer=document.createElement('canvas');private texture=document.createElement('canvas');
   private points:{x:number;y:number}[]=[];private character={x:.55,y:.6};private mirror=false;
   private renderer:VisionRenderer;private change:()=>void;
-  private stage:'edit'|'pass'|'search'|'found'='edit';private body=new Uint8ClampedArray();private visible=new Uint8ClampedArray();private quality?:HideVisibility;private reveal=0;private animation=0;
+  private edges?:PhotoEdges;private edgeKey='';private edgeBuilds=0;private fixedEdge=false;private fixedVisible?:Uint8ClampedArray;
+  private edgeStats={refineMs:0,changed:0,ambiguous:0,examined:0,maxShift:0,compositeMs:0};
+  private stage:'edit'|'pass'|'search'|'found'='edit';private body=new Uint8ClampedArray();private visible:Uint8ClampedArray=new Uint8ClampedArray();private quality?:HideVisibility;private reveal=0;private animation=0;
   constructor(renderer:VisionRenderer,change:()=>void){this.renderer=renderer;this.change=change;
     this.texture.width=this.texture.height=256;cardArt(this.texture.getContext('2d')!,'robot');const ctx=this.texture.getContext('2d')!,art=ctx.getImageData(0,0,256,256);for(let i=3;i<art.data.length;i+=4)if(art.data[i]<250)art.data[i]=0;ctx.putImageData(art,0,0);
     for(const id of ['depth-experiment','depth-display','depth-character-depth','depth-occlusion'])el(id).addEventListener(id==='depth-character-depth'?'input':'change',()=>{this.sync();this.render();change();});
     el('depth-reset-points').onclick=()=>{this.points=[];this.render();change();};this.sync();
     el('hide-depth').oninput=()=>{this.render();change();};
-    el('hide-lock').onclick=()=>{this.render();if(!this.data||!this.quality?.ready)return;this.setStage('pass');};
+    for(const id of ['depth-edge','hide-edge'])el(id).onchange=()=>{this.render();change();};
+    el('hide-lock').onclick=()=>{this.render();if(this.busy||!this.data||!this.quality?.ready)return;this.setStage('pass');};
     el('hide-seek').onclick=()=>this.setStage('search');
     el('hide-again').onclick=()=>this.setStage('edit');
     el('hide-exit').onclick=()=>{this.setStage('edit');el<HTMLSelectElement>('depth-experiment').value='character';this.sync();this.render();change();};
@@ -29,13 +33,14 @@ export class DepthPanel {
   }
   message(text:string){el('depth-status').textContent=text;}
   sourceReady(ready:boolean){this.hasInput=ready;el<HTMLButtonElement>('depth-analyze').disabled=!ready||this.busy||this.hiding&&!!this.data&&Math.max(this.data.inputWidth,this.data.inputHeight)===this.requestedSize;}
-  setBusy(busy:boolean){this.busy=busy;el<HTMLSelectElement>('depth-size').disabled=busy;this.sourceReady(this.hasInput);}
+  setBusy(busy:boolean){this.busy=busy;el<HTMLSelectElement>('depth-size').disabled=busy;if(busy)el<HTMLButtonElement>('hide-lock').disabled=true;this.sourceReady(this.hasInput);}
   get hiding(){return el<HTMLSelectElement>('depth-experiment').value==='hide';}
   get locked(){return this.hiding&&this.stage!=='edit';}
   view(view:ViewId):ViewId{return this.hiding?'normal':view;}
-  private setStage(stage:typeof this.stage){cancelAnimationFrame(this.animation);this.stage=stage;this.reveal=stage==='found'?performance.now():0;el('hide-hint-text').textContent='';this.sync();this.render();this.change();if(stage==='found'){const tick=()=>{if(this.stage!=='found'||!this.data)return;this.render();this.change();if(performance.now()-this.reveal<650)this.animation=requestAnimationFrame(tick);};this.animation=requestAnimationFrame(tick);}}
-  sync(){const e=el<HTMLSelectElement>('depth-experiment').value;if(e!=='hide'&&this.stage!=='edit'){this.stage='edit';cancelAnimationFrame(this.animation);}document.querySelectorAll<HTMLElement>('[data-depth-experiment]').forEach(n=>n.hidden=n.dataset.depthExperiment!==e);document.body.classList.toggle('hide-locked',this.locked);document.body.classList.toggle('hide-editing',this.hiding);for(const [id,stage] of [['hide-edit','edit'],['hide-pass','pass'],['hide-search','search'],['hide-found','found']])el(id).hidden=this.stage!==stage;el('hide-exit').hidden=!this.locked;this.sourceReady(this.hasInput);}
-  update(data:DepthMap,source:HTMLCanvasElement,mirror:boolean,original={width:source.width,height:source.height}){
+  private setStage(stage:typeof this.stage){cancelAnimationFrame(this.animation);if(stage==='pass'){this.fixedEdge=el<HTMLInputElement>('hide-edge').checked;this.fixedVisible=this.visible;}if(stage==='edit')this.fixedVisible=undefined;this.stage=stage;this.reveal=stage==='found'?performance.now():0;el('hide-hint-text').textContent='';this.sync();this.render();this.change();if(stage==='found'){const tick=()=>{if(this.stage!=='found'||!this.data)return;this.render();this.change();if(performance.now()-this.reveal<650)this.animation=requestAnimationFrame(tick);};this.animation=requestAnimationFrame(tick);}}
+  sync(){const e=el<HTMLSelectElement>('depth-experiment').value;if(e!=='hide'&&this.stage!=='edit'){this.stage='edit';this.fixedVisible=undefined;cancelAnimationFrame(this.animation);}document.querySelectorAll<HTMLElement>('[data-depth-experiment]').forEach(n=>n.hidden=n.dataset.depthExperiment!==e);document.body.classList.toggle('hide-locked',this.locked);document.body.classList.toggle('hide-editing',this.hiding);for(const [id,stage] of [['hide-edit','edit'],['hide-pass','pass'],['hide-search','search'],['hide-found','found']])el(id).hidden=this.stage!==stage;el('hide-exit').hidden=!this.locked;this.sourceReady(this.hasInput);}
+  update(data:DepthMap,source:HTMLCanvasElement,mirror:boolean,original={width:source.width,height:source.height},photoId=''){
+    const key=photoId+':'+source.width+'x'+source.height;if(key!==this.edgeKey){this.edges=undefined;this.edgeBuilds=0;this.edgeKey=key;}
     this.data={...data,width:source.width,height:source.height,nativeValues:undefined,values:resizeFloat(data.nativeValues??data.values,data.nativeValues?data.outputWidth!:data.width,data.nativeValues?data.outputHeight!:data.height,source.width,source.height)};
     this.mirror=mirror;el('overlay').parentElement!.style.setProperty('--depth-photo-ratio',String(source.width/source.height));
     this.source.width=source.width;this.source.height=source.height;this.source.getContext('2d')!.drawImage(source,0,0);
@@ -47,13 +52,22 @@ export class DepthPanel {
     el('depth-diagnostics').textContent=`Depth Anything V2 Small Q4 / Worker WASM 1 thread\n元写真 ${original.width}×${original.height}\n解析用写真 ${data.width}×${data.height}\n実モデル入力 ${data.inputWidth}×${data.inputHeight}\n生深度出力 ${data.outputWidth??'—'}×${data.outputHeight??'—'}\n写真・ロボット・遮蔽バッファ ${source.width}×${source.height}\nロボット素材 ${size}×${size} / DPR上限3\nモデル読込・初期化 ${data.loadMs.toFixed(1)} ms\n今回の解析（前処理・復元込み）${data.duration.toFixed(1)} ms\n大きい値ほど手前。描画用マップ拡大は推論解像度ではありません。`;
     this.render();const canvas=el<HTMLCanvasElement>('overlay'),density=renderDensity(canvas.clientWidth,canvas.clientHeight,devicePixelRatio);el('depth-diagnostics').textContent+=`\n最終描画Canvas ${Math.round(canvas.clientWidth*density)}×${Math.round(canvas.clientHeight*density)} / CSS ${canvas.clientWidth}×${canvas.clientHeight}`;
   }
-  render(){const map=this.data;if(!map)return;const w=map.width,h=map.height;this.after.width=w;this.after.height=h;const ctx=this.after.getContext('2d')!;ctx.drawImage(this.source,0,0,w,h);const experiment=el<HTMLSelectElement>('depth-experiment').value;el('overlay').classList.toggle('depth-drag',experiment==='character');
+  render(){const map=this.data;if(!map)return;Object.assign(this.edgeStats,{refineMs:0,changed:0,ambiguous:0,examined:0,maxShift:0});const at=performance.now(),w=map.width,h=map.height;this.after.width=w;this.after.height=h;const ctx=this.after.getContext('2d')!;ctx.drawImage(this.source,0,0,w,h);const experiment=el<HTMLSelectElement>('depth-experiment').value;el('overlay').classList.toggle('depth-drag',experiment==='character');
     if(experiment==='color'&&el<HTMLSelectElement>('depth-display').value==='depth')ctx.putImageData(new ImageData(colorize(map),w,h),0,0);
     if(experiment==='points'){this.points.forEach((p,i)=>{ctx.fillStyle=i?'#22d8ff':'#ffcf52';ctx.beginPath();ctx.arc(p.x*w,p.y*h,Math.max(4,w/120),0,Math.PI*2);ctx.fill();ctx.font=`bold ${Math.max(16,w/32)}px sans-serif`;ctx.fillText(i?'B':'A',p.x*w+8,p.y*h-8);});el('depth-comparison').textContent=this.points.length===2?comparePoints(map,this.points[0],this.points[1]):'画像を2か所タップしてA・Bを選んでください。';}
-    if(experiment==='character'){this.layer.width=w;this.layer.height=h;const layer=this.layer.getContext('2d')!,size=Math.min(w,h)*.35;layer.drawImage(this.texture,this.character.x*w-size/2,this.character.y*h-size/2,size,size);const image=layer.getImageData(0,0,w,h),alpha=new Uint8ClampedArray(w*h);for(let i=0;i<alpha.length;i++)alpha[i]=image.data[i*4+3];const visible=occlusionAlpha(alpha,map,1-Number(el<HTMLInputElement>('depth-character-depth').value)/100,el<HTMLInputElement>('depth-occlusion').checked,.004);for(let i=0;i<visible.length;i++)image.data[i*4+3]=visible[i];layer.putImageData(image,0,0);ctx.drawImage(this.layer,0,0);}
+    if(experiment==='character'){this.layer.width=w;this.layer.height=h;const layer=this.layer.getContext('2d')!,size=Math.min(w,h)*.35;layer.drawImage(this.texture,this.character.x*w-size/2,this.character.y*h-size/2,size,size);const image=layer.getImageData(0,0,w,h),alpha=new Uint8ClampedArray(w*h);for(let i=0;i<alpha.length;i++)alpha[i]=image.data[i*4+3];const visible=this.mask(alpha,1-Number(el<HTMLInputElement>('depth-character-depth').value)/100,el<HTMLInputElement>('depth-occlusion').checked);for(let i=0;i<visible.length;i++)image.data[i*4+3]=visible[i];layer.putImageData(image,0,0);ctx.drawImage(this.layer,0,0);}
     if(experiment==='hide')this.renderHide(ctx,w,h);
     this.renderer.setSceneFrames(experiment==='hide'?this.after:this.source,this.after,this.mirror,false);
+    this.edgeStats.compositeMs=performance.now()-at;this.edgeDiagnostics();
   }
+  private mask(alpha:Uint8ClampedArray,near:number,enabled:boolean){
+    const base=occlusionAlpha(alpha,this.data!,near,enabled,.004),on=this.hiding?(this.stage==='edit'?el<HTMLInputElement>('hide-edge').checked:this.fixedEdge):el<HTMLInputElement>('depth-edge').checked;
+    Object.assign(this.edgeStats,{refineMs:0,changed:0,ambiguous:0,examined:0,maxShift:0});
+    if(!enabled||!on)return base;
+    if(!this.edges){const at=performance.now();this.edges=photoEdges(this.source.getContext('2d')!.getImageData(0,0,this.source.width,this.source.height).data,this.source.width,this.source.height);this.edges.buildMs=performance.now()-at;this.edgeBuilds++;}
+    const result=refineContour(alpha,base,this.data!,near,this.edges);Object.assign(this.edgeStats,{refineMs:result.duration,changed:result.changed,ambiguous:result.ambiguous,examined:result.examined,maxShift:result.maxShift});return result.alpha;
+  }
+  private edgeDiagnostics(){const metrics={...this.edgeStats,photoCacheBuildMs:this.edges?.buildMs??0,photoCacheBuilds:this.edgeBuilds,radius:this.data?correctionRadius(this.data.width,this.data.height):0};el('depth-edge-diagnostics').dataset.metrics=JSON.stringify(metrics);el('depth-edge-diagnostics').textContent=`輪郭情報の初回処理 ${metrics.photoCacheBuildMs.toFixed(2)} ms / この写真で${metrics.photoCacheBuilds}回\n境界補正 ${metrics.refineMs.toFixed(2)} ms / 合成 ${metrics.compositeMs.toFixed(2)} ms（AI時間を含まない）\n補正上限 ${metrics.radius}描画px / 今回最大 ${metrics.maxShift.toFixed(2)}px\n変更 ${metrics.changed}px / 競合時の維持 ${metrics.ambiguous}px\n写真情報は再利用。元の深度と従来のギザギザ軽減は維持。`;}
   private renderHide(ctx:CanvasRenderingContext2D,w:number,h:number){
     el('overlay').classList.toggle('depth-drag',this.stage==='edit');
     if(this.stage==='pass'){ctx.fillStyle='#10191e';ctx.fillRect(0,0,w,h);return;}
@@ -61,11 +75,11 @@ export class DepthPanel {
     layer.drawImage(this.texture,left,top,size,size);const image=layer.getImageData(0,0,w,h),alpha=new Uint8ClampedArray(w*h);this.body=new Uint8ClampedArray(w*h);
     // Hide-and-seek uses the robot body only; omit the antenna decoration from rendering and hit masks.
     for(let i=0;i<alpha.length;i++){const y=Math.floor(i/w);if(y>=top+size*51/256)this.body[i]=alpha[i]=image.data[i*4+3];}
-    this.visible=occlusionAlpha(alpha,this.data!,1-Number(el<HTMLInputElement>('hide-depth').value)/100,true,.004);
+    this.visible=this.locked&&this.fixedVisible?this.fixedVisible:this.mask(alpha,1-Number(el<HTMLInputElement>('hide-depth').value)/100,true);
     if(this.stage==='edit'){
       const r=el('overlay').getBoundingClientRect(),scale=Math.min(r.width/w,r.height/h),inside=left>=0&&top>=0&&left+size<=w&&top+size<=h;
       this.quality=visibility(this.body,this.visible,w,h,scale,inside);const q=this.quality;
-      el('hide-quality').textContent=`${q.label}（本体の${Math.round(q.ratio*100)}%が見えています）。${q.reason||'見える部分を確認して隠してください。'}`;el<HTMLButtonElement>('hide-lock').disabled=!q.ready;
+      el('hide-quality').textContent=`${q.label}（本体の${Math.round(q.ratio*100)}%が見えています）。${q.reason||'見える部分を確認して隠してください。'}`;el<HTMLButtonElement>('hide-lock').disabled=!q.ready||this.busy;
     }
     const progress=this.stage==='found'?Math.min(1,(performance.now()-this.reveal)/650):0;
     for(let i=0;i<alpha.length;i++)image.data[i*4+3]=this.visible[i]+(alpha[i]-this.visible[i])*progress;
@@ -78,5 +92,5 @@ export class DepthPanel {
       if(this.stage!=='edit')return;this.character=normalized;
     }else if(experiment==='character'){this.character=normalized;}else if(experiment==='points'&&!drag){if(this.points.length===2)this.points=[];this.points.push(normalized);}else return;this.render();this.change();}
   get draggable(){return !!this.data&&(el<HTMLSelectElement>('depth-experiment').value==='character'||this.hiding&&this.stage==='edit');}
-  clear(){cancelAnimationFrame(this.animation);this.stage='edit';this.sync();this.body=this.visible=new Uint8ClampedArray();this.quality=undefined;el('hide-quality').textContent='写真を選び、奥行きを解析してください。';el<HTMLButtonElement>('hide-lock').disabled=true;el('hide-hint-text').textContent='';el('overlay').classList.remove('depth-drag');this.data=undefined;this.points=[];this.setBusy(false);this.source.width=this.source.height=this.after.width=this.after.height=this.layer.width=this.layer.height=1;el('depth-comparison').textContent='画像を2か所タップしてください。';el('depth-diagnostics').textContent='未解析';}
+  clear(){this.edges=undefined;this.edgeKey='';this.edgeBuilds=0;this.fixedEdge=false;this.fixedVisible=undefined;el('depth-edge-diagnostics').textContent='未処理';el('depth-edge-diagnostics').removeAttribute('data-metrics');cancelAnimationFrame(this.animation);this.stage='edit';this.sync();this.body=this.visible=new Uint8ClampedArray();this.quality=undefined;el('hide-quality').textContent='写真を選び、奥行きを解析してください。';el<HTMLButtonElement>('hide-lock').disabled=true;el('hide-hint-text').textContent='';el('overlay').classList.remove('depth-drag');this.data=undefined;this.points=[];this.setBusy(false);this.source.width=this.source.height=this.after.width=this.after.height=this.layer.width=this.layer.height=1;el('depth-comparison').textContent='画像を2か所タップしてください。';el('depth-diagnostics').textContent='未解析';}
 }

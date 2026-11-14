@@ -9,9 +9,9 @@
 </head>
 <body>
   <div id="app">
-    <header><div><span class="eyebrow">CAMERA VISION LAB / 014</span><h1>カメラ認識実験室</h1></div><span class="version">v0.8.2</span></header>
+    <header><div><span class="eyebrow">CAMERA VISION LAB / 014</span><h1>カメラ認識実験室</h1></div><span class="version">v0.8.3</span></header>
     <main>
-      <div class="mode"><span class="dot"></span> HIGH DETAIL DEPTH LAB <span class="local" id="mode-kind">端末内AI</span></div>
+      <div class="mode"><span class="dot"></span> EDGE REFINEMENT <span class="local" id="mode-kind">端末内AI</span></div>
       <div class="view-control"><label for="view-select">比較表示</label><select id="view-select"><option value="normal">通常表示</option><option value="before">BEFORE（元映像）</option><option value="after">AFTER（認識結果）</option><option value="split">左右比較</option></select></div>
       <section class="viewport" aria-label="カメラ映像と認識結果">
         <video id="video" autoplay muted playsinline></video><canvas id="overlay"></canvas>
@@ -24,7 +24,7 @@
         <label for="depth-experiment">実験</label><select id="depth-experiment"><option value="color">A. 奥行きの色分け</option><option value="points">B. 2点の前後比較</option><option value="character">C. 物陰に隠れるキャラクター</option><option value="hide">D. かくれんぼ</option></select>
         <div id="hide-game" data-depth-experiment="hide" hidden>
           <h2>写真の中のかくれんぼ</h2>
-          <div id="hide-edit"><p>ロボットをドラッグして物陰へ。奥行きで隠れ具合を調整します。</p><button id="hide-sample">サンプル写真を使う（コーヒーカップ）</button><label for="hide-depth">ロボットの奥行き（手前 ↔ 奥）</label><input id="hide-depth" type="range" min="0" max="100" value="50"><p id="hide-quality" role="status">写真を選び、奥行きを解析してください。</p><p>手前に不透明な物がある写真でお試しください。</p><button id="hide-lock" disabled>この場所に隠す</button></div>
+          <div id="hide-edit"><p>ロボットをドラッグして物陰へ。奥行きで隠れ具合を調整します。</p><button id="hide-sample">サンプル写真を使う（コーヒーカップ）</button><label for="hide-depth">ロボットの奥行き（手前 ↔ 奥）</label><input id="hide-depth" type="range" min="0" max="100" value="50"><label><input id="hide-edge" type="checkbox"> 輪郭補正 ON／OFF</label><p id="hide-quality" role="status">写真を選び、奥行きを解析してください。</p><p>手前に不透明な物がある写真でお試しください。</p><button id="hide-lock" disabled>この場所に隠す</button></div>
           <div id="hide-pass" hidden><p>端末を渡してください</p><button id="hide-seek">探し始める</button></div>
           <div id="hide-search" hidden><p>写真の中のロボットを見つけてタップ！</p><button id="hide-hint">ヒント</button><p id="hide-hint-text" role="status"></p></div>
           <div id="hide-found" hidden><p role="status">見つけた！</p><button id="hide-again">同じ写真で隠し直す</button></div>
@@ -32,9 +32,9 @@
         </div>
         <div data-depth-experiment="color"><label for="depth-display">表示</label><select id="depth-display"><option value="depth">奥行き色分け</option><option value="original">元画像</option></select><div class="depth-legend"><span>手前</span><span>中間</span><span>奥</span></div></div>
         <div data-depth-experiment="points" hidden><p id="depth-comparison">画像を2か所タップしてください。</p><button id="depth-reset-points">A・Bを選び直す</button></div>
-        <div data-depth-experiment="character" hidden><p>キャラクターを画像上でドラッグできます。</p><label for="depth-character-depth">キャラクターの奥行き（手前 ↔ 奥）</label><input id="depth-character-depth" type="range" min="0" max="100" value="50"><label><input id="depth-occlusion" type="checkbox" checked> 隠れ処理 ON／OFF</label></div>
+        <div data-depth-experiment="character" hidden><p>キャラクターを画像上でドラッグできます。</p><label for="depth-character-depth">キャラクターの奥行き（手前 ↔ 奥）</label><input id="depth-character-depth" type="range" min="0" max="100" value="50"><label><input id="depth-occlusion" type="checkbox" checked> 隠れ処理 ON／OFF</label><label><input id="depth-edge" type="checkbox"> 輪郭補正 ON／OFF</label></div>
         <p>相対的な奥行きです。距離は測れません。透明なコップ・反射・細い輪郭では推定が崩れることがあります。</p>
-        <details><summary>奥行きの設定・診断</summary><p>標準はモデル入力の長辺280px、高精細は518px。選択だけでは解析しません。</p><pre id="depth-diagnostics">未解析</pre></details>
+        <details><summary>奥行きの設定・診断</summary><p>標準はモデル入力の長辺280px、高精細は518px。選択だけでは解析しません。</p><pre id="depth-diagnostics">未解析</pre><pre id="depth-edge-diagnostics">未処理</pre></details>
       </section>
       <section id="text-lab" class="mode-help segment-panel" data-modes="textmarker" hidden aria-label="文字とマーカーの操作">
         <label for="tm-tab">文字・マーカー実験</label><select id="tm-tab"><option value="ocr">OCR（文字認識）</option><option value="code">QR／バーコード</option><option value="match">登録画像照合</option><option value="marker">ARマーカー</option><option value="cards">ARカード実験</option><option value="overlay">位置追従映像合成</option></select>

@@ -57,6 +57,9 @@ try {
     await page.locator('#hide-sample').click();
     await page.locator('#depth-analyze').click();
     await page.waitForFunction(()=>document.querySelector('#depth-status')?.textContent.includes('解析完了'),null,{timeout:120000});
+    assert.equal(await page.locator('#hide-edge').isChecked(),false);
+    await page.locator('#hide-edge').check();
+    assert.equal(await page.locator('#depth-edge-diagnostics').evaluate(e=>JSON.parse(e.dataset.metrics).photoCacheBuilds),1);
     assert.equal(await page.locator('#video').evaluate(v=>v.srcObject),null);
     assert.equal((await page.request.get(new URL('samples/coffee-LICENSE.txt',page.url()).href)).status(),200);
     assert.deepEqual(errors,[]);assert.deepEqual(failed,[]);assert.deepEqual(external,[]);

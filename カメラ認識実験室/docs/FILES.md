@@ -1,5 +1,12 @@
 # 作成ファイル一覧
 
+## v0.8.3の追加・変更
+
+- 新規: `src/depth/edge.ts`（写真輪郭キャッシュ・深度境界の局所補正）、`tests/depth-edge.test.ts`、`tests/browser/edge.spec.ts`、`docs/V0_8_3.md`、`docs/depth-validation/v0.8.3-*.png`と`v0.8.3-edge.json`。
+- 接続: `src/depth/panel.ts`、`src/main.ts`、`index.html`。OFF時の`processing.ts`によるギザギザ軽減、深度マップ、Worker、モデル入力・表示解像度・座標変換・ARカードは変更しない。
+- 配布・資料: package.json／lock、親メニューのVersion表示、親メニューの輪郭補正確認、検証入力準備スクリプト、README・実機手順、本一覧、再生成dist。
+- 追加実写真astronaut.pngは検証専用・Git対象外の`depth-validation.local/`に置き、アプリの配布画像・初回取得は増やさない。比較PNGは依頼に基づく開発検証で明示的に出力した合成画像で、アプリの自動保存機能ではない。
+
 ## v0.8.2の追加・変更
 
 - 新規: `src/depth/detail.ts`（表示バッファ制限）、`tests/depth-detail.test.ts`、`tests/browser/detail.spec.ts`、`docs/V0_8_2.md`、`docs/depth-validation/v0.8.2-detail.json`と公開サンプルの拡大比較PNG。
