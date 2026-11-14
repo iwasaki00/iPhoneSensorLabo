@@ -3,7 +3,7 @@ import {writeFile} from 'node:fs/promises';
 test.use({deviceScaleFactor:3});
 async function setup(page:Page,mock=true){
   await page.addInitScript(()=>{(window as any).__runs=0;const Native=Worker;(window as any).Worker=class extends Native{constructor(u:any,o:any){super(u,o);this.addEventListener('message',({data})=>{if(data.values){(window as any).__depth=data;(window as any).__runs++;}});}};});
-  if(mock)await page.route('**/assets/worker-*.js',r=>r.fulfill({contentType:'application/javascript',body:`self.onmessage=({data:d})=>{if(d.type==='init'){postMessage({ready:true,loadMs:1});return;}const values=Float32Array.from({length:d.width*d.height},(_,i)=>i%d.width<d.width/2?0:1);postMessage({width:d.width,height:d.height,values,minimum:0,maximum:1,duration:1,loadMs:1,inputWidth:280,inputHeight:140});};`}));
+  if(mock)await page.route('**/assets/worker-*.js',r=>r.fulfill({contentType:'application/javascript',body:`self.onmessage=({data:d})=>{if(d.type==='init'){postMessage({ready:true,loadMs:1});return;}const values=Float32Array.from({length:d.width*d.height},(_,i)=>Math.floor(i/d.width)/(d.height-1));postMessage({width:d.width,height:d.height,values,minimum:0,maximum:1,duration:1,loadMs:1,inputWidth:280,inputHeight:140});};`}));
   await page.goto('/');await page.locator('#mode-select').selectOption('depth');await page.locator('#depth-experiment').selectOption('hide');await page.locator('#hide-sample').click();await page.locator('#depth-analyze').click();await expect(page.locator('#depth-status')).toContainText('解析完了',{timeout:120000});
 }
 async function search(page:Page){await page.locator('#hide-find').click();await expect(page.locator('#hide-find')).toBeEnabled({timeout:30000});return page.locator('#hide-spot-status').evaluate(e=>JSON.parse(e.dataset.metrics!));}
@@ -29,10 +29,18 @@ test('premise changes cancel pending results; flat depth produces no filler',asy
   await page.locator('#hide-find').evaluate((b:HTMLButtonElement)=>{b.click();b.click();const e=document.getElementById('hide-edge') as HTMLInputElement;e.checked=true;e.dispatchEvent(new Event('change'));});
   await expect(page.locator('#hide-find')).toBeEnabled();await expect(page.locator('#hide-spots button')).toHaveCount(0);await expect(page.locator('#hide-spot-status')).toHaveText('');
   await search(page);await page.locator('#depth-experiment').selectOption('character');await page.locator('#depth-experiment').selectOption('hide');await expect(page.locator('#hide-spots button')).toHaveCount(0);
+  await page.locator('#depth-size').selectOption('518');
+  await page.locator('#hide-find').evaluate((b:HTMLButtonElement)=>{b.click();(document.getElementById('depth-analyze') as HTMLButtonElement).click();});
+  await expect(page.locator('#depth-status')).toContainText('解析完了');await expect(page.locator('#hide-spots button')).toHaveCount(0);
   await page.locator('#hide-find').click();await page.locator('#hide-sample').click();await expect(page.locator('#hide-spots button')).toHaveCount(0);await expect(page.locator('#hide-find')).toBeDisabled();
   await page.route('**/assets/worker-*.js',r=>r.fulfill({contentType:'application/javascript',body:`self.onmessage=({data:d})=>{if(d.type==='init'){postMessage({ready:true});return;}postMessage({width:d.width,height:d.height,values:new Float32Array(d.width*d.height).fill(1),minimum:1,maximum:1,duration:1,loadMs:1,inputWidth:280,inputHeight:140});};`}));
   await page.locator('#mode-select').selectOption('color');await page.locator('#mode-select').selectOption('depth');await page.locator('#depth-experiment').selectOption('hide');await page.locator('#hide-sample').click();await page.locator('#depth-analyze').click();await expect(page.locator('#depth-status')).toContainText('解析完了');
   expect((await search(page)).count).toBe(0);await expect(page.locator('#hide-spot-status')).toContainText('候補が見つかりませんでした');await page.locator('#mode-select').selectOption('color');
+});
+test('leaving mode during search rejects the old generation',async({page})=>{
+  await setup(page);await page.locator('#hide-find').evaluate((b:HTMLButtonElement)=>{b.click();const mode=document.getElementById('mode-select') as HTMLSelectElement;mode.value='color';mode.dispatchEvent(new Event('change'));});
+  await expect(page.locator('#mode-select')).toHaveValue('color');await page.locator('#mode-select').selectOption('depth');await page.locator('#depth-experiment').selectOption('hide');
+  await expect(page.locator('#hide-spots button')).toHaveCount(0);await expect(page.locator('#hide-spot-status')).toHaveText('');await expect(page.locator('#hide-find')).toBeDisabled();
 });
 test('real photos: candidate counts, search time separate from AI and selected game',async({page})=>{
   test.setTimeout(180000);await setup(page,false);const records:any[]=[];

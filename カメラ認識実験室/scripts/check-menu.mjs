@@ -60,6 +60,12 @@ try {
     assert.equal(await page.locator('#hide-edge').isChecked(),false);
     await page.locator('#hide-edge').check();
     assert.equal(await page.locator('#depth-edge-diagnostics').evaluate(e=>JSON.parse(e.dataset.metrics).photoCacheBuilds),1);
+    await page.locator('#hide-find').click();
+    await page.waitForFunction(()=>!!document.querySelector('#hide-spot-status')?.dataset.metrics);
+    const spots=await page.locator('#hide-spot-status').evaluate(e=>JSON.parse(e.dataset.metrics));
+    assert.ok(spots.count>0&&spots.count<=3);
+    await page.locator('#hide-spots button').first().click();
+    assert.equal(await page.locator('#hide-lock').isEnabled(),true);
     assert.equal(await page.locator('#video').evaluate(v=>v.srcObject),null);
     assert.equal((await page.request.get(new URL('samples/coffee-LICENSE.txt',page.url()).href)).status(),200);
     assert.deepEqual(errors,[]);assert.deepEqual(failed,[]);assert.deepEqual(external,[]);

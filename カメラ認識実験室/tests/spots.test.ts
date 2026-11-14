@@ -8,6 +8,7 @@ test('bounded depth transition trials provide in-bounds distinct candidates, not
   assert.ok(result.spots.length);assert.ok(result.trials<=SPOT_LIMITS.trials);assert.ok(result.spots.length<=SPOT_LIMITS.finalists);
   for(const s of result.spots){assert.ok(s.ratio>=.12&&s.ratio<=.65);assert.ok(s.cohesion>=.6);assert.ok(s.x>=14/120&&s.x<=1-14/120);}
   assert.equal((await coarseSpots(map(true),art,48,3,()=>true,async()=>{})).spots.length,0);
+  const weak=map();weak.values.fill(.5);assert.equal((await coarseSpots(weak,art,48,3,()=>true,async()=>{})).spots.length,0);
 });
 test('search yields and cancels without publishing its accumulated trials',async()=>{
   let active=true,yields=0;const result=await coarseSpots(map(),new Uint8ClampedArray(2304).fill(255),48,3,()=>active,async()=>{yields++;active=false;});
@@ -18,5 +19,6 @@ test('coherence outranks fragments; nearby depth alternatives collapse, never fa
   assert.ok(spotScore(q)>spotScore({...q,largest:20}));
   const s={x:.5,y:.5,depth:40,score:3,ratio:.3,cohesion:1};
   assert.equal(distinctSpots([s,{...s,x:.501,depth:41}],600,400,3).length,1);
+  assert.equal(distinctSpots([s,{...s,x:.8}],600,400,3).length,2);
   assert.equal(distinctSpots([],600,400,3).length,0);
 });

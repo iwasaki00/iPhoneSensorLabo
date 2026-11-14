@@ -1,5 +1,12 @@
 # 作成ファイル一覧
 
+## v0.8.4の追加・変更
+
+- 新規: `src/depth/spots.ts`（上限付き粗探索・順位・重複整理）、`tests/spots.test.ts`、`tests/browser/spots.spec.ts`、`docs/V0_8_4.md`、`docs/depth-validation/v0.8.4-spots.json`と実写真候補のPNG。
+- 接続: `src/depth/panel.ts`（候補探索・選択／復帰・世代破棄、既存本体描画の共用）、`index.html`（隠す画面だけの候補UI）、`src/main.ts`（バージョン表記）。
+- 配布・資料: package.json／lock、再生成dist、親メニューの既存Version表示、`scripts/check-menu.mjs`の候補経由起動確認、README・実機手順、本一覧。
+- 深度モデル・WASM・推論解像度・遮蔽と輪郭補正の計算・カメラと座標変換・既存認識エンジン・ARカードには変更なし。依存追加なし。画像・候補の外部送信／自動保存なし。
+
 ## v0.8.3の追加・変更
 
 - 新規: `src/depth/edge.ts`（写真輪郭キャッシュ・深度境界の局所補正）、`tests/depth-edge.test.ts`、`tests/browser/edge.spec.ts`、`docs/V0_8_3.md`、`docs/depth-validation/v0.8.3-*.png`と`v0.8.3-edge.json`。
