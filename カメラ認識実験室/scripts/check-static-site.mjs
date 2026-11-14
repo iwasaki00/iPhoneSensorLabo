@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 const root = new URL('../', import.meta.url);
 const dist = new URL('dist/', root);
 const paths = ['index.html', 'vision-worker.js', 'segmentation-worker.js', 'assets-manifest.json'];
-for(const entry of ['index.html','ar-cards.html','ar-playground.html']) {
+for(const entry of ['index.html','ar-cards.html','ar-playground.html','demos.html']) {
 const html = await readFile(new URL(entry, dist), 'utf8');paths.push(entry);
 for (const [, reference] of html.matchAll(/(?:src|href)="([^"]+)"/g)) {
   assert.ok(!reference.startsWith('/') && !reference.endsWith('.ts'), `静的配信できない参照: ${reference}`);
@@ -19,6 +19,8 @@ const manifest = JSON.parse(await readFile(new URL('assets-manifest.json', dist)
 const sceneManifest = JSON.parse(await readFile(new URL('scene-assets.json', dist), 'utf8'));
 const textManifest = JSON.parse(await readFile(new URL('text-assets.json', dist),'utf8'));
 const depthManifest=JSON.parse(await readFile(new URL('depth-assets.json',dist),'utf8'));
+const demoAssets=JSON.parse(await readFile(new URL('demo-samples/manifest.json',dist),'utf8'));
+for(const f of demoAssets.files){const bytes=await readFile(new URL(f.path,dist));assert.equal(bytes.length,f.bytes);assert.equal(createHash('sha256').update(bytes).digest('hex'),f.sha256);}
 const sample=await readFile(new URL('samples/coffee.png',dist));
 assert.equal(createHash('sha256').update(sample).digest('hex'),'cc02f8ca188b167c775a7101b5d767d1e71792cf762c33d6fa15a4599b5a8de7','Sample photo differs from the documented CC0 source');
 assert.ok((await readFile(new URL('samples/coffee-LICENSE.txt',dist),'utf8')).includes('Rachel Michetti'));

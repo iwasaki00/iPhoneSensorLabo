@@ -85,7 +85,7 @@ function drawStatic() {
 function persist() { el('storage-status').hidden = saveSettings(settings); }
 function diagnostics() {
   el('diagnostics').textContent = [
-    'Version: 0.8.4 / HIDE SPOT FINDER', `認識モード: ${titles[settings.mode]}`, `比較表示: ${settings.view}`,
+    'Version: 1.0.0 / CAMERA APPLICATION DEMOS', `認識モード: ${titles[settings.mode]}`, `比較表示: ${settings.view}`,
     `安全な接続: ${isSecureContext}`, `カメラAPI: ${!!navigator.mediaDevices?.getUserMedia}`,
     `映像FPS: ${'requestVideoFrameCallback' in video ? '映像フレーム通知' : 'API非対応（数値なし）'}`,
     '描画FPS: 実描画のrAF通知（2秒窓） / 認識FPS: 処理完了通知（10秒窓）', `実行方式: ${mode?.runtime ?? '未初期化'}`,
@@ -270,7 +270,7 @@ bindExperiments(() => {
   if (settings.mode === 'multi' && !multiData) return null;
   if(settings.mode==='textmarker'&&!textPanel.data)return null;
   const now = performance.now(), stats = segmentStats.value;
-  return { version: '0.8.4', at: new Date().toISOString(), mode: titles[settings.mode] + (settings.mode === 'segmentation' ? '/' + segmentSettings.tab : ''),
+  return { version: '1.0.0', at: new Date().toISOString(), mode: titles[settings.mode] + (settings.mode === 'segmentation' ? '/' + segmentSettings.tab : ''),
     model: settings.mode === 'depth' ? 'Depth Anything V2 Small Q4' : settings.mode === 'textmarker' ? textPanel.data?.result.engine ?? 'Worker' : settings.mode === 'multi' ? multiData?.engines.map(e => e.engine).join(' + ') ?? '未計測' : settings.mode === 'scene' ? sceneModels[sceneSettings.model].name : settings.mode === 'segmentation' ? segmentModels[modelForTab(segmentSettings.tab)].name : settings.mode === 'object' ? 'EfficientDet-Lite0 int8 revision 1' : 'モデル不使用',
     resolution: `${resultW}×${resultH}`, renderFPS: renderRate.value(now), inferenceFPS: detectRate.value(now), averageMs: stats.average, maximumMs: stats.maximum,
     waitMs: waitMs(), loadMode: settings.mode === 'textmarker' ? textSettings.loadMode : settings.mode === 'multi' ? multiSettings.loadMode : settings.mode === 'scene' ? sceneSettings.loadMode : settings.mode === 'segmentation' ? segmentSettings.loadMode : 'manual', runtime: mode.runtime,
@@ -381,10 +381,16 @@ el('multi-reset-history').onclick = () => { clearResults(); mode?.reset?.(); sce
 el('multi-defaults').onclick = () => { Object.assign(multiSettings, multiDefaults); saveMulti(multiSettings); syncMulti(); scenePanel.inputOverride = multiSettings.input; scenePanel.sync(); sceneRequested = scenePanel.hasStill; void activateMode(); };
 function enterCards(){modeSelect.value='textmarker';modeSelect.dispatchEvent(new Event('change'));el<HTMLSelectElement>('tm-tab').value='cards';el('tm-tab').dispatchEvent(new Event('change'));el('card-welcome').scrollIntoView({block:'nearest'});}
 el('try-ar-cards').onclick=enterCards;
+el('try-demos').onclick=()=>{stop();location.href='demos.html';};
 syncMulti(); syncUI(); diagnostics();
 if(new URLSearchParams(location.search).get('ar-cards')==='1')enterCards();
 
 let depthUserRequest=false;el('depth-analyze').onclick=async()=>{if(settings.mode!=='depth'||depthPanel.busy||inFlight||depthUserRequest||!scenePanel.hasStill)return;const inputId=scenePanel.inputId;depthUserRequest=true;try{if(!mode||preparingScene)await activateMode();if(settings.mode!=='depth'||!mode||inputId!==scenePanel.inputId)return;(mode as DepthMode).setSize(Number(el<HTMLSelectElement>('depth-size').value));depthPanel.setBusy(true);depthPanel.message('読み込み・解析を開始します…');sceneRequested=true;run();}finally{depthUserRequest=false;}};
 el('hide-sample').onclick=async()=>{if(settings.mode!=='depth')return;depthPanel.message('サンプル写真を読み込み中…');if(!await scenePanel.loadSample()&&settings.mode==='depth')depthPanel.message('サンプル写真を取得できません。再試行するか端末の写真を選択してください。');};
 el('depth-size').onchange=()=>{depthPanel.requestQuality(Number(el<HTMLSelectElement>('depth-size').value));};
+if(new URLSearchParams(location.search).get('demo-depth')==='1'){
+  modeSelect.value='depth';modeSelect.dispatchEvent(new Event('change'));
+  el<HTMLSelectElement>('depth-experiment').value='character';el('depth-experiment').dispatchEvent(new Event('change'));
+  void scenePanel.loadSample('demo-samples/road.jpg').then(ok=>depthPanel.message(ok?'応用デモと同じ道路サンプルです。「奥行きを解析」で自由配置を試せます。自分の写真はここでもう一度選んでください。':'写真を選んで「奥行きを解析」を押してください。'));
+}
 let depthPointer:number|undefined;overlay.addEventListener('pointerdown',e=>{if(settings.mode==='depth'&&depthPanel.draggable){depthPointer=e.pointerId;overlay.setPointerCapture(e.pointerId);depthPanel.interact(e.clientX,e.clientY,overlay,settings.view,true);e.preventDefault();}});overlay.addEventListener('pointermove',e=>{if(depthPointer===e.pointerId&&settings.mode==='depth')depthPanel.interact(e.clientX,e.clientY,overlay,settings.view,true);});const endDepth=(e:PointerEvent)=>{if(depthPointer===e.pointerId){depthPointer=undefined;if(overlay.hasPointerCapture(e.pointerId))overlay.releasePointerCapture(e.pointerId);}};overlay.addEventListener('pointerup',endDepth);overlay.addEventListener('pointercancel',endDepth);

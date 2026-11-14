@@ -1,0 +1,50 @@
+{
+  "version": "1.0.0",
+  "files": [
+    {
+      "path": "demo-samples/desk-before.png",
+      "bytes": 8388,
+      "sha256": "12a6f605c4e483dd19090caf9b3eb85bdfa9cee6ce3c937f6791856c82bb7583"
+    },
+    {
+      "path": "demo-samples/desk-moved.png",
+      "bytes": 7531,
+      "sha256": "c8ca4ec19967d0d0ab3965f8af587b93ef782e8ee8e7d8d5cf26b8466efaba5e"
+    },
+    {
+      "path": "demo-samples/desk-missing.png",
+      "bytes": 7449,
+      "sha256": "54d705d8d69970056d7d17b2eef8fd09d90ea44be3471e07e1f4cfb10924aab7"
+    },
+    {
+      "path": "demo-samples/red.png",
+      "bytes": 7039,
+      "sha256": "efac179343cc8d99b904c9e869e4b062f74bd2c286bcf7b582d73d2f32515a06"
+    },
+    {
+      "path": "demo-samples/round.png",
+      "bytes": 11401,
+      "sha256": "9c51d342a9fdbf7da0b9b2cf47021c242d323ad9e1299969ef285b1359733d84"
+    },
+    {
+      "path": "demo-samples/panel.png",
+      "bytes": 21414,
+      "sha256": "2210c4f16d73e6ce97adc90a090657488ba16abf0c6c548dd47bc76b1293ab96"
+    },
+    {
+      "path": "demo-samples/workshop.mp4",
+      "bytes": 32688,
+      "sha256": "e232dcad7ec1ca4f2ff5efa5008563e8ea933a0ab2cd8438cf862847a154245a"
+    },
+    {
+      "path": "demo-samples/blue.mp4",
+      "bytes": 7935,
+      "sha256": "0c8e10326070264e778faae3bc324473aff4939f52f7df198dd0dc58ce81034e"
+    },
+    {
+      "path": "demo-samples/road.jpg",
+      "bytes": 71524,
+      "sha256": "5378d491ac96009045f5ab5e538c63607f63726b4fd2365ff9090bddfb296311"
+    }
+  ]
+}
