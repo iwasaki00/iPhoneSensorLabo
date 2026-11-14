@@ -85,7 +85,7 @@ function drawStatic() {
 function persist() { el('storage-status').hidden = saveSettings(settings); }
 function diagnostics() {
   el('diagnostics').textContent = [
-    'Version: 0.8.3 / EDGE REFINEMENT', `認識モード: ${titles[settings.mode]}`, `比較表示: ${settings.view}`,
+    'Version: 0.8.4 / HIDE SPOT FINDER', `認識モード: ${titles[settings.mode]}`, `比較表示: ${settings.view}`,
     `安全な接続: ${isSecureContext}`, `カメラAPI: ${!!navigator.mediaDevices?.getUserMedia}`,
     `映像FPS: ${'requestVideoFrameCallback' in video ? '映像フレーム通知' : 'API非対応（数値なし）'}`,
     '描画FPS: 実描画のrAF通知（2秒窓） / 認識FPS: 処理完了通知（10秒窓）', `実行方式: ${mode?.runtime ?? '未初期化'}`,
@@ -270,7 +270,7 @@ bindExperiments(() => {
   if (settings.mode === 'multi' && !multiData) return null;
   if(settings.mode==='textmarker'&&!textPanel.data)return null;
   const now = performance.now(), stats = segmentStats.value;
-  return { version: '0.8.3', at: new Date().toISOString(), mode: titles[settings.mode] + (settings.mode === 'segmentation' ? '/' + segmentSettings.tab : ''),
+  return { version: '0.8.4', at: new Date().toISOString(), mode: titles[settings.mode] + (settings.mode === 'segmentation' ? '/' + segmentSettings.tab : ''),
     model: settings.mode === 'depth' ? 'Depth Anything V2 Small Q4' : settings.mode === 'textmarker' ? textPanel.data?.result.engine ?? 'Worker' : settings.mode === 'multi' ? multiData?.engines.map(e => e.engine).join(' + ') ?? '未計測' : settings.mode === 'scene' ? sceneModels[sceneSettings.model].name : settings.mode === 'segmentation' ? segmentModels[modelForTab(segmentSettings.tab)].name : settings.mode === 'object' ? 'EfficientDet-Lite0 int8 revision 1' : 'モデル不使用',
     resolution: `${resultW}×${resultH}`, renderFPS: renderRate.value(now), inferenceFPS: detectRate.value(now), averageMs: stats.average, maximumMs: stats.maximum,
     waitMs: waitMs(), loadMode: settings.mode === 'textmarker' ? textSettings.loadMode : settings.mode === 'multi' ? multiSettings.loadMode : settings.mode === 'scene' ? sceneSettings.loadMode : settings.mode === 'segmentation' ? segmentSettings.loadMode : 'manual', runtime: mode.runtime,

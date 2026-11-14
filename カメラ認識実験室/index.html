@@ -9,9 +9,9 @@
 </head>
 <body>
   <div id="app">
-    <header><div><span class="eyebrow">CAMERA VISION LAB / 014</span><h1>カメラ認識実験室</h1></div><span class="version">v0.8.3</span></header>
+    <header><div><span class="eyebrow">CAMERA VISION LAB / 014</span><h1>カメラ認識実験室</h1></div><span class="version">v0.8.4</span></header>
     <main>
-      <div class="mode"><span class="dot"></span> EDGE REFINEMENT <span class="local" id="mode-kind">端末内AI</span></div>
+      <div class="mode"><span class="dot"></span> HIDE SPOT FINDER <span class="local" id="mode-kind">端末内AI</span></div>
       <div class="view-control"><label for="view-select">比較表示</label><select id="view-select"><option value="normal">通常表示</option><option value="before">BEFORE（元映像）</option><option value="after">AFTER（認識結果）</option><option value="split">左右比較</option></select></div>
       <section class="viewport" aria-label="カメラ映像と認識結果">
         <video id="video" autoplay muted playsinline></video><canvas id="overlay"></canvas>
@@ -24,7 +24,7 @@
         <label for="depth-experiment">実験</label><select id="depth-experiment"><option value="color">A. 奥行きの色分け</option><option value="points">B. 2点の前後比較</option><option value="character">C. 物陰に隠れるキャラクター</option><option value="hide">D. かくれんぼ</option></select>
         <div id="hide-game" data-depth-experiment="hide" hidden>
           <h2>写真の中のかくれんぼ</h2>
-          <div id="hide-edit"><p>ロボットをドラッグして物陰へ。奥行きで隠れ具合を調整します。</p><button id="hide-sample">サンプル写真を使う（コーヒーカップ）</button><label for="hide-depth">ロボットの奥行き（手前 ↔ 奥）</label><input id="hide-depth" type="range" min="0" max="100" value="50"><label><input id="hide-edge" type="checkbox"> 輪郭補正 ON／OFF</label><p id="hide-quality" role="status">写真を選び、奥行きを解析してください。</p><p>手前に不透明な物がある写真でお試しください。</p><button id="hide-lock" disabled>この場所に隠す</button></div>
+          <div id="hide-edit"><p>ロボットをドラッグして物陰へ。奥行きで隠れ具合を調整します。</p><button id="hide-sample">サンプル写真を使う（コーヒーカップ）</button><label for="hide-depth">ロボットの奥行き（手前 ↔ 奥）</label><input id="hide-depth" type="range" min="0" max="100" value="50"><label><input id="hide-edge" type="checkbox"> 輪郭補正 ON／OFF</label><div class="hide-spots"><button id="hide-find" disabled>候補を探す</button><div id="hide-spots" class="button-row"></div><p id="hide-spot-status" role="status"></p><button id="hide-restore" disabled>元の配置に戻す</button><p>候補は深度に基づく配置例です。自然な隠れ方は保証しません。</p></div><p id="hide-quality" role="status">写真を選び、奥行きを解析してください。</p><p>手前に不透明な物がある写真でお試しください。</p><button id="hide-lock" disabled>この場所に隠す</button></div>
           <div id="hide-pass" hidden><p>端末を渡してください</p><button id="hide-seek">探し始める</button></div>
           <div id="hide-search" hidden><p>写真の中のロボットを見つけてタップ！</p><button id="hide-hint">ヒント</button><p id="hide-hint-text" role="status"></p></div>
           <div id="hide-found" hidden><p role="status">見つけた！</p><button id="hide-again">同じ写真で隠し直す</button></div>
