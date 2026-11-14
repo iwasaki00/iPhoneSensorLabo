@@ -51,7 +51,19 @@ try {
   await card.click();
   await page.waitForFunction(version => document.querySelector('#diagnostics')?.textContent.includes('Version: ' + version), version);
   assert.equal(decodeURI(new URL(page.url()).pathname), `/repository/${folder}/dist/`);
-  if(process.argv.includes('--hide-only')){
+  if(process.argv.includes('--demos-only')){
+    await page.locator('#try-demos').click();
+    assert.ok(decodeURI(new URL(page.url()).pathname).endsWith(`/${folder}/dist/demos.html`));
+    assert.equal(await page.locator('#demo-list button').count(),6);
+    await page.locator('#demo-list button').nth(1).click();
+    await page.locator('#demo-sample').click();await page.locator('#demo-compare').click();
+    assert.ok((await page.locator('#demo-step').textContent()).includes('端末を渡し'));
+    await page.locator('#demo-answer').click();assert.equal(await page.locator('#demo-comparison figure').count(),2);
+    assert.equal(await page.locator('#demo-video').evaluate(v=>v.srcObject),null);
+    await page.locator('a[href="index.html"]').click();await page.waitForFunction(()=>!!document.querySelector('#try-demos'));
+    assert.deepEqual(errors,[]);assert.deepEqual(failed,[]);assert.deepEqual(external,[]);
+    console.log(`PASS: ${files.length} Git-eligible static files; parent menu -> v${version} -> six application demos -> sample comparison/result -> original app; no camera, HTTP/page errors or external requests.`);
+  }else if(process.argv.includes('--hide-only')){
     await page.locator('#mode-select').selectOption('depth');
     await page.locator('#depth-experiment').selectOption('hide');
     await page.locator('#hide-sample').click();
