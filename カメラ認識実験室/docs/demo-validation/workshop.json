@@ -1,1 +1,1 @@
-{"at":"2026-11-14T18:13:48.487Z","condition":"PC Chrome, actual EfficientDet on composed CC0 cup video; no camera","metrics":"サンプル映像 / 解析 640×420\n今回の処理 197.2 ms / 実測解析FPS 1.10\n完了後の待機 550 ms / Worker / CPU"}
+{"at":"2026-11-15T02:30:16.501Z","condition":"PC Chrome, actual EfficientDet on composed CC0 cup video; no camera","metrics":"サンプル映像 / 解析 640×420\n今回の処理 162.5 ms / 実測解析FPS 2.13\n完了後の待機 300 ms / Worker / CPU"}

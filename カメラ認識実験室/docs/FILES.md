@@ -1,5 +1,13 @@
 # 作成ファイル一覧
 
+## v1.0.0の追加・変更
+
+- 新規: `demos.html`、`src/demos/{app,catalog,logic}.ts`、`src/demos/style.css`。共通の案内・入力・解放と6本の応用デモ。
+- サンプル: `public/demo-samples/`の前後机画像3枚、赤・円・架空盤面各1枚、8秒MP4×2、道路写真1枚、LICENSES.md、manifest.json。`scripts/create-demo-samples.mjs`は開発者の明示操作による再生成用。
+- 接続: `index.html`の入口1つ、`src/main.ts`の退出・バージョンと奥行き導線、`src/scene/panel.ts`の同梱道路サンプル読込選択肢。既存の初期モード・認識エンジン内部・深度モデル・ARカード・かくれんぼは変更しない。
+- 配布・検証: `vite.config.ts`、`scripts/check-static-site.mjs`、`scripts/check-menu.mjs`、package.json／lock、dist再生成、親メニューのVersion表示、`tests/demos.test.ts`、`tests/browser/demos.spec.ts`。
+- 資料: README、iPhone手順、本一覧、`docs/V1_0_0.md`、`docs/demo-validation/`の公開／架空サンプル検証記録・画像。利用者画像・OCR内容の保存機能は追加しない。
+
 ## v0.8.4の追加・変更
 
 - 新規: `src/depth/spots.ts`（上限付き粗探索・順位・重複整理）、`tests/spots.test.ts`、`tests/browser/spots.spec.ts`、`docs/V0_8_4.md`、`docs/depth-validation/v0.8.4-spots.json`と実写真候補のPNG。
